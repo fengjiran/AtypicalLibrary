@@ -32,8 +32,6 @@ public:
 
     pointer operator->() const noexcept {
         return to_address(i);
-        //        static_assert(!std::is_function<value_type>::value, "value is a function type");
-        //        return i;
     }
 
     ATLIterator& operator++() noexcept {
