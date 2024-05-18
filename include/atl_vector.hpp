@@ -76,8 +76,6 @@ public:
      */
     vector(std::initializer_list<T> il, const allocator_type& alloc_ = allocator_type());
 
-    vector& operator=(std::initializer_list<T> il);
-
     /**
      * @brief Copy constructor
      *
@@ -88,14 +86,6 @@ public:
     vector(const vector& rhs, const type_identity_t<allocator_type>& alloc_);
 
     /**
-     * @brief Copy assignment operator
-     *
-     * @param rhs Right Hand Side
-     * @return The self reference
-     */
-    vector& operator=(const vector& rhs);
-
-    /**
      * @brief Move constructor
      *
      * @param rhs Right Hand Side
@@ -103,6 +93,16 @@ public:
     vector(vector&& rhs) noexcept;
 
     vector(vector&& rhs, const type_identity_t<allocator_type>& alloc_);
+
+    vector& operator=(std::initializer_list<T> il);
+
+    /**
+     * @brief Copy assignment operator
+     *
+     * @param rhs Right Hand Side
+     * @return The self reference
+     */
+    vector& operator=(const vector& rhs);
 
     /**
      * @brief Move assignment
