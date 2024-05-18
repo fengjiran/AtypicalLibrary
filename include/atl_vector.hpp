@@ -13,8 +13,8 @@
 
 namespace atp {
 
-template<typename T, typename Allocator = MyAllocator<T> /* = std::allocator<T>*/>
-class vec {
+template<typename T, typename Allocator = ATLAllocator<T> /* = std::allocator<T>*/>
+class vector {
 public:
     using value_type = T;
     using allocator_type = Allocator;
@@ -26,8 +26,8 @@ public:
     using reference = value_type&;
     using const_reference = const value_type&;
 
-    using iterator = MyIterator<pointer>;
-    using const_iterator = MyIterator<const_pointer>;
+    using iterator = ATLIterator<pointer>;
+    using const_iterator = ATLIterator<const_pointer>;
     using reverse_iterator = std::reverse_iterator<iterator>;
     using const_reverse_iterator = std::reverse_iterator<const_iterator>;
 
@@ -38,10 +38,10 @@ public:
     /**
      * @brief Default constructor
      */
-    vec() noexcept(noexcept(allocator_type()))
+    vector() noexcept(noexcept(allocator_type()))
         : start(nullptr), cap(nullptr), firstFree(nullptr), alloc(allocator_type()) {}
 
-    explicit vec(const allocator_type& alloc_) noexcept
+    explicit vector(const allocator_type& alloc_) noexcept
         : start(nullptr), cap(nullptr), firstFree(nullptr), alloc(alloc_) {}
 
     /**
@@ -49,7 +49,7 @@ public:
      *
      * @param n Size
      */
-    explicit vec(size_type n, const allocator_type& alloc_ = allocator_type());
+    explicit vector(size_type n, const allocator_type& alloc_ = allocator_type());
 
     /**
      * @brief Constructor with size and initial value
@@ -57,7 +57,7 @@ public:
      * @param n Size
      * @param t Initial value
      */
-    vec(size_type n, const_reference value, const allocator_type& alloc_ = allocator_type());
+    vector(size_type n, const_reference value, const allocator_type& alloc_ = allocator_type());
 
     /**
      * @brief Constructor with range [first, last)
@@ -67,25 +67,25 @@ public:
      */
     template<typename InputIterator,
              typename has_input_iterator_category<InputIterator, value_type>::type = 0>
-    vec(InputIterator first, InputIterator last, const allocator_type& alloc_ = allocator_type());
+    vector(InputIterator first, InputIterator last, const allocator_type& alloc_ = allocator_type());
 
     /**
      * @brief Constructor with initializer list
      *
      * @param il Initializer list
      */
-    vec(std::initializer_list<T> il, const allocator_type& alloc_ = allocator_type());
+    vector(std::initializer_list<T> il, const allocator_type& alloc_ = allocator_type());
 
-    vec& operator=(std::initializer_list<T> il);
+    vector& operator=(std::initializer_list<T> il);
 
     /**
      * @brief Copy constructor
      *
      * @param rhs Right Hand Side
      */
-    vec(const vec& rhs);
+    vector(const vector& rhs);
 
-    vec(const vec& rhs, const type_identity_t<allocator_type>& alloc_);
+    vector(const vector& rhs, const type_identity_t<allocator_type>& alloc_);
 
     /**
      * @brief Copy assignment operator
@@ -93,16 +93,16 @@ public:
      * @param rhs Right Hand Side
      * @return The self reference
      */
-    vec& operator=(const vec& rhs);
+    vector& operator=(const vector& rhs);
 
     /**
      * @brief Move constructor
      *
      * @param rhs Right Hand Side
      */
-    vec(vec&& rhs) noexcept;
+    vector(vector&& rhs) noexcept;
 
-    vec(vec&& rhs, const type_identity_t<allocator_type>& alloc_);
+    vector(vector&& rhs, const type_identity_t<allocator_type>& alloc_);
 
     /**
      * @brief Move assignment
@@ -110,7 +110,7 @@ public:
      * @param rhs Right Hand Side
      * @return The self reference
      */
-    vec& operator=(vec&& rhs) noexcept;
+    vector& operator=(vector&& rhs) noexcept;
 
     /**
      * @brief Get the number of elements in the container
@@ -193,7 +193,7 @@ public:
              typename has_input_iterator_category<InputIterator, value_type>::type = 0>
     void assign(InputIterator first, InputIterator last);
 
-    ~vec();
+    ~vector();
 
 private:
     template<typename InputIterator,
@@ -233,7 +233,7 @@ private:
         firstFree = start;
     }
 
-    void _copy_assign_alloc(const vec& c, true_type) {
+    void _copy_assign_alloc(const vector& c, true_type) {
         if (_alloc() != c._alloc()) {
             _free();
             start = nullptr;
@@ -243,9 +243,9 @@ private:
         _alloc() = c._alloc();
     }
 
-    void _copy_assign_alloc(const vec&, false_type) {}
+    void _copy_assign_alloc(const vector&, false_type) {}
 
-    void _move_assign(vec& rhs, true_type) {
+    void _move_assign(vector& rhs, true_type) {
         _free();
         _alloc() = std::move(rhs._alloc());
 
@@ -258,7 +258,7 @@ private:
         rhs.cap = nullptr;
     }
 
-    void _move_assign(vec& rhs, false_type) {
+    void _move_assign(vector& rhs, false_type) {
         if (_alloc() != rhs._alloc()) {
             _clear();
             for (auto iter = rhs.begin(); iter != rhs.end(); ++iter) {
@@ -280,50 +280,50 @@ private:
 };
 
 template<typename T, typename Allocator>
-typename vec<T, Allocator>::const_reference
-vec<T, Allocator>::back() const noexcept {
+typename vector<T, Allocator>::const_reference
+vector<T, Allocator>::back() const noexcept {
     CHECK(!empty()) << "back() called on an empty vector";
     return *(firstFree - 1);
 }
 
 template<typename T, typename Allocator>
-typename vec<T, Allocator>::reference
-vec<T, Allocator>::back() noexcept {
+typename vector<T, Allocator>::reference
+vector<T, Allocator>::back() noexcept {
     CHECK(!empty()) << "back() called on an empty vector";
     return *(firstFree - 1);
 }
 
 template<typename T, typename Allocator>
-typename vec<T, Allocator>::const_reference
-vec<T, Allocator>::front() const noexcept {
+typename vector<T, Allocator>::const_reference
+vector<T, Allocator>::front() const noexcept {
     CHECK(!empty()) << "front() called on an empty vector";
     return *start;
 }
 
 template<typename T, typename Allocator>
-typename vec<T, Allocator>::reference
-vec<T, Allocator>::front() noexcept {
+typename vector<T, Allocator>::reference
+vector<T, Allocator>::front() noexcept {
     CHECK(!empty()) << "front() called on an empty vector";
     return *start;
 }
 
 template<typename T, typename Allocator>
-typename vec<T, Allocator>::const_reference
-vec<T, Allocator>::operator[](size_type pos) const noexcept {
+typename vector<T, Allocator>::const_reference
+vector<T, Allocator>::operator[](size_type pos) const noexcept {
     CHECK(pos < size()) << "vector[] index out of bounds";
     return start[pos];
 }
 
 template<typename T, typename Allocator>
-typename vec<T, Allocator>::reference
-vec<T, Allocator>::operator[](size_type pos) noexcept {
+typename vector<T, Allocator>::reference
+vector<T, Allocator>::operator[](size_type pos) noexcept {
     CHECK(pos < size()) << "vector[] index out of bounds";
     return start[pos];
 }
 
 template<typename T, typename Allocator>
-typename vec<T, Allocator>::reference
-vec<T, Allocator>::at(size_type pos) {
+typename vector<T, Allocator>::reference
+vector<T, Allocator>::at(size_type pos) {
     if (pos >= size()) {
         throw std::out_of_range("index out of bounds");
     }
@@ -331,8 +331,8 @@ vec<T, Allocator>::at(size_type pos) {
 }
 
 template<typename T, typename Allocator>
-typename vec<T, Allocator>::const_reference
-vec<T, Allocator>::at(size_type pos) const {
+typename vector<T, Allocator>::const_reference
+vector<T, Allocator>::at(size_type pos) const {
     if (pos >= size()) {
         throw std::out_of_range("index out of bounds");
     }
@@ -341,25 +341,25 @@ vec<T, Allocator>::at(size_type pos) const {
 
 template<typename T, typename Allocator>
 template<typename... Args>
-void vec<T, Allocator>::emplace_back(Args&&... args) {
+void vector<T, Allocator>::emplace_back(Args&&... args) {
     _check_and_alloc();
     alloc_traits::construct(alloc, firstFree++, std::forward<Args>(args)...);
 }
 
 template<typename T, typename Allocator>
-void vec<T, Allocator>::push_back(value_type&& t) {
+void vector<T, Allocator>::push_back(value_type&& t) {
     _check_and_alloc();
     alloc_traits::construct(alloc, firstFree++, std::move(t));
 }
 
 template<typename T, typename Allocator>
-void vec<T, Allocator>::push_back(const_reference t) {
+void vector<T, Allocator>::push_back(const_reference t) {
     _check_and_alloc();
     alloc_traits::construct(alloc, firstFree++, t);
 }
 
 template<typename T, typename Allocator>
-void vec<T, Allocator>::resize(size_type n) {
+void vector<T, Allocator>::resize(size_type n) {
     if (n > size()) {
         while (size() < n) {
             push_back(T());
@@ -372,7 +372,7 @@ void vec<T, Allocator>::resize(size_type n) {
 }
 
 template<typename T, typename Allocator>
-void vec<T, Allocator>::resize(size_type n, const_reference t) {
+void vector<T, Allocator>::resize(size_type n, const_reference t) {
     if (n > size()) {
         while (size() < n) {
             push_back(t);
@@ -381,19 +381,19 @@ void vec<T, Allocator>::resize(size_type n, const_reference t) {
 }
 
 template<typename T, typename Allocator>
-void vec<T, Allocator>::reserve(size_type n) {
+void vector<T, Allocator>::reserve(size_type n) {
     if (n > capacity()) {
         _reallocate(n);
     }
 }
 
 template<typename T, typename Allocator>
-vec<T, Allocator>::~vec() {
+vector<T, Allocator>::~vector() {
     _free();
 }
 
 template<typename T, typename Allocator>
-void vec<T, Allocator>::_reallocate(size_type newCap) {
+void vector<T, Allocator>::_reallocate(size_type newCap) {
     auto data = alloc_traits::allocate(alloc, newCap);
     auto src = start;
     auto dst = data;
@@ -409,7 +409,7 @@ void vec<T, Allocator>::_reallocate(size_type newCap) {
 }
 
 template<typename T, typename Allocator>
-void vec<T, Allocator>::_reallocate() {
+void vector<T, Allocator>::_reallocate() {
     size_type newCap = size() != 0 ? 2 * size() : 1;
     auto data = alloc_traits::allocate(alloc, newCap);
     auto src = start;
@@ -426,7 +426,7 @@ void vec<T, Allocator>::_reallocate() {
 }
 
 template<typename T, typename Allocator>
-vec<T, Allocator>& vec<T, Allocator>::operator=(vec&& rhs) noexcept {
+vector<T, Allocator>& vector<T, Allocator>::operator=(vector&& rhs) noexcept {
     _move_assign(rhs,
                  integral_constant<bool,
                                    propagate_on_container_move_assignment<Allocator>::type::value>());
@@ -434,7 +434,7 @@ vec<T, Allocator>& vec<T, Allocator>::operator=(vec&& rhs) noexcept {
 }
 
 template<typename T, typename Allocator>
-vec<T, Allocator>::vec(vec&& rhs) noexcept
+vector<T, Allocator>::vector(vector&& rhs) noexcept
     : start(rhs.start), firstFree(rhs.firstFree), cap(rhs.cap), alloc(std::move(rhs.alloc)) {
     rhs.start = nullptr;
     rhs.firstFree = nullptr;
@@ -442,7 +442,7 @@ vec<T, Allocator>::vec(vec&& rhs) noexcept
 }
 
 template<typename T, typename Allocator>
-vec<T, Allocator>::vec(vec&& rhs, const type_identity_t<allocator_type>& alloc_)
+vector<T, Allocator>::vector(vector&& rhs, const type_identity_t<allocator_type>& alloc_)
     : alloc(alloc_) {
     if (rhs._alloc() == alloc_) {
         start = rhs.start;
@@ -460,7 +460,7 @@ vec<T, Allocator>::vec(vec&& rhs, const type_identity_t<allocator_type>& alloc_)
 }
 
 template<typename T, typename Allocator>
-vec<T, Allocator>::vec(size_type n, const allocator_type& alloc_)
+vector<T, Allocator>::vector(size_type n, const allocator_type& alloc_)
     : alloc(alloc_) {
     auto data = alloc_traits::allocate(alloc, n);
     start = data;
@@ -472,7 +472,7 @@ vec<T, Allocator>::vec(size_type n, const allocator_type& alloc_)
 }
 
 template<typename T, typename Allocator>
-vec<T, Allocator>::vec(size_type n, const_reference value, const allocator_type& alloc_)
+vector<T, Allocator>::vector(size_type n, const_reference value, const allocator_type& alloc_)
     : alloc(alloc_) {
     auto data = alloc_traits::allocate(alloc, n);
     start = data;
@@ -486,7 +486,7 @@ vec<T, Allocator>::vec(size_type n, const_reference value, const allocator_type&
 template<typename T, typename Allocator>
 template<typename InputIterator,
          typename has_input_iterator_category<InputIterator, T>::type>
-vec<T, Allocator>::vec(InputIterator first, InputIterator last, const allocator_type& alloc_)
+vector<T, Allocator>::vector(InputIterator first, InputIterator last, const allocator_type& alloc_)
     : alloc(alloc_) {
     auto data = Allocate(first, last);
     start = data.first;
@@ -495,7 +495,7 @@ vec<T, Allocator>::vec(InputIterator first, InputIterator last, const allocator_
 }
 
 template<typename T, typename Allocator>
-vec<T, Allocator>::vec(std::initializer_list<T> il, const allocator_type& alloc_)
+vector<T, Allocator>::vector(std::initializer_list<T> il, const allocator_type& alloc_)
     : alloc(alloc_) {
     auto data = Allocate(il.begin(), il.end());
     start = data.first;
@@ -504,7 +504,7 @@ vec<T, Allocator>::vec(std::initializer_list<T> il, const allocator_type& alloc_
 }
 
 template<typename T, typename Allocator>
-vec<T, Allocator>& vec<T, Allocator>::operator=(std::initializer_list<T> il) {
+vector<T, Allocator>& vector<T, Allocator>::operator=(std::initializer_list<T> il) {
     auto data = Allocate(il.begin(), il.end());
     _free();
     start = data.first;
@@ -514,7 +514,7 @@ vec<T, Allocator>& vec<T, Allocator>::operator=(std::initializer_list<T> il) {
 }
 
 template<typename T, typename Allocator>
-vec<T, Allocator>::vec(const vec<T, Allocator>& rhs)
+vector<T, Allocator>::vector(const vector<T, Allocator>& rhs)
     : alloc(select_on_container_copy_construction(rhs._alloc())) {
     auto data = Allocate(rhs.begin(), rhs.end());
     start = data.first;
@@ -523,7 +523,7 @@ vec<T, Allocator>::vec(const vec<T, Allocator>& rhs)
 }
 
 template<typename T, typename Allocator>
-vec<T, Allocator>::vec(const vec<T, Allocator>& rhs, const type_identity_t<allocator_type>& alloc_)
+vector<T, Allocator>::vector(const vector<T, Allocator>& rhs, const type_identity_t<allocator_type>& alloc_)
     : alloc(alloc_) {
     auto data = Allocate(rhs.begin(), rhs.end());
     start = data.first;
@@ -532,7 +532,7 @@ vec<T, Allocator>::vec(const vec<T, Allocator>& rhs, const type_identity_t<alloc
 }
 
 template<typename T, typename Allocator>
-vec<T, Allocator>& vec<T, Allocator>::operator=(const vec<T, Allocator>& rhs) {
+vector<T, Allocator>& vector<T, Allocator>::operator=(const vector<T, Allocator>& rhs) {
     if (this != std::addressof(rhs)) {
         _copy_assign_alloc(
                 rhs,
@@ -546,8 +546,8 @@ vec<T, Allocator>& vec<T, Allocator>::operator=(const vec<T, Allocator>& rhs) {
 template<typename T, typename Allocator>
 template<typename InputIterator,
          typename has_input_iterator_category<InputIterator, T>::type>
-std::pair<typename vec<T, Allocator>::pointer, typename vec<T, Allocator>::pointer>
-vec<T, Allocator>::Allocate(InputIterator first, InputIterator last) {
+std::pair<typename vector<T, Allocator>::pointer, typename vector<T, Allocator>::pointer>
+vector<T, Allocator>::Allocate(InputIterator first, InputIterator last) {
     auto n = std::distance(first, last);
     auto dst = alloc_traits::allocate(alloc, n);
     return {dst, std::uninitialized_copy(first, last, dst)};
@@ -556,7 +556,7 @@ vec<T, Allocator>::Allocate(InputIterator first, InputIterator last) {
 template<typename T, typename Allocator>
 template<typename InputIterator,
          typename has_input_iterator_category<InputIterator, T>::type>
-void vec<T, Allocator>::assign(InputIterator first, InputIterator last) {
+void vector<T, Allocator>::assign(InputIterator first, InputIterator last) {
     _clear();
     while (first != last) {
         emplace_back(*first);
@@ -565,7 +565,7 @@ void vec<T, Allocator>::assign(InputIterator first, InputIterator last) {
 }
 
 template<typename T, typename Allocator>
-void vec<T, Allocator>::_free() {
+void vector<T, Allocator>::_free() {
     if (start) {
         auto p = firstFree;
         while (p != start) {
@@ -576,17 +576,17 @@ void vec<T, Allocator>::_free() {
 }
 
 template<typename T, typename Allocator>
-bool operator==(const vec<T, Allocator>& x, const vec<T, Allocator>& y) {
+bool operator==(const vector<T, Allocator>& x, const vector<T, Allocator>& y) {
     return x.size() == y.size() && std::equal(x.begin(), x.end(), y.begin());
 }
 
 template<typename T, typename Allocator>
-bool operator!=(const vec<T, Allocator>& x, const vec<T, Allocator>& y) {
+bool operator!=(const vector<T, Allocator>& x, const vector<T, Allocator>& y) {
     return !(x == y);
 }
 
 template<typename T, typename Allocator>
-std::ostream& operator<<(std::ostream& s, const vec<T, Allocator>& v) {
+std::ostream& operator<<(std::ostream& s, const vector<T, Allocator>& v) {
     s.put('{');
 
     //    // Range-based for loop initialization statements(c++ 20)

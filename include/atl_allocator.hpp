@@ -11,8 +11,9 @@
 #include <memory>
 
 namespace atp {
+
 template<typename T>
-class MyAllocator {
+class ATLAllocator {
 public:
     using value_type = T;
     using size_type = size_t;
@@ -25,13 +26,13 @@ public:
     using propagate_on_container_move_assignment = true_type;
 
 public:
-    MyAllocator() noexcept = default;
+    ATLAllocator() noexcept = default;
 
     template<typename U>
-    explicit MyAllocator(const MyAllocator<U>&) noexcept {}
+    explicit ATLAllocator(const ATLAllocator<U>&) noexcept {}
 
     pointer allocate(size_type n) {
-        if (n > std::allocator_traits<MyAllocator>::max_size(*this)) {
+        if (n > std::allocator_traits<ATLAllocator>::max_size(*this)) {
             throw std::bad_array_new_length();
         }
         return static_cast<pointer>(::operator new(n * sizeof(value_type)));
@@ -41,18 +42,18 @@ public:
         ::operator delete(p);
     }
 
-    static MyAllocator select_on_container_copy_construction() {
+    static ATLAllocator select_on_container_copy_construction() {
         return {};
     }
 };
 
 template<typename T, typename U>
-inline bool operator==(const MyAllocator<T>&, const MyAllocator<U>&) noexcept {
+inline bool operator==(const ATLAllocator<T>&, const ATLAllocator<U>&) noexcept {
     return true;
 }
 
 template<typename T, typename U>
-inline bool operator!=(const MyAllocator<T>&, const MyAllocator<U>&) noexcept {
+inline bool operator!=(const ATLAllocator<T>&, const ATLAllocator<U>&) noexcept {
     return false;
 }
 }// namespace atp
