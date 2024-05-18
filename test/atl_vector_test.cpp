@@ -6,47 +6,45 @@
 #include "gtest/gtest.h"
 #include <list>
 
-namespace atp {
-
-TEST(MyVectorTest, ctor) {
-    vector<std::string> words1{"the", "yogurt", "is", "also", "cursed"};
+TEST(ATLVectorTest, ctor) {
+    atp::vector<std::string> words1{"the", "yogurt", "is", "also", "cursed"};
     std::cout << "1: " << words1;
 
-    vector<std::string> words2(words1.begin(), words1.end());
+    atp::vector<std::string> words2(words1.begin(), words1.end());
     std::cout << "2: " << words2;
 
-    vector<std::string> words3(words1);
+    atp::vector<std::string> words3(words1);
     std::cout << "3: " << words3;
 
-    vector<std::string> words4(5, "Mo");
+    atp::vector<std::string> words4(5, "Mo");
     std::cout << "4: " << words4;
 
     auto const rg = {"cat", "cow", "crow"};
 #ifdef __cpp_lib_containers_ranges
     vector<std::string> words5(std::from_range, rg);// overload (11)
 #else
-    vector<std::string> words5(rg.begin(), rg.end());// overload (5)
+    atp::vector<std::string> words5(rg.begin(), rg.end());// overload (5)
 #endif
     std::cout << "5: " << words5;
 
     std::list<int> lst = {1, 2, 3, 4, 5};
-    vector<int> words6(lst.begin(), lst.end());
+    atp::vector<int> words6(lst.begin(), lst.end());
     std::cout << "6: " << words6;
 
-    vector<std::string> words7;
+    atp::vector<std::string> words7;
     words7 = words1;
     std::cout << "7: " << words7;
 
-    vector<std::string> words8(std::move(words7));
+    atp::vector<std::string> words8(std::move(words7));
     std::cout << "8: " << words8;
 
     auto alloc1 = std::allocator<int>();
-    auto alloc2 = ATLAllocator<int>();
+    auto alloc2 = atp::ATLAllocator<int>();
     std::vector<int> a(alloc1);
-    vector<int, std::allocator<int>> b(alloc1);
+    atp::vector<int, std::allocator<int>> b(alloc1);
 
-    std::vector<int, ATLAllocator<int>> aa(alloc2);
-    vector<int, ATLAllocator<int>> bb(alloc2);
+    std::vector<int, atp::ATLAllocator<int>> aa(alloc2);
+    atp::vector<int, atp::ATLAllocator<int>> bb(alloc2);
 
     ASSERT_TRUE(a.empty());
     ASSERT_TRUE(b.empty());
@@ -54,17 +52,17 @@ TEST(MyVectorTest, ctor) {
     ASSERT_TRUE(bb.empty());
 }
 
-TEST(MyVectorTest, general) {
-    vector<int> v{8, 4, 5, 9};
+TEST(ATLVectorTest, general) {
+    atp::vector<int> v{8, 4, 5, 9};
     v.push_back(6);
     v.push_back(9);
     v[2] = -1;
 
-    vector<int> ans{8, 4, -1, 9, 6, 9};
+    atp::vector<int> ans{8, 4, -1, 9, 6, 9};
     ASSERT_TRUE(v == ans);
 }
 
-TEST(MyVectorTest, assignment) {
+TEST(ATLVectorTest, assignment) {
     auto print = [](auto const comment, auto const& container) {
         auto size = std::size(container);
         std::cout << comment << "{ ";
@@ -73,7 +71,7 @@ TEST(MyVectorTest, assignment) {
         std::cout << "}\n";
     };
 
-    vector<int> x{1, 2, 3}, y, z;
+    atp::vector<int> x{1, 2, 3}, y, z;
     const auto w = {4, 5, 6, 7};
 
     std::cout << "Initially:\n";
@@ -97,17 +95,17 @@ TEST(MyVectorTest, assignment) {
     print("z = ", z);
 }
 
-TEST(MyVectorTest, back) {
-    vector<char> letters{'a', 'b', 'c', 'd', 'e', 'f'};
+TEST(ATLVectorTest, back) {
+    atp::vector<char> letters{'a', 'b', 'c', 'd', 'e', 'f'};
     std::cout << letters;
     ASSERT_EQ(letters.back(), 'f');
     if (!letters.empty())
         std::cout << "The last character is '" << letters.back() << "'.\n";
 }
 
-TEST(MyVectorTest, integral_constant) {
-    static_assert(true_type::value);
-    static_assert(!false_type::value);
+TEST(ATLVectorTest, integral_constant) {
+    static_assert(atp::true_type::value);
+    static_assert(!atp::false_type::value);
 
     class A {
     public:
@@ -115,9 +113,7 @@ TEST(MyVectorTest, integral_constant) {
         static A select_on_container_copy_construction() { return {}; }
     };
 
-    static_assert(_has_select_on_container_copy_construction<A>::value);
-    static_assert(!_has_select_on_container_copy_construction<std::allocator<int>>::value);
-    static_assert(_has_select_on_container_copy_construction<ATLAllocator<int>>::value);
+    static_assert(atp::_has_select_on_container_copy_construction<A>::value);
+    static_assert(!atp::_has_select_on_container_copy_construction<std::allocator<int>>::value);
+    static_assert(atp::_has_select_on_container_copy_construction<atp::ATLAllocator<int>>::value);
 }
-
-}// namespace XAcceleratorEngine
