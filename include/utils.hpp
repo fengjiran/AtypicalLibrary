@@ -2,13 +2,13 @@
 // Created by 赵丹 on 24-5-16.
 //
 
-#ifndef OPENXAE_UTILS_HPP
-#define OPENXAE_UTILS_HPP
+#ifndef ATYPICALLIBRARY_UTILS_HPP
+#define ATYPICALLIBRARY_UTILS_HPP
 
 #include <iterator>
 #include <type_traits>
 
-namespace XAcceleratorEngine {
+namespace atp {
 
 template<typename T>
 struct type_identity {
@@ -102,6 +102,6 @@ struct propagate_on_container_move_assignment<alloc, true> {
     using type = typename alloc::propagate_on_container_move_assignment;
 };
 
-}// namespace XAcceleratorEngine
+}// namespace atp
 
-#endif//OPENXAE_UTILS_HPP
+#endif//ATYPICALLIBRARY_UTILS_HPP
