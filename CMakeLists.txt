@@ -19,3 +19,5 @@ target_link_libraries(${PROJECT_NAME}
         glog::glog
         pthread
 )
+
+add_subdirectory(test)
