@@ -1,0 +1,2 @@
+# AtypicalLibrary
+Atypical Library
