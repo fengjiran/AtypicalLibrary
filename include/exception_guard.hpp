@@ -15,14 +15,33 @@ public:
     _exception_guard_exceptions() = delete;
 
     explicit _exception_guard_exceptions(Rollback rollback)
-        : rollback_(std::move(rollback)), complete_(false) {}
+        : rollback_(std::move(rollback)), completed_(false) {}
 
-    //TODO: move constructor
+    _exception_guard_exceptions(_exception_guard_exceptions&& other) noexcept(std::is_nothrow_constructible<Rollback>::value)
+        : rollback_(std::move(other.rollback_)), completed_(other.completed_) {
+        other.completed_ = true;
+    }
+
+    _exception_guard_exceptions(const _exception_guard_exceptions&) = delete;
+    _exception_guard_exceptions& operator=(const _exception_guard_exceptions&) = delete;
+    _exception_guard_exceptions& operator=(_exception_guard_exceptions&&) = delete;
+
+    void complete() noexcept {
+        completed_ = true;
+    }
+
+    ~_exception_guard_exceptions() {
+        if (!completed_) {
+            rollback_();
+        }
+    }
 
 private:
     Rollback rollback_;
-    bool complete_;
+    bool completed_;
 };
+
+//std::is_nothrow_constructible
 
 }// namespace atp
 
