@@ -8,6 +8,7 @@
 #include "atl_allocator.hpp"
 #include "atl_iterator.hpp"
 #include "config.hpp"
+#include "exception_guard.hpp"
 #include "glog/logging.h"
 #include "utils.hpp"
 
@@ -501,6 +502,7 @@ vector<T, Allocator>::vector(vector&& rhs, const type_identity_t<allocator_type>
 template<typename T, typename Allocator>
 vector<T, Allocator>::vector(size_type n, const allocator_type& alloc_)
     : alloc(alloc_) {
+    // todo: add exception guard
     auto data = alloc_traits::allocate(alloc, n);
     start = data;
     firstFree = data;
@@ -513,6 +515,7 @@ vector<T, Allocator>::vector(size_type n, const allocator_type& alloc_)
 template<typename T, typename Allocator>
 vector<T, Allocator>::vector(size_type n, const_reference value, const allocator_type& alloc_)
     : alloc(alloc_) {
+    // todo: add exception guard
     auto data = alloc_traits::allocate(alloc, n);
     start = data;
     firstFree = data;
