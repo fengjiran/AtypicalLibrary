@@ -296,6 +296,21 @@ private:
         }
     }
 
+    class _destroy_vector {
+    public:
+        explicit _destroy_vector(vector& _vec) : _vec_(_vec) {}
+
+        void operator()() {
+            if (_vec_.start) {
+                _vec_._clear();
+                alloc_traits::deallocate(_vec_._alloc(), _vec_.start, _vec_.capacity());
+            }
+        }
+
+    private:
+        vector& _vec_;
+    };
+
 private:
     allocator_type alloc;
     pointer start;
@@ -595,7 +610,7 @@ void vector<T, Allocator>::_free() {
         while (p != start) {
             alloc_traits::destroy(_alloc(), to_address(--p));
         }
-        alloc_traits::deallocate(_alloc(), start, cap - start);
+        alloc_traits::deallocate(_alloc(), start, capacity());
     }
 }
 
