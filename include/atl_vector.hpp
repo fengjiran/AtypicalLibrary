@@ -36,63 +36,87 @@ public:
 
 public:
     /**
-     * @brief Default constructor
+     * @brief Default constructor.
+     *
+     * Constructs an empty container with a default-constructed allocator.
      */
     vector() noexcept(noexcept(allocator_type()))
         : start(nullptr), cap(nullptr), firstFree(nullptr), alloc(allocator_type()) {}
 
+    /**
+     * @brief Constructs an empty container with the given allocator.
+     *
+     * @param alloc_ The given allocator.
+     */
     explicit vector(const allocator_type& alloc_) noexcept
         : start(nullptr), cap(nullptr), firstFree(nullptr), alloc(alloc_) {}
 
     /**
-     * @brief Constructor with size and default initialization
+     * @brief Constructs the container with n copies of elements with value.
      *
      * @param n Size
-     */
-    explicit vector(size_type n, const allocator_type& alloc_ = allocator_type());
-
-    /**
-     * @brief Constructor with size and initial value
-     *
-     * @param n Size
-     * @param t Initial value
+     * @param value const reference of initial value
+     * @param alloc_ The given allocator
      */
     vector(size_type n, const_reference value, const allocator_type& alloc_ = allocator_type());
 
     /**
-     * @brief Constructor with range [first, last)
+     * @brief Constructs the container with n default-inserted instances of T. No copies are made.
      *
-     * @param first first ptr
-     * @param last last ptr
+     * @param n Size
+     * @param alloc_ The given allocator
+     */
+    explicit vector(size_type n, const allocator_type& alloc_ = allocator_type());
+
+    /**
+     * @brief Constructs the container with the contents of the range [first, last).
+     *
+     * @param first First iterator
+     * @param last Last iterator
+     * @param alloc_ The given allocator
      */
     template<typename InputIterator,
              typename has_input_iterator_category<InputIterator, value_type>::type = 0>
     vector(InputIterator first, InputIterator last, const allocator_type& alloc_ = allocator_type());
 
     /**
-     * @brief Constructor with initializer list
-     *
-     * @param il Initializer list
-     */
-    vector(std::initializer_list<T> il, const allocator_type& alloc_ = allocator_type());
-
-    /**
-     * @brief Copy constructor
+     * @brief Copy constructor. Constructs the container with the copy of the contents of rhs.
      *
      * @param rhs Right Hand Side
      */
     vector(const vector& rhs);
 
+    /**
+     * @brief Constructs the container with the copy of the contents of rhs, using alloc_ as the allocator.
+     *
+     * @param rhs Right Hand Side
+     * @param alloc_ The given allocator
+     */
     vector(const vector& rhs, const type_identity_t<allocator_type>& alloc_);
 
     /**
-     * @brief Move constructor
+     * @brief Move constructor. Constructs the container with the contents of rhs using move semantics.
      *
      * @param rhs Right Hand Side
      */
     vector(vector&& rhs) noexcept;
 
+    /**
+     * @brief Allocator-extended move constructor. Using alloc_ as the allocator for the new container,
+     * moving the contents from rhs.
+     *
+     * @param rhs Right Hand Side
+     * @param alloc_ The given allocator
+     */
     vector(vector&& rhs, const type_identity_t<allocator_type>& alloc_);
+
+    /**
+     * @brief Constructs the container with the contents of the initializer list.
+     *
+     * @param il Initializer list
+     * @param alloc_ The given allocator
+     */
+    vector(std::initializer_list<T> il, const allocator_type& alloc_ = allocator_type());
 
     vector& operator=(std::initializer_list<T> il);
 
