@@ -41,7 +41,19 @@ private:
     bool completed_;
 };
 
-//std::is_nothrow_constructible
+#if CPP_STD_VERSION >= 17
+template<typename... Tag>
+[[maybe_unused]] _exception_guard_exceptions(typename Tag::__allow_ctad...)
+        -> _exception_guard_exceptions<Tag...>;
+#endif
+
+template<typename Rollback>
+using _exception_guard = _exception_guard_exceptions<Rollback>;
+
+template<typename Rollback>
+_exception_guard<Rollback> _make_exception_guard(Rollback rollback) {
+    return _exception_guard<Rollback>(std::move(rollback));
+}
 
 }// namespace atp
 
