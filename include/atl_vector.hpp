@@ -223,7 +223,7 @@ public:
 private:
     template<typename InputIterator,
              typename has_input_iterator_category<InputIterator, value_type>::type = 0>
-    std::pair<pointer, pointer> Allocate(InputIterator first, InputIterator last);
+    std::pair<pointer, pointer> AllocateWithSentinel(InputIterator first, InputIterator last);
 
     void _free();
     void _reallocate();
@@ -502,7 +502,8 @@ vector<T, Allocator>::vector(vector&& rhs, const type_identity_t<allocator_type>
 template<typename T, typename Allocator>
 vector<T, Allocator>::vector(size_type n, const allocator_type& alloc_)
     : alloc(alloc_) {
-    // todo: add exception guard
+    // allocate with sentinel
+    auto guard = _make_exception_guard(_destroy_vector(*this));
     auto data = alloc_traits::allocate(alloc, n);
     start = data;
     firstFree = data;
@@ -510,12 +511,14 @@ vector<T, Allocator>::vector(size_type n, const allocator_type& alloc_)
     for (size_type i = 0; i < n; ++i) {
         alloc_traits::construct(alloc, firstFree++, T());
     }
+    guard.complete();
 }
 
 template<typename T, typename Allocator>
 vector<T, Allocator>::vector(size_type n, const_reference value, const allocator_type& alloc_)
     : alloc(alloc_) {
-    // todo: add exception guard
+    // allocate with sentinel
+    auto guard = _make_exception_guard(_destroy_vector(*this));
     auto data = alloc_traits::allocate(alloc, n);
     start = data;
     firstFree = data;
@@ -523,6 +526,8 @@ vector<T, Allocator>::vector(size_type n, const_reference value, const allocator
     for (size_type i = 0; i < n; ++i) {
         alloc_traits::construct(alloc, firstFree++, value);
     }
+
+    guard.complete();
 }
 
 template<typename T, typename Allocator>
@@ -530,7 +535,7 @@ template<typename InputIterator,
          typename has_input_iterator_category<InputIterator, T>::type>
 vector<T, Allocator>::vector(InputIterator first, InputIterator last, const allocator_type& alloc_)
     : alloc(alloc_) {
-    auto data = Allocate(first, last);
+    auto data = AllocateWithSentinel(first, last);
     start = data.first;
     firstFree = data.second;
     cap = data.second;
@@ -539,7 +544,7 @@ vector<T, Allocator>::vector(InputIterator first, InputIterator last, const allo
 template<typename T, typename Allocator>
 vector<T, Allocator>::vector(std::initializer_list<T> il, const allocator_type& alloc_)
     : alloc(alloc_) {
-    auto data = Allocate(il.begin(), il.end());
+    auto data = AllocateWithSentinel(il.begin(), il.end());
     start = data.first;
     firstFree = data.second;
     cap = data.second;
@@ -547,7 +552,7 @@ vector<T, Allocator>::vector(std::initializer_list<T> il, const allocator_type& 
 
 template<typename T, typename Allocator>
 vector<T, Allocator>& vector<T, Allocator>::operator=(std::initializer_list<T> il) {
-    auto data = Allocate(il.begin(), il.end());
+    auto data = AllocateWithSentinel(il.begin(), il.end());
     _free();
     start = data.first;
     firstFree = data.second;
@@ -558,7 +563,7 @@ vector<T, Allocator>& vector<T, Allocator>::operator=(std::initializer_list<T> i
 template<typename T, typename Allocator>
 vector<T, Allocator>::vector(const vector<T, Allocator>& rhs)
     : alloc(select_on_container_copy_construction(rhs._alloc())) {
-    auto data = Allocate(rhs.begin(), rhs.end());
+    auto data = AllocateWithSentinel(rhs.begin(), rhs.end());
     start = data.first;
     firstFree = data.second;
     cap = data.second;
@@ -567,7 +572,7 @@ vector<T, Allocator>::vector(const vector<T, Allocator>& rhs)
 template<typename T, typename Allocator>
 vector<T, Allocator>::vector(const vector<T, Allocator>& rhs, const type_identity_t<allocator_type>& alloc_)
     : alloc(alloc_) {
-    auto data = Allocate(rhs.begin(), rhs.end());
+    auto data = AllocateWithSentinel(rhs.begin(), rhs.end());
     start = data.first;
     firstFree = data.second;
     cap = data.second;
@@ -589,10 +594,14 @@ template<typename T, typename Allocator>
 template<typename InputIterator,
          typename has_input_iterator_category<InputIterator, T>::type>
 std::pair<typename vector<T, Allocator>::pointer, typename vector<T, Allocator>::pointer>
-vector<T, Allocator>::Allocate(InputIterator first, InputIterator last) {
+vector<T, Allocator>::AllocateWithSentinel(InputIterator first, InputIterator last) {
+    auto guard = _make_exception_guard(_destroy_vector(*this));
     auto n = std::distance(first, last);
-    auto dst = alloc_traits::allocate(alloc, n);
-    return {dst, std::uninitialized_copy(first, last, dst)};
+    auto begin = alloc_traits::allocate(alloc, n);
+    auto end = std::uninitialized_copy(first, last, begin);
+    guard.complete();
+
+    return {begin, end};
 }
 
 template<typename T, typename Allocator>
