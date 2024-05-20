@@ -43,7 +43,7 @@ private:
 
 #if CPP_STD_VERSION >= 17
 template<typename... Tag>
-[[maybe_unused]] _exception_guard_exceptions(typename Tag::__allow_ctad...)
+_exception_guard_exceptions(typename Tag::__allow_ctad...)
         -> _exception_guard_exceptions<Tag...>;
 #endif
 
