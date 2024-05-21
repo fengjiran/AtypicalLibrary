@@ -143,6 +143,8 @@ public:
              typename has_input_iterator_category<InputIterator, value_type>::type = 0>
     void assign(InputIterator first, InputIterator last);
 
+    void assign(std::initializer_list<T> il);
+
     /**
      * @brief Get the number of elements in the container
      *
@@ -491,6 +493,22 @@ void vector<T, Allocator>::assign(size_type n, const_reference value) {
 }
 
 template<typename T, typename Allocator>
+template<typename InputIterator,
+         typename has_input_iterator_category<InputIterator, T>::type>
+void vector<T, Allocator>::assign(InputIterator first, InputIterator last) {
+    _clear();
+    while (first != last) {
+        emplace_back(*first);
+        ++first;
+    }
+}
+
+template<typename T, typename Allocator>
+void vector<T, Allocator>::assign(std::initializer_list<T> il) {
+    assign(il.begin(), il.end());
+}
+
+template<typename T, typename Allocator>
 typename vector<T, Allocator>::const_reference
 vector<T, Allocator>::back() const noexcept {
     CHECK(!empty()) << "back() called on an empty vector";
@@ -708,17 +726,6 @@ template<typename InputIterator,
          typename has_input_iterator_category<InputIterator, T>::type>
 void vector<T, Allocator>::_construct_at_end(InputIterator first, InputIterator last) {
     firstFree = std::uninitialized_copy(first, last, firstFree);
-}
-
-template<typename T, typename Allocator>
-template<typename InputIterator,
-         typename has_input_iterator_category<InputIterator, T>::type>
-void vector<T, Allocator>::assign(InputIterator first, InputIterator last) {
-    _clear();
-    while (first != last) {
-        emplace_back(*first);
-        ++first;
-    }
 }
 
 template<typename T, typename Allocator>

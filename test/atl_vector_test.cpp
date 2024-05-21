@@ -102,7 +102,8 @@ TEST(ATLVectorTest, assignment) {
     characters.assign(extra.begin(), extra.end());
     print("characters = ", characters);
 
-    //    characters.assign({'C', '+', '+', '1', '1'});
+    characters.assign({'C', '+', '+', '1', '1'});
+    print("characters = ", characters);
 }
 
 TEST(ATLVectorTest, back) {
