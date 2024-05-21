@@ -53,6 +53,14 @@ public:
         : start(nullptr), cap(nullptr), firstFree(nullptr), alloc(alloc_) {}
 
     /**
+     * @brief Constructs the container with n default-inserted instances of T. No copies are made.
+     *
+     * @param n Size
+     * @param alloc_ The given allocator
+     */
+    explicit vector(size_type n, const allocator_type& alloc_ = allocator_type());
+
+    /**
      * @brief Constructs the container with n copies of elements with value and the given allocator.
      *
      * @param n Size
@@ -60,14 +68,6 @@ public:
      * @param alloc_ The given allocator
      */
     vector(size_type n, const_reference value, const allocator_type& alloc_ = allocator_type());
-
-    /**
-     * @brief Constructs the container with n default-inserted instances of T. No copies are made.
-     *
-     * @param n Size
-     * @param alloc_ The given allocator
-     */
-    explicit vector(size_type n, const allocator_type& alloc_ = allocator_type());
 
     /**
      * @brief Constructs the container with the contents of the range [first, last).
@@ -81,26 +81,26 @@ public:
     vector(InputIterator first, InputIterator last, const allocator_type& alloc_ = allocator_type());
 
     /**
-     * @brief Copy constructor. Constructs the container with the copy of the contents of rhs.
+     * @brief Copy constructor. Constructs the container with the copy of the contents of other.
      *
-     * @param rhs Right Hand Side
+     * @param other Other vector
      */
-    vector(const vector& rhs);
+    vector(const vector& other);
 
     /**
-     * @brief Constructs the container with the copy of the contents of rhs, using alloc_ as the allocator.
+     * @brief Constructs the container with the copy of the contents of other, using alloc_ as the allocator.
      *
-     * @param rhs Right Hand Side
+     * @param other Other vector
      * @param alloc_ The given allocator
      */
-    vector(const vector& rhs, const type_identity_t<allocator_type>& alloc_);
+    vector(const vector& other, const type_identity_t<allocator_type>& alloc_);
 
     /**
-     * @brief Move constructor. Constructs the container with the contents of rhs using move semantics.
+     * @brief Move constructor. Constructs the container with the contents of other using move semantics.
      *
-     * @param rhs Right Hand Side
+     * @param other Other vector
      */
-    vector(vector&& rhs) noexcept;
+    vector(vector&& other) noexcept;
 
     /**
      * @brief Allocator-extended move constructor. Using alloc_ as the allocator for the new container,
@@ -225,7 +225,40 @@ private:
              typename has_input_iterator_category<InputIterator, value_type>::type = 0>
     std::pair<pointer, pointer> AllocateWithSentinel(InputIterator first, InputIterator last);
 
-    void _free();
+    void _init_with_size(size_type n);
+
+    void _init_with_size(size_type n, const_reference value);
+
+    template<typename InputIterator,
+             typename has_input_iterator_category<InputIterator, value_type>::type = 0>
+    void _init_with_range(InputIterator first, InputIterator last);
+
+    /**
+     * @brief Allocate space for n objects.
+     *
+     * @param n The number of objects to be allocated.
+     *
+     * @Precondition: start == firstFree == cap == nullptr
+     * @Precondition: n > 0
+     *
+     * @Postcondition: capacity() >= n
+     * @Postcondition: size() == 0
+     */
+    void _allocate_with_size(size_type n);
+
+    void _construct_at_end(size_type n);
+
+    void _construct_at_end(size_type n, const_reference value);
+
+    template<typename InputIterator,
+             typename has_input_iterator_category<InputIterator, value_type>::type = 0>
+    void _construct_at_end(InputIterator first, InputIterator last);
+
+    template<typename... Args>
+    void _construct_one_at_end(Args&&... args) {
+        alloc_traits::construct(alloc, firstFree++, std::forward<Args>(args)...);
+    }
+
     void _reallocate();
     void _reallocate(size_type newCap);
     void _check_and_alloc() {
@@ -251,16 +284,14 @@ private:
     }
 
     void _clear() noexcept {
-        auto p = firstFree;
-        while (p != start) {
-            alloc_traits::destroy(_alloc(), to_address(--p));
+        while (firstFree != start) {
+            alloc_traits::destroy(_alloc(), to_address(--firstFree));
         }
-        firstFree = start;
     }
 
     void _copy_assign_alloc(const vector& c, true_type) {
         if (_alloc() != c._alloc()) {
-            _free();
+            _destroy_vector (*this)();
             start = nullptr;
             firstFree = nullptr;
             cap = nullptr;
@@ -271,7 +302,7 @@ private:
     void _copy_assign_alloc(const vector&, false_type) {}
 
     void _move_assign(vector& rhs, true_type) {
-        _free();
+        _destroy_vector (*this)();
         _alloc() = std::move(rhs._alloc());
 
         start = rhs.start;
@@ -320,34 +351,15 @@ private:
 };
 
 template<typename T, typename Allocator>
-vector<T, Allocator>::vector(size_type n, const_reference value, const allocator_type& alloc_)
+vector<T, Allocator>::vector(size_type n, const allocator_type& alloc_)
     : alloc(alloc_) {
-    // allocate with sentinel
-    auto guard = _make_exception_guard(_destroy_vector(*this));
-    auto data = alloc_traits::allocate(alloc, n);
-    start = data;
-    firstFree = data;
-    cap = start + n;
-    for (size_type i = 0; i < n; ++i) {
-        alloc_traits::construct(alloc, firstFree++, value);
-    }
-
-    guard.complete();
+    _init_with_size(n);
 }
 
 template<typename T, typename Allocator>
-vector<T, Allocator>::vector(size_type n, const allocator_type& alloc_)
+vector<T, Allocator>::vector(size_type n, const_reference value, const allocator_type& alloc_)
     : alloc(alloc_) {
-    // allocate with sentinel
-    auto guard = _make_exception_guard(_destroy_vector(*this));
-    auto data = alloc_traits::allocate(alloc, n);
-    start = data;
-    firstFree = data;
-    cap = start + n;
-    for (size_type i = 0; i < n; ++i) {
-        alloc_traits::construct(alloc, firstFree++, T());
-    }
-    guard.complete();
+    _init_with_size(n, value);
 }
 
 template<typename T, typename Allocator>
@@ -355,36 +367,27 @@ template<typename InputIterator,
          typename has_input_iterator_category<InputIterator, T>::type>
 vector<T, Allocator>::vector(InputIterator first, InputIterator last, const allocator_type& alloc_)
     : alloc(alloc_) {
-    auto data = AllocateWithSentinel(first, last);
-    start = data.first;
-    firstFree = data.second;
-    cap = data.second;
+    _init_with_range(first, last);
 }
 
 template<typename T, typename Allocator>
-vector<T, Allocator>::vector(const vector<T, Allocator>& rhs)
-    : alloc(select_on_container_copy_construction(rhs._alloc())) {
-    auto data = AllocateWithSentinel(rhs.begin(), rhs.end());
-    start = data.first;
-    firstFree = data.second;
-    cap = data.second;
+vector<T, Allocator>::vector(const vector<T, Allocator>& other)
+    : alloc(select_on_container_copy_construction(other._alloc())) {
+    _init_with_range(other.begin(), other.end());
 }
 
 template<typename T, typename Allocator>
-vector<T, Allocator>::vector(const vector<T, Allocator>& rhs, const type_identity_t<allocator_type>& alloc_)
+vector<T, Allocator>::vector(const vector<T, Allocator>& other, const type_identity_t<allocator_type>& alloc_)
     : alloc(alloc_) {
-    auto data = AllocateWithSentinel(rhs.begin(), rhs.end());
-    start = data.first;
-    firstFree = data.second;
-    cap = data.second;
+    _init_with_range(other.begin(), other.end());
 }
 
 template<typename T, typename Allocator>
-vector<T, Allocator>::vector(vector&& rhs) noexcept
-    : start(rhs.start), firstFree(rhs.firstFree), cap(rhs.cap), alloc(std::move(rhs.alloc)) {
-    rhs.start = nullptr;
-    rhs.firstFree = nullptr;
-    rhs.cap = nullptr;
+vector<T, Allocator>::vector(vector&& other) noexcept
+    : start(other.start), firstFree(other.firstFree), cap(other.cap), alloc(std::move(other.alloc)) {
+    other.start = nullptr;
+    other.firstFree = nullptr;
+    other.cap = nullptr;
 }
 
 template<typename T, typename Allocator>
@@ -410,10 +413,7 @@ vector<T, Allocator>::vector(vector&& rhs, const type_identity_t<allocator_type>
 template<typename T, typename Allocator>
 vector<T, Allocator>::vector(std::initializer_list<T> il, const allocator_type& alloc_)
     : alloc(alloc_) {
-    auto data = AllocateWithSentinel(il.begin(), il.end());
-    start = data.first;
-    firstFree = data.second;
-    cap = data.second;
+    _init_with_range(il.begin(), il.end());
 }
 
 template<typename T, typename Allocator>
@@ -526,7 +526,7 @@ void vector<T, Allocator>::reserve(size_type n) {
 
 template<typename T, typename Allocator>
 vector<T, Allocator>::~vector() noexcept {
-    _free();
+    _destroy_vector (*this)();
 }
 
 template<typename T, typename Allocator>
@@ -539,7 +539,7 @@ void vector<T, Allocator>::_reallocate(size_type newCap) {
         ++src;
         ++dst;
     }
-    _free();
+    _destroy_vector (*this)();
     start = data;
     firstFree = dst;
     cap = start + newCap;
@@ -556,7 +556,7 @@ void vector<T, Allocator>::_reallocate() {
         ++src;
         ++dst;
     }
-    _free();
+    _destroy_vector (*this)();
     start = data;
     firstFree = dst;
     cap = start + newCap;
@@ -573,8 +573,9 @@ vector<T, Allocator>& vector<T, Allocator>::operator=(vector&& rhs) noexcept {
 
 template<typename T, typename Allocator>
 vector<T, Allocator>& vector<T, Allocator>::operator=(std::initializer_list<T> il) {
+
     auto data = AllocateWithSentinel(il.begin(), il.end());
-    _free();
+    _destroy_vector (*this)();
     start = data.first;
     firstFree = data.second;
     cap = data.second;
@@ -609,6 +610,65 @@ vector<T, Allocator>::AllocateWithSentinel(InputIterator first, InputIterator la
 }
 
 template<typename T, typename Allocator>
+void vector<T, Allocator>::_init_with_size(size_type n) {
+    auto guard = _make_exception_guard(_destroy_vector(*this));
+    if (n > 0) {
+        _allocate_with_size(n);
+        _construct_at_end(n);
+    }
+    guard.complete();
+}
+
+template<typename T, typename Allocator>
+void vector<T, Allocator>::_init_with_size(size_type n, const_reference value) {
+    auto guard = _make_exception_guard(_destroy_vector(*this));
+    if (n > 0) {
+        _allocate_with_size(n);
+        _construct_at_end(n, value);
+    }
+    guard.complete();
+}
+
+template<typename T, typename Allocator>
+template<typename InputIterator,
+         typename has_input_iterator_category<InputIterator, T>::type>
+void vector<T, Allocator>::_init_with_range(InputIterator first, InputIterator last) {
+    auto guard = _make_exception_guard(_destroy_vector(*this));
+    auto n = std::distance(first, last);
+    _allocate_with_size(n);
+    _construct_at_end(first, last);
+    guard.complete();
+}
+
+template<typename T, typename Allocator>
+void vector<T, Allocator>::_allocate_with_size(size_type n) {
+    start = alloc_traits::allocate(alloc, n);
+    firstFree = start;
+    cap = start + n;
+}
+
+template<typename T, typename Allocator>
+void vector<T, Allocator>::_construct_at_end(size_type n) {
+    for (size_type i = 0; i < n; ++i) {
+        alloc_traits::construct(alloc, firstFree++);
+    }
+}
+
+template<typename T, typename Allocator>
+void vector<T, Allocator>::_construct_at_end(size_type n, const_reference value) {
+    for (size_type i = 0; i < n; ++i) {
+        alloc_traits::construct(alloc, firstFree++, value);
+    }
+}
+
+template<typename T, typename Allocator>
+template<typename InputIterator,
+         typename has_input_iterator_category<InputIterator, T>::type>
+void vector<T, Allocator>::_construct_at_end(InputIterator first, InputIterator last) {
+    firstFree = std::uninitialized_copy(first, last, firstFree);
+}
+
+template<typename T, typename Allocator>
 template<typename InputIterator,
          typename has_input_iterator_category<InputIterator, T>::type>
 void vector<T, Allocator>::assign(InputIterator first, InputIterator last) {
@@ -616,17 +676,6 @@ void vector<T, Allocator>::assign(InputIterator first, InputIterator last) {
     while (first != last) {
         emplace_back(*first);
         ++first;
-    }
-}
-
-template<typename T, typename Allocator>
-void vector<T, Allocator>::_free() {
-    if (start) {
-        auto p = firstFree;
-        while (p != start) {
-            alloc_traits::destroy(_alloc(), to_address(--p));
-        }
-        alloc_traits::deallocate(_alloc(), start, capacity());
     }
 }
 
