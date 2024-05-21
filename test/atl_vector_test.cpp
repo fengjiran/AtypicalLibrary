@@ -93,6 +93,16 @@ TEST(ATLVectorTest, assignment) {
     z = w;
     print("w = ", w);
     print("z = ", z);
+
+    atp::vector<char> characters;
+    characters.assign(5, 'a');
+    print("characters = ", characters);
+
+    const std::string extra(6, 'b');
+    characters.assign(extra.begin(), extra.end());
+    print("characters = ", characters);
+
+    //    characters.assign({'C', '+', '+', '1', '1'});
 }
 
 TEST(ATLVectorTest, back) {

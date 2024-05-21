@@ -137,12 +137,24 @@ public:
      */
     vector& operator=(vector&& rhs) noexcept;
 
+    void assign(size_type n, const_reference value);
+
+    template<typename InputIterator,
+             typename has_input_iterator_category<InputIterator, value_type>::type = 0>
+    void assign(InputIterator first, InputIterator last);
+
     /**
      * @brief Get the number of elements in the container
      *
      * @return The number of elements in the container.
      */
     size_type size() const { return static_cast<size_type>(firstFree - start); }
+
+    size_type max_size() const noexcept {
+        return std::min<size_type>(
+                alloc_traits::max_size(_alloc()),
+                std::numeric_limits<size_type>::max());
+    }
 
     /**
      * @brief Get the number of elements that the container has currently allocated space for
@@ -214,10 +226,6 @@ public:
         _clear();
     }
 
-    template<typename InputIterator,
-             typename has_input_iterator_category<InputIterator, value_type>::type = 0>
-    void assign(InputIterator first, InputIterator last);
-
     ~vector() noexcept;
 
 private:
@@ -259,6 +267,14 @@ private:
         alloc_traits::construct(alloc, firstFree++, std::forward<Args>(args)...);
     }
 
+    void _destruct_at_end(pointer new_last) noexcept {
+        pointer p = firstFree;
+        while (p != new_last) {
+            alloc_traits::destroy(_alloc(), to_address(--p));
+        }
+        firstFree = new_last;
+    }
+
     void _reallocate();
     void _reallocate(size_type newCap);
     void _check_and_alloc() {
@@ -284,9 +300,7 @@ private:
     }
 
     void _clear() noexcept {
-        while (firstFree != start) {
-            alloc_traits::destroy(_alloc(), to_address(--firstFree));
-        }
+        _destruct_at_end(start);
     }
 
     void _copy_assign_alloc(const vector& c, true_type) {
@@ -326,6 +340,18 @@ private:
         } else {
             _move_assign(rhs, true_type());
         }
+    }
+
+    size_type _recommend_size(size_type new_size) const {
+        const size_type ms = max_size();
+        if (new_size > ms) {
+            throw std::bad_array_new_length();
+        }
+
+        if (ms / 2 <= capacity()) {
+            return ms;
+        }
+        return std::max<size_type>(2 * capacity(), new_size);
     }
 
     class _destroy_vector {
@@ -445,6 +471,23 @@ vector<T, Allocator>& vector<T, Allocator>::operator=(vector&& rhs) noexcept {
                  integral_constant<bool,
                                    propagate_on_container_move_assignment<Allocator>::type::value>());
     return *this;
+}
+
+template<typename T, typename Allocator>
+void vector<T, Allocator>::assign(size_type n, const_reference value) {
+    if (n <= capacity()) {
+        size_type s = size();
+        std::fill_n(start, std::min(s, n), value);
+        if (n > s) {
+            _construct_at_end(n - s, value);
+        } else {
+            _destruct_at_end(start + n);
+        }
+    } else {
+        _destroy_vector (*this)();
+        _allocate_with_size(_recommend_size(n));
+        _construct_at_end(n, value);
+    }
 }
 
 template<typename T, typename Allocator>
