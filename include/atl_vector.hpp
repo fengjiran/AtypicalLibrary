@@ -446,12 +446,7 @@ vector<T, Allocator>::vector(std::initializer_list<T> il, const allocator_type& 
 
 template<typename T, typename Allocator>
 vector<T, Allocator>& vector<T, Allocator>::operator=(std::initializer_list<T> il) {
-
-    auto data = AllocateWithSentinel(il.begin(), il.end());
-    _destroy_vector (*this)();
-    start = data.first;
-    firstFree = data.second;
-    cap = data.second;
+    assign(il.begin(), il.end());
     return *this;
 }
 
