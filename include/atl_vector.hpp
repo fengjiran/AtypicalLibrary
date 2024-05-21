@@ -104,12 +104,12 @@ public:
 
     /**
      * @brief Allocator-extended move constructor. Using alloc_ as the allocator for the new container,
-     * moving the contents from rhs.
+     * moving the contents from other vector.
      *
-     * @param rhs Right Hand Side
+     * @param other Other vector
      * @param alloc_ The given allocator
      */
-    vector(vector&& rhs, const type_identity_t<allocator_type>& alloc_);
+    vector(vector&& other, const type_identity_t<allocator_type>& alloc_);
 
     /**
      * @brief Constructs the container with the contents of the initializer list.
@@ -391,29 +391,60 @@ vector<T, Allocator>::vector(vector&& other) noexcept
 }
 
 template<typename T, typename Allocator>
-vector<T, Allocator>::vector(vector&& rhs, const type_identity_t<allocator_type>& alloc_)
+vector<T, Allocator>::vector(vector&& other, const type_identity_t<allocator_type>& alloc_)
     : alloc(alloc_) {
-    if (rhs._alloc() == alloc_) {
-        start = rhs.start;
-        firstFree = rhs.firstFree;
-        cap = rhs.cap;
+    if (other._alloc() == alloc_) {
+        start = other.start;
+        firstFree = other.firstFree;
+        cap = other.cap;
     } else {
         auto guard = _make_exception_guard(_destroy_vector(*this));
-        for (auto iter = rhs.begin(); iter != rhs.end(); ++iter) {
+        for (auto iter = other.begin(); iter != other.end(); ++iter) {
             emplace_back(std::move(*iter));
         }
         guard.complete();
     }
 
-    rhs.start = nullptr;
-    rhs.firstFree = nullptr;
-    rhs.cap = nullptr;
+    other.start = nullptr;
+    other.firstFree = nullptr;
+    other.cap = nullptr;
 }
 
 template<typename T, typename Allocator>
 vector<T, Allocator>::vector(std::initializer_list<T> il, const allocator_type& alloc_)
     : alloc(alloc_) {
     _init_with_range(il.begin(), il.end());
+}
+
+template<typename T, typename Allocator>
+vector<T, Allocator>& vector<T, Allocator>::operator=(std::initializer_list<T> il) {
+
+    auto data = AllocateWithSentinel(il.begin(), il.end());
+    _destroy_vector (*this)();
+    start = data.first;
+    firstFree = data.second;
+    cap = data.second;
+    return *this;
+}
+
+template<typename T, typename Allocator>
+vector<T, Allocator>& vector<T, Allocator>::operator=(const vector<T, Allocator>& rhs) {
+    if (this != std::addressof(rhs)) {
+        _copy_assign_alloc(
+                rhs,
+                integral_constant<bool,
+                                  propagate_on_container_copy_assignment<Allocator>::type::value>());
+        assign(rhs.begin(), rhs.end());
+    }
+    return *this;
+}
+
+template<typename T, typename Allocator>
+vector<T, Allocator>& vector<T, Allocator>::operator=(vector&& rhs) noexcept {
+    _move_assign(rhs,
+                 integral_constant<bool,
+                                   propagate_on_container_move_assignment<Allocator>::type::value>());
+    return *this;
 }
 
 template<typename T, typename Allocator>
@@ -562,38 +593,6 @@ void vector<T, Allocator>::_reallocate() {
     cap = start + newCap;
 }
 
-template<typename T, typename Allocator>
-vector<T, Allocator>& vector<T, Allocator>::operator=(vector&& rhs) noexcept {
-    _move_assign(rhs,
-                 integral_constant<bool,
-                                   propagate_on_container_move_assignment<Allocator>::type::value>());
-    return *this;
-}
-
-
-template<typename T, typename Allocator>
-vector<T, Allocator>& vector<T, Allocator>::operator=(std::initializer_list<T> il) {
-
-    auto data = AllocateWithSentinel(il.begin(), il.end());
-    _destroy_vector (*this)();
-    start = data.first;
-    firstFree = data.second;
-    cap = data.second;
-    return *this;
-}
-
-
-template<typename T, typename Allocator>
-vector<T, Allocator>& vector<T, Allocator>::operator=(const vector<T, Allocator>& rhs) {
-    if (this != std::addressof(rhs)) {
-        _copy_assign_alloc(
-                rhs,
-                integral_constant<bool,
-                                  propagate_on_container_copy_assignment<Allocator>::type::value>());
-        assign(rhs.begin(), rhs.end());
-    }
-    return *this;
-}
 
 template<typename T, typename Allocator>
 template<typename InputIterator,
