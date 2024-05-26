@@ -416,6 +416,33 @@ public:
     }
 
     /**
+     * @brief Attempt to preallocate enough memory for specified number of elements.
+     * If @a n is greater than the current @c capacity(),
+     * new storage is allocated, otherwise the function does nothing.
+     *
+     * @param n Number of elements required.
+     * @throw std::length_error If @a n exceeds @c max_size().
+     *
+     * This function attempts to reserve enough memory for the
+     * vector to hold the specified number of elements.  If the
+     * number requested is more than max_size(), length_error is
+     * thrown.
+     * <p>
+     * If @a n is greater than @c capacity(), all iterators, including the @c end() iterator,
+     * and all references to the elements are invalidated. Otherwise, no iterators or references are invalidated.
+     * <p>
+     * After a call to @c reserve(), insertions will not trigger reallocation unless the insertion
+     * would make the size of the vector greater than the value of @c capacity().
+     * <p>
+     * The advantage of this function is that if optimal code is a
+     * necessity and the user can determine the number of elements
+     * that will be required, the user can reserve the memory in
+     * advance, and thus prevent a possible reallocation of memory
+     * and copying of vector data.
+     */
+    void reserve(size_type n);
+
+    /**
      * @brief Get the number of elements that the container has currently allocated space for
      *
      * @return Capacity of the currently allocated storage.
@@ -423,7 +450,6 @@ public:
     size_type capacity() const { return static_cast<size_type>(cap - start); }
 
 
-    void reserve(size_type n);
     void resize(size_type n);
     void resize(size_type n, const_reference t);
     void push_back(const_reference t);
@@ -770,6 +796,17 @@ vector<T, Allocator>::back() const noexcept {
 }
 
 template<typename T, typename Allocator>
+void vector<T, Allocator>::reserve(size_type n) {
+    if (n > max_size()) {
+        throw std::length_error("vector::reserve");
+    }
+
+    if (n > capacity()) {
+        _reallocate(n);
+    }
+}
+
+template<typename T, typename Allocator>
 template<typename... Args>
 void vector<T, Allocator>::emplace_back(Args&&... args) {
     _check_and_alloc();
@@ -807,13 +844,6 @@ void vector<T, Allocator>::resize(size_type n, const_reference t) {
         while (size() < n) {
             push_back(t);
         }
-    }
-}
-
-template<typename T, typename Allocator>
-void vector<T, Allocator>::reserve(size_type n) {
-    if (n > capacity()) {
-        _reallocate(n);
     }
 }
 
