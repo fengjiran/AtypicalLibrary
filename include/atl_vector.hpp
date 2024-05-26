@@ -443,11 +443,23 @@ public:
     void reserve(size_type n);
 
     /**
-     * @brief Get the number of elements that the container has currently allocated space for
+     * @brief Returns the number of elements that the container has currently allocated space for.
      *
      * @return Capacity of the currently allocated storage.
      */
     size_type capacity() const { return static_cast<size_type>(cap - start); }
+
+    /**
+     * @brief Requests the removal of unused capacity.
+     *
+     * It is a non-binding request to reduce @c capacity() to @c size().
+     * It depends on the implementation whether the request is fulfilled.
+     * <p>
+     * If reallocation occurs, all iterators (including the @c end() iterator)
+     * and all references to the elements are invalidated.
+     * If no reallocation occurs, no iterators or references are invalidated.
+     */
+    void shrink_to_fit() noexcept;
 
 
     void resize(size_type n);
