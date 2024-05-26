@@ -327,16 +327,92 @@ public:
     const_iterator cend() const noexcept { return end(); }
 
     /**
-     * @brief Get the number of elements in the container
+     * @brief Returns a reverse iterator to the first element of the reversed vector.
+     * It corresponds to the last element of the non-reversed vector.
+     * If the vector is empty, the returned iterator is equal to rend().
+     *
+     * @return Reverse iterator to the first element.
+     *
+     * @note The underlying iterator of the returned reverse iterator is the end iterator.
+     * Hence the returned iterator is invalidated if and when the end iterator is invalidated.
+     */
+    reverse_iterator rbegin() noexcept { return reverse_iterator(end()); }
+
+    /**
+     * @brief Returns a read-only reverse iterator to the first element of the reversed vector.
+     * It corresponds to the last element of the non-reversed vector.
+     * If the vector is empty, the returned iterator is equal to rend().
+     *
+     * @return Read-only reverse iterator to the first element.
+     */
+    const_reverse_iterator rbegin() const noexcept { return const_reverse_iterator(end()); }
+
+    /**
+     * @brief Returns a read-only reverse iterator to the first element of the reversed vector.
+     * It corresponds to the last element of the non-reversed vector.
+     * If the vector is empty, the returned iterator is equal to rend().
+     *
+     * @return Read-only reverse iterator to the first element.
+     */
+    const_reverse_iterator crbegin() const noexcept { return rbegin(); }
+
+    /**
+     * @brief Returns a reverse iterator to the element following the last element of the reversed vector.
+     * It corresponds to the element preceding the first element of the non-reversed vector.
+     * This element acts as a placeholder, attempting to access it results in undefined behavior.
+     *
+     * @return Reverse iterator to the element following the last element.
+     */
+    reverse_iterator rend() noexcept { return reverse_iterator(begin()); }
+
+    /**
+     * @brief Returns a read-only reverse iterator to the element following the last element of the reversed vector.
+     * It corresponds to the element preceding the first element of the non-reversed vector.
+     * This element acts as a placeholder, attempting to access it results in undefined behavior.
+     *
+     * @return Read-only reverse iterator to the element following the last element.
+     */
+    const_reverse_iterator rend() const noexcept { return const_reverse_iterator(begin()); }
+
+    /**
+     * @brief Returns a read-only reverse iterator to the element following the last element of the reversed vector.
+     * It corresponds to the element preceding the first element of the non-reversed vector.
+     * This element acts as a placeholder, attempting to access it results in undefined behavior.
+     *
+     * @return Read-only reverse iterator to the element following the last element.
+     */
+    const_reverse_iterator crend() const noexcept { return rend(); }
+
+    /**
+     * @brief Checks if the container has no elements, i.e. whether begin() == end().
+     *
+     * @return true if the container is empty, false otherwise.
+     */
+    bool empty() const noexcept { return firstFree == start; }
+
+    /**
+     * @brief Returns the number of elements in the container,
+     * i.e. std::distance(begin(), end()).
      *
      * @return The number of elements in the container.
      */
-    size_type size() const { return static_cast<size_type>(firstFree - start); }
+    size_type size() const noexcept { return static_cast<size_type>(firstFree - start); }
 
+    /**
+     * @brief Returns the maximum number of elements the container is able to hold due to system or
+     * library implementation limitations, i.e. std::distance(begin(), end()) for the largest container.
+     *
+     * @return Maximum number of elements.
+     *
+     * @note This value typically reflects the theoretical limit on the size of the container,
+     * at most std::numeric_limits<difference_type>::max().
+     * At runtime, the size of the container may be limited to a value smaller than max_size()
+     * by the amount of RAM available.
+     */
     size_type max_size() const noexcept {
         return std::min<size_type>(
                 alloc_traits::max_size(_alloc()),
-                std::numeric_limits<size_type>::max());
+                std::numeric_limits<difference_type>::max());
     }
 
     /**
@@ -346,8 +422,6 @@ public:
      */
     size_type capacity() const { return static_cast<size_type>(cap - start); }
 
-
-    CPP_NODISCARD bool empty() const { return firstFree == start; }
 
     void reserve(size_type n);
     void resize(size_type n);
