@@ -166,9 +166,165 @@ public:
     /**
      * @brief Replaces the contents with the elements from the initializer list.
      *
-     * @param il The initilizer list.
+     * @param il The initializer list.
      */
     void assign(std::initializer_list<T> il);
+
+    /**
+     * @brief Returns the allocator associated with the container.
+     *
+     * @return The associated allocator.
+     */
+    allocator_type get_allocator() const noexcept {
+        return _alloc();
+    }
+
+    /**
+     * @brief Returns a reference to the element at specified location pos, with bounds checking.
+     * If pos is not within the range of the container, an exception of type std::out_of_range is thrown.
+     *
+     * @param pos Position of the element to return.
+     * @return Reference to the requested element.
+     */
+    reference at(size_type pos);
+
+    /**
+     * @brief Returns a reference to the element at specified location pos, with bounds checking.
+     * If pos is not within the range of the container, an exception of type std::out_of_range is thrown.
+     *
+     * @param pos Position of the element to return.
+     * @return Const reference to the requested element.
+     */
+    const_reference at(size_type pos) const;
+
+    /**
+     * @brief Returns a reference to the element at specified location pos.
+     * No bounds checking is performed.
+     *
+     * @param pos position of the element to return.
+     * @return Reference to the requested element.
+     */
+    reference operator[](size_type pos) noexcept;
+
+    /**
+     * @brief Returns the read only reference to the element at specified location pos.
+     * No bounds checking is performed.
+     *
+     * @param pos position of the element to return.
+     * @return Read-only reference to the requested element.
+     */
+    const_reference operator[](size_type pos) const noexcept;
+
+    /**
+     * @brief Returns a reference to the first element in the container.
+     * Calling front on an empty container causes undefined behavior.
+     *
+     * @return Reference to the first element.
+     */
+    reference front() noexcept;
+
+
+    /**
+     * @brief Returns the read-only reference to the first element in the container.
+     * Calling front on an empty container causes undefined behavior.
+     *
+     * @return Read-only reference to the first element.
+     */
+    const_reference front() const noexcept;
+
+    /**
+     * @brief Get the reference to the last element in the container.
+     * Calling back on an empty container causes undefined behavior.
+     *
+     * @return Reference to the last element.
+     */
+    reference back() noexcept;
+
+    /**
+     * @brief Get the read-only reference to the last element in the container.
+     * Calling back on an empty container causes undefined behavior.
+     *
+     * @return Read-only reference to the last element.
+     */
+    const_reference back() const noexcept;
+
+    /**
+     * @brief Returns pointer to the underlying array serving as element storage. \n
+     * The pointer is such that range [data(), data() + size()) is always a valid range,
+     * even if the container is empty (data() is not dereferenceable in that case).
+     *
+     * @return Pointer to the underlying element storage. For non-empty containers,
+     * the returned pointer compares equal to the address of the first element.
+     *
+     * @note If size() is 0, data() may or may not return a null pointer.
+     */
+    pointer data() noexcept { return to_address(start); }
+
+    /**
+     * @brief Returns const pointer to the underlying array serving as element storage. \n
+     * The pointer is such that range [data(), data() + size()) is always a valid range,
+     * even if the container is empty (data() is not dereferenceable in that case).
+     *
+     * @return Pointer to the underlying element storage. For non-empty containers,
+     * the returned pointer compares equal to the address of the first element.
+     *
+     * @note If size() is 0, data() may or may not return a null pointer.
+     */
+    const_pointer data() const noexcept { return to_address(start); }
+
+    /**
+     * @brief Get an iterator to the first element of the vector.
+     * If the vector is empty, the returned iterator will be equal to end().
+     *
+     * @return Iterator to the first element.
+     *
+     * @complexity Constant
+     */
+    iterator begin() noexcept { return _make_iter(start); }
+
+    /**
+     * @brief Get an read-only iterator to the first element of the vector.
+     * If the vector is empty, the returned iterator will be equal to end().
+     *
+     * @return Read-only iterator to the first element.
+     *
+     * @complexity Constant
+     */
+    const_iterator begin() const noexcept { return _make_iter(start); }
+
+    /**
+     * @brief Get an read-only iterator to the first element of the vector.
+     * If the vector is empty, the returned iterator will be equal to end().
+     *
+     * @return Read-only iterator to the first element.
+     *
+     * @complexity Constant
+     */
+    const_iterator cbegin() const noexcept { return begin(); }
+
+    /**
+     * @brief Returns an iterator to the element following the last element of the vector.\n
+     * This element acts as a placeholder, attempting to access it results in undefined behavior.
+     *
+     * @return Iterator to the element following the last element.
+     */
+    iterator end() noexcept { return _make_iter(firstFree); }
+
+    /**
+     * @brief Returns an read-only iterator to the element following the last element of the vector.\n
+     * This element acts as a placeholder, attempting to access it results in undefined behavior.
+     *
+     * @return Read-only iterator to the element following the last element.
+     */
+    const_iterator end() const noexcept { return _make_iter(firstFree); }
+
+    /**
+     * @brief Returns an read-only iterator to the element following the last element of the vector.\n
+     * This element acts as a placeholder, attempting to access it results in undefined behavior.
+     *
+     * @return Read-only iterator to the element following the last element.
+     */
+    const_iterator cend() const noexcept { return end(); }
 
     /**
      * @brief Get the number of elements in the container
@@ -190,64 +346,18 @@ public:
      */
     size_type capacity() const { return static_cast<size_type>(cap - start); }
 
-    /**
-     * @brief Get the first element iterator of the vector
-     *
-     * @return The pointer of the first element
-     */
-    iterator begin() noexcept { return _make_iter(start); }
-
-    const_iterator begin() const noexcept { return _make_iter(start); }
-
-    /**
-     * @brief Get the ptr to the element following the last element of the vector
-     *
-     * @return The ptr to the element following the last element of the vector
-     */
-    iterator end() noexcept { return _make_iter(firstFree); }
-
-    const_iterator end() const noexcept { return _make_iter(firstFree); }
 
     CPP_NODISCARD bool empty() const { return firstFree == start; }
 
     void reserve(size_type n);
     void resize(size_type n);
     void resize(size_type n, const_reference t);
-    pointer data() noexcept { return to_address(start); }
-    const_pointer data() const noexcept { return to_address(start); }
-
     void push_back(const_reference t);
     void push_back(value_type&& t);
 
     template<typename... Args>
     void emplace_back(Args&&... args);
 
-    reference operator[](size_type pos) noexcept;
-    const_reference operator[](size_type pos) const noexcept;
-
-    reference at(size_type pos);
-    const_reference at(size_type pos) const;
-
-    reference front() noexcept;
-    const_reference front() const noexcept;
-
-    /**
-     * @brief Get the reference to the last element in the container.
-     *
-     * @return Reference to the last element.
-     */
-    reference back() noexcept;
-
-    /**
-     * @brief Get the reference to the last element in the container.
-     *
-     * @return Reference to the last element.
-     */
-    const_reference back() const noexcept;
-
-    allocator_type get_allocator() const noexcept {
-        return _alloc();
-    }
 
     void clear() noexcept {
         _clear();
@@ -525,32 +635,23 @@ void vector<T, Allocator>::assign(std::initializer_list<T> il) {
 }
 
 template<typename T, typename Allocator>
-typename vector<T, Allocator>::const_reference
-vector<T, Allocator>::back() const noexcept {
-    CHECK(!empty()) << "back() called on an empty vector";
-    return *(firstFree - 1);
-}
-
-template<typename T, typename Allocator>
 typename vector<T, Allocator>::reference
-vector<T, Allocator>::back() noexcept {
-    CHECK(!empty()) << "back() called on an empty vector";
-    return *(firstFree - 1);
+vector<T, Allocator>::at(size_type pos) {
+    if (pos >= size()) {
+        throw std::out_of_range("index out of bounds");
+    }
+    return (*this)[pos];
 }
 
 template<typename T, typename Allocator>
 typename vector<T, Allocator>::const_reference
-vector<T, Allocator>::front() const noexcept {
-    CHECK(!empty()) << "front() called on an empty vector";
-    return *start;
+vector<T, Allocator>::at(size_type pos) const {
+    if (pos >= size()) {
+        throw std::out_of_range("index out of bounds");
+    }
+    return (*this)[pos];
 }
 
-template<typename T, typename Allocator>
-typename vector<T, Allocator>::reference
-vector<T, Allocator>::front() noexcept {
-    CHECK(!empty()) << "front() called on an empty vector";
-    return *start;
-}
 
 template<typename T, typename Allocator>
 typename vector<T, Allocator>::const_reference
@@ -568,20 +669,30 @@ vector<T, Allocator>::operator[](size_type pos) noexcept {
 
 template<typename T, typename Allocator>
 typename vector<T, Allocator>::reference
-vector<T, Allocator>::at(size_type pos) {
-    if (pos >= size()) {
-        throw std::out_of_range("index out of bounds");
-    }
-    return (*this)[pos];
+vector<T, Allocator>::front() noexcept {
+    CHECK(!empty()) << "front() called on an empty vector";
+    return *start;
 }
 
 template<typename T, typename Allocator>
 typename vector<T, Allocator>::const_reference
-vector<T, Allocator>::at(size_type pos) const {
-    if (pos >= size()) {
-        throw std::out_of_range("index out of bounds");
-    }
-    return (*this)[pos];
+vector<T, Allocator>::front() const noexcept {
+    CHECK(!empty()) << "front() called on an empty vector";
+    return *start;
+}
+
+template<typename T, typename Allocator>
+typename vector<T, Allocator>::reference
+vector<T, Allocator>::back() noexcept {
+    CHECK(!empty()) << "back() called on an empty vector";
+    return *(firstFree - 1);
+}
+
+template<typename T, typename Allocator>
+typename vector<T, Allocator>::const_reference
+vector<T, Allocator>::back() const noexcept {
+    CHECK(!empty()) << "back() called on an empty vector";
+    return *(firstFree - 1);
 }
 
 template<typename T, typename Allocator>

@@ -7,6 +7,16 @@
 #include <list>
 #include <vector>
 
+TEST(ATLVectorTest, general) {
+    atp::vector<int> v{8, 4, 5, 9};
+    v.push_back(6);
+    v.push_back(9);
+    v[2] = -1;
+
+    atp::vector<int> ans{8, 4, -1, 9, 6, 9};
+    ASSERT_TRUE(v == ans);
+}
+
 TEST(ATLVectorTest, ctor) {
     atp::vector<std::string> words1{"the", "yogurt", "is", "also", "cursed"};
     std::cout << "1: " << words1;
@@ -53,16 +63,6 @@ TEST(ATLVectorTest, ctor) {
     ASSERT_TRUE(bb.empty());
 }
 
-TEST(ATLVectorTest, general) {
-    atp::vector<int> v{8, 4, 5, 9};
-    v.push_back(6);
-    v.push_back(9);
-    v[2] = -1;
-
-    atp::vector<int> ans{8, 4, -1, 9, 6, 9};
-    ASSERT_TRUE(v == ans);
-}
-
 TEST(ATLVectorTest, assignment) {
     auto print = [](auto const comment, auto const& container) {
         auto size = std::size(container);
@@ -105,6 +105,31 @@ TEST(ATLVectorTest, assignment) {
 
     characters.assign({'C', '+', '+', '1', '1'});
     print("characters = ", characters);
+}
+
+TEST(ATLVectorTest, at) {
+    atp::vector<int> data = {1, 2, 4, 5, 5, 6};
+
+    // Set element 1
+    data.at(1) = 88;
+
+    // Read element 2
+    std::cout << "Element at index 2 has value " << data.at(2) << '\n';
+
+    std::cout << "data size = " << data.size() << '\n';
+
+    try {
+        // Set element 6, where the index is determined at runtime
+        data.at(6) = 666;
+    } catch (std::out_of_range const& exc) {
+        std::cout << exc.what() << '\n';
+    }
+
+    // Print final values
+    std::cout << "data:";
+    for (int elem: data)
+        std::cout << ' ' << elem;
+    std::cout << '\n';
 }
 
 TEST(ATLVectorTest, back) {
