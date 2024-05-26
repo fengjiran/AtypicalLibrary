@@ -231,10 +231,6 @@ public:
     ~vector() noexcept;
 
 private:
-    template<typename InputIterator,
-             typename has_input_iterator_category<InputIterator, value_type>::type = 0>
-    std::pair<pointer, pointer> AllocateWithSentinel(InputIterator first, InputIterator last);
-
     void _init_with_size(size_type n);
 
     void _init_with_size(size_type n, const_reference value);
@@ -312,14 +308,14 @@ private:
             firstFree = nullptr;
             cap = nullptr;
         }
-        _alloc() = c._alloc();
+        alloc = c._alloc();
     }
 
     void _copy_assign_alloc(const vector&, false_type) {}
 
     void _move_assign(vector& rhs, true_type) {
         _destroy_vector (*this)();
-        _alloc() = std::move(rhs._alloc());
+        alloc = std::move(rhs._alloc());
 
         start = rhs.start;
         firstFree = rhs.firstFree;
@@ -647,21 +643,6 @@ void vector<T, Allocator>::_reallocate() {
     start = data;
     firstFree = dst;
     cap = start + newCap;
-}
-
-
-template<typename T, typename Allocator>
-template<typename InputIterator,
-         typename has_input_iterator_category<InputIterator, T>::type>
-std::pair<typename vector<T, Allocator>::pointer, typename vector<T, Allocator>::pointer>
-vector<T, Allocator>::AllocateWithSentinel(InputIterator first, InputIterator last) {
-    auto guard = _make_exception_guard(_destroy_vector(*this));
-    auto n = std::distance(first, last);
-    auto begin = alloc_traits::allocate(alloc, n);
-    auto end = std::uninitialized_copy(first, last, begin);
-    guard.complete();
-
-    return {begin, end};
 }
 
 template<typename T, typename Allocator>
