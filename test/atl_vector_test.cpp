@@ -5,6 +5,7 @@
 #include "atl_vector.hpp"
 #include "gtest/gtest.h"
 #include <list>
+#include <vector>
 
 TEST(ATLVectorTest, ctor) {
     atp::vector<std::string> words1{"the", "yogurt", "is", "also", "cursed"};

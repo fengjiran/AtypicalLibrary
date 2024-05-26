@@ -70,7 +70,7 @@ public:
     vector(size_type n, const_reference value, const allocator_type& alloc_ = allocator_type());
 
     /**
-     * @brief Constructs the container with the contents of the range [first, last).
+     * @brief Constructs the container with the contents of range [first, last).
      *
      * @param first First iterator
      * @param last Last iterator
@@ -119,6 +119,12 @@ public:
      */
     vector(std::initializer_list<T> il, const allocator_type& alloc_ = allocator_type());
 
+    /**
+     * @brief Replaces the contents with those identifier by initializer list.
+     *
+     * @param il Initializer list
+     * @return The self reference
+     */
     vector& operator=(std::initializer_list<T> il);
 
     /**
@@ -137,12 +143,31 @@ public:
      */
     vector& operator=(vector&& rhs) noexcept;
 
+    /**
+     * @brief Replaces the contents with n copies of the given value.
+     *
+     * @param n Number of elements to be assigned
+     * @param value The given value
+     */
     void assign(size_type n, const_reference value);
 
+    /**
+     * @brief Replaces the contents with copies of those in the range [first, last).
+     * The behavior is undefined if either argument is an iterator into *this.
+     *
+     * @tparam InputIterator
+     * @param first An input iterator.
+     * @param last An input iterator.
+     */
     template<typename InputIterator,
              typename has_input_iterator_category<InputIterator, value_type>::type = 0>
     void assign(InputIterator first, InputIterator last);
 
+    /**
+     * @brief Replaces the contents with the elements from the initializer list.
+     *
+     * @param il The initilizer list.
+     */
     void assign(std::initializer_list<T> il);
 
     /**
@@ -301,7 +326,7 @@ private:
         _destruct_at_end(start);
     }
 
-    void _copy_assign_alloc(const vector& c, true_type) {
+    void _copy_assign_allocator(const vector& c, true_type) {
         if (_alloc() != c._alloc()) {
             _destroy_vector (*this)();
             start = nullptr;
@@ -311,7 +336,7 @@ private:
         alloc = c._alloc();
     }
 
-    void _copy_assign_alloc(const vector&, false_type) {}
+    void _copy_assign_allocator(const vector&, false_type) {}
 
     void _move_assign(vector& rhs, true_type) {
         _destroy_vector (*this)();
@@ -449,7 +474,7 @@ vector<T, Allocator>& vector<T, Allocator>::operator=(std::initializer_list<T> i
 template<typename T, typename Allocator>
 vector<T, Allocator>& vector<T, Allocator>::operator=(const vector<T, Allocator>& rhs) {
     if (this != std::addressof(rhs)) {
-        _copy_assign_alloc(
+        _copy_assign_allocator(
                 rhs,
                 integral_constant<bool,
                                   propagate_on_container_copy_assignment<Allocator>::type::value>());
