@@ -461,6 +461,32 @@ public:
      */
     void shrink_to_fit() noexcept;
 
+    /**
+     * @brief Erases all elements from the container. After this call, @c size() returns zero.
+     *
+     * Invalidates any references, pointers, and iterators referring to contained elements.
+     * Any past-the-end iterators are also invalidated.
+     * <p>
+     * Leaves the @c capacity() of the vector unchanged.
+     */
+    void clear() noexcept {
+        _clear();
+    }
+
+    /**
+     * @brief Inserts given value into vector before specified iterator.
+     *
+     * @param pos A const_iterator into the vector.
+     * @param value Data to be inserted.
+     * @return An iterator that points to the inserted data.
+     *
+     * This function will insert a copy of the given value before the specified location.
+     * Note that this kind of operation could be expensive for a vector and if it is frequently
+     * used the user should consider using std::list.
+     */
+    iterator insert(const_iterator pos, const_reference value);
+    // TODO: Need implementation.
+
     void resize(size_type n);
     void resize(size_type n, const_reference t);
     void push_back(const_reference t);
@@ -470,9 +496,7 @@ public:
     void emplace_back(Args&&... args);
 
 
-    void clear() noexcept {
-        _clear();
-    }
+
 
     /**
      * @brief Swaps data with another vector.
@@ -842,6 +866,12 @@ void vector<T, Allocator>::shrink_to_fit() noexcept {
         vector other(begin(), end());
         swap(other);
     }
+}
+
+template<typename T, typename Allocator>
+typename vector<T, Allocator>::iterator
+vector<T, Allocator>::insert(const_iterator pos, const_reference value) {
+    //
 }
 
 template<typename T, typename Allocator>
