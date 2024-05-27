@@ -460,7 +460,6 @@ public:
      * If no reallocation occurs, no iterators or references are invalidated.
      */
     void shrink_to_fit() noexcept;
-    // TODO: implementation after swap() function.
 
     void resize(size_type n);
     void resize(size_type n, const_reference t);
@@ -478,7 +477,7 @@ public:
     /**
      * @brief Swaps data with another vector.
      *
-     * @param other A vector of the same element and allocator type.
+     * @param other container to exchange the contents with.
      *
      * This exchanges the elements between two vectors in constant time.
      * (Three pointers, so it should be quite fast.)
@@ -600,6 +599,12 @@ private:
         }
     }
 
+    void _swap_allocator(vector& c, true_type) noexcept {
+        std::swap(this->_alloc(), c._alloc());
+    }
+
+    void _swap_allocator(vector& c, false_type) noexcept {}
+
     size_type _recommend_size(size_type new_size) const {
         const size_type ms = max_size();
         if (new_size > ms) {
@@ -656,7 +661,7 @@ vector<T, Allocator>::vector(InputIterator first, InputIterator last, const allo
 
 template<typename T, typename Allocator>
 vector<T, Allocator>::vector(const vector<T, Allocator>& other)
-    : alloc(select_on_container_copy_construction(other._alloc())) {
+    : alloc(alloc_traits::select_on_container_copy_construction(other._alloc())) {
     _init_with_range(other.begin(), other.end());
 }
 
@@ -677,7 +682,7 @@ vector<T, Allocator>::vector(vector&& other) noexcept
 template<typename T, typename Allocator>
 vector<T, Allocator>::vector(vector&& other, const type_identity_t<allocator_type>& alloc_)
     : alloc(alloc_) {
-    if (other._alloc() == alloc_) {
+    if (other._alloc() == _alloc()) {
         start = other.start;
         firstFree = other.firstFree;
         cap = other.cap;
@@ -712,7 +717,7 @@ vector<T, Allocator>& vector<T, Allocator>::operator=(const vector<T, Allocator>
         _copy_assign_allocator(
                 rhs,
                 integral_constant<bool,
-                                  propagate_on_container_copy_assignment<Allocator>::type::value>());
+                                  alloc_traits::propagate_on_container_copy_assignment::value>());
         assign(rhs.begin(), rhs.end());
     }
     return *this;
@@ -722,7 +727,7 @@ template<typename T, typename Allocator>
 vector<T, Allocator>& vector<T, Allocator>::operator=(vector&& rhs) noexcept {
     _move_assign(rhs,
                  integral_constant<bool,
-                                   propagate_on_container_move_assignment<Allocator>::type::value>());
+                                   alloc_traits::propagate_on_container_move_assignment::value>());
     return *this;
 }
 
@@ -836,15 +841,6 @@ void vector<T, Allocator>::shrink_to_fit() noexcept {
     if (capacity() > size()) {
         vector other(begin(), end());
         swap(other);
-        //        _destroy_vector (*this)();
-        //
-        //        start = tmp.start;
-        //        firstFree = tmp.firstFree;
-        //        cap = tmp.cap;
-        //
-        //        tmp.start = nullptr;
-        //        tmp.firstFree = nullptr;
-        //        tmp.cap = nullptr;
     }
 }
 
@@ -988,17 +984,14 @@ void vector<T, Allocator>::_construct_at_end(InputIterator first, InputIterator 
 
 template<typename T, typename Allocator>
 void vector<T, Allocator>::swap(vector& other) noexcept {
-    //    CHECK(propagate_on_container_swap<Allocator>::type::value || _alloc() == other._alloc())
-    //            << "vector::swap: Either propagate_on_container_swap must be true"
-    //            << " or the allocators must compare equal";
-
     CHECK(alloc_traits::propagate_on_container_swap::value || _alloc() == other._alloc())
             << "vector::swap: Either propagate_on_container_swap must be true"
             << " or the allocators must compare equal";
     std::swap(start, other.start);
     std::swap(firstFree, other.firstFree);
     std::swap(cap, other.cap);
-    _swap_allocator(_alloc(), other._alloc());
+    _swap_allocator(other,
+                    integral_constant<bool, alloc_traits::propagate_on_container_swap::value>());
 }
 
 template<typename T, typename Allocator>

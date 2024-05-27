@@ -25,6 +25,7 @@ public:
     using propagate_on_container_copy_assignment = true_type;
     using propagate_on_container_move_assignment = true_type;
     using propagate_on_container_swap = true_type;
+    using is_always_equal = true_type;
 
 public:
     ATLAllocator() noexcept = default;
