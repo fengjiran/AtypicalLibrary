@@ -418,7 +418,7 @@ public:
     /**
      * @brief Attempt to preallocate enough memory for specified number of elements.
      * If @a n is greater than the current @c capacity(),
-     * new storage is allocated, otherwise the function does nothing.
+     * new storage is allocated, otherwise this function does nothing.
      *
      * @param n Number of elements required.
      * @throw std::length_error If @a n exceeds @c max_size().
