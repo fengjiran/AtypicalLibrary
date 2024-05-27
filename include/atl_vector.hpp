@@ -460,7 +460,7 @@ public:
      * If no reallocation occurs, no iterators or references are invalidated.
      */
     void shrink_to_fit() noexcept;
-
+    // TODO: implementation after swap() function.
 
     void resize(size_type n);
     void resize(size_type n, const_reference t);
@@ -815,6 +815,22 @@ void vector<T, Allocator>::reserve(size_type n) {
 
     if (n > capacity()) {
         _reallocate(n);
+    }
+}
+
+template<typename T, typename Allocator>
+void vector<T, Allocator>::shrink_to_fit() noexcept {
+    if (capacity() > size()) {
+        vector<T, Allocator> tmp(begin(), end());
+        _destroy_vector (*this)();
+
+        start = tmp.start;
+        firstFree = tmp.firstFree;
+        cap = tmp.cap;
+
+        tmp.start = nullptr;
+        tmp.firstFree = nullptr;
+        tmp.cap = nullptr;
     }
 }
 
