@@ -475,6 +475,19 @@ public:
         _clear();
     }
 
+    /**
+     * @brief Swaps data with another vector.
+     *
+     * @param other A vector of the same element and allocator type.
+     *
+     * This exchanges the elements between two vectors in constant time.
+     * (Three pointers, so it should be quite fast.)
+     * Note that the global @c std::swap() function is specialized such that
+     * @c std::swap(v1,v2) will feed to this function. Whether the allocators
+     * are swapped depends on the allocator traits.
+     */
+    void swap(vector& other) noexcept;
+
     ~vector() noexcept;
 
 private:
@@ -560,7 +573,7 @@ private:
 
     void _copy_assign_allocator(const vector&, false_type) {}
 
-    void _move_assign(vector& rhs, true_type) {
+    void _move_assign(vector& rhs, true_type) noexcept(std::is_move_assignable_v<allocator_type>) {
         _destroy_vector (*this)();
         alloc = std::move(rhs._alloc());
 
@@ -573,7 +586,7 @@ private:
         rhs.cap = nullptr;
     }
 
-    void _move_assign(vector& rhs, false_type) {
+    void _move_assign(vector& rhs, false_type) noexcept(alloc_traits::is_always_equal::value) {
         if (_alloc() != rhs._alloc()) {
             _clear();
             for (auto iter = rhs.begin(); iter != rhs.end(); ++iter) {
@@ -970,6 +983,11 @@ template<typename InputIterator,
          typename has_input_iterator_category<InputIterator, T>::type>
 void vector<T, Allocator>::_construct_at_end(InputIterator first, InputIterator last) {
     firstFree = std::uninitialized_copy(first, last, firstFree);
+}
+
+template<typename T, typename Allocator>
+void vector<T, Allocator>::swap(vector& other) noexcept {
+    //
 }
 
 template<typename T, typename Allocator>
