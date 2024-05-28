@@ -834,16 +834,17 @@ void vector<T, Allocator>::reserve(size_type n) {
 template<typename T, typename Allocator>
 void vector<T, Allocator>::shrink_to_fit() noexcept {
     if (capacity() > size()) {
-        vector<T, Allocator> tmp(begin(), end());
-        _destroy_vector (*this)();
-
-        start = tmp.start;
-        firstFree = tmp.firstFree;
-        cap = tmp.cap;
-
-        tmp.start = nullptr;
-        tmp.firstFree = nullptr;
-        tmp.cap = nullptr;
+        vector other(begin(), end());
+        swap(other);
+//        _destroy_vector (*this)();
+//
+//        start = tmp.start;
+//        firstFree = tmp.firstFree;
+//        cap = tmp.cap;
+//
+//        tmp.start = nullptr;
+//        tmp.firstFree = nullptr;
+//        tmp.cap = nullptr;
     }
 }
 
@@ -987,7 +988,13 @@ void vector<T, Allocator>::_construct_at_end(InputIterator first, InputIterator 
 
 template<typename T, typename Allocator>
 void vector<T, Allocator>::swap(vector& other) noexcept {
-    //
+    CHECK(propagate_on_container_swap<Allocator>::type::value || _alloc() == other._alloc())
+            << "vector::swap: Either propagate_on_container_swap must be true"
+            << " or the allocators must compare equal";
+    std::swap(start, other.start);
+    std::swap(firstFree, other.firstFree);
+    std::swap(cap, other.cap);
+    _swap_allocator(_alloc(), other._alloc());
 }
 
 template<typename T, typename Allocator>

@@ -102,6 +102,38 @@ struct propagate_on_container_move_assignment<alloc, true> {
     using type = typename alloc::propagate_on_container_move_assignment;
 };
 
+// propagate on container swap
+template<typename alloc, typename = void>
+struct _has_propagate_on_container_swap : false_type {};
+
+template<typename alloc>
+struct _has_propagate_on_container_swap<
+        alloc,
+        void_t<typename alloc::propagate_on_container_swap>> : true_type {};
+
+template<typename alloc,
+         bool = _has_propagate_on_container_swap<alloc>::value>
+struct propagate_on_container_swap : false_type {};
+
+template<typename alloc>
+struct propagate_on_container_swap<alloc, true> {
+    using type = typename alloc::propagate_on_container_swap;
+};
+
+template<typename alloc>
+void _swap_allocator(alloc& a1, alloc& a2, false_type) noexcept {}
+
+template<typename alloc>
+void _swap_allocator(alloc& a1, alloc& a2, true_type) noexcept {
+    std::swap(a1, a2);
+}
+
+template<typename alloc>
+void _swap_allocator(alloc& a1, alloc& a2) noexcept {
+    auto identifier = integral_constant<bool, propagate_on_container_swap<alloc>::type::value>();
+    _swap_allocator(a1, a2, identifier);
+}
+
 }// namespace atp
 
 #endif//ATYPICALLIBRARY_UTILS_HPP
