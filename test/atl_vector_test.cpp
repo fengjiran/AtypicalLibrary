@@ -15,6 +15,16 @@ TEST(ATLVectorTest, general) {
 
     atp::vector<int> ans{8, 4, -1, 9, 6, 9};
     ASSERT_TRUE(v == ans);
+
+    char buf[7] = "buffer";
+    std::string code;
+    code = buf;
+    std::cout << code.size() << std::endl;
+    std::cout << code << std::endl;
+
+    std::string shape = "(1,3,10,10)";
+    std::string str = shape.substr(1, shape.find_last_of(')') - 1);
+    std::cout << str << std::endl;
 }
 
 TEST(ATLVectorTest, ctor) {
