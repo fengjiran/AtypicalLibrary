@@ -6,6 +6,7 @@
 #include "gtest/gtest.h"
 #include <list>
 #include <vector>
+#include <map>
 
 TEST(ATLVectorTest, general) {
     atp::vector<int> v{8, 4, 5, 9};
@@ -25,6 +26,13 @@ TEST(ATLVectorTest, general) {
     std::string shape = "(1,3,10,10)";
     std::string str = shape.substr(1, shape.find_last_of(')') - 1);
     std::cout << str << std::endl;
+
+    std::map<int , std::string> kv;
+    std::string& val = kv[0];
+    val = "hello";
+    for (auto & it : kv) {
+        std::cout << it.first << ": " << it.second << std::endl;
+    }
 }
 
 TEST(ATLVectorTest, ctor) {
