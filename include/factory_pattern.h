@@ -14,6 +14,10 @@ public:
     virtual std::string GetName() const = 0;
 
     virtual int GetSize() const = 0;
+
+    virtual void SetName(const std::string& name) = 0;
+
+    virtual void SetSize(int size) = 0;
 };
 
 class Impl1 : public Car {
@@ -29,6 +33,14 @@ public:
 
     int GetSize() const override {
         return size_;
+    }
+
+    void SetName(const std::string& name) override {
+        name_ = name;
+    }
+
+    void SetSize(int size) override {
+        size_ = size;
     }
 
 private:
@@ -51,6 +63,14 @@ public:
         return size_;
     }
 
+    void SetName(const std::string& name) override {
+        name_ = name;
+    }
+
+    void SetSize(int size) override {
+        size_ = size;
+    }
+
 private:
     std::string name_;
     int size_{};
@@ -60,7 +80,8 @@ template<typename Base>
 class Factory {
 public:
     using FCreator = std::function<std::shared_ptr<Base>()>;
-    Factory& GetInstance() {
+
+    static Factory& GetInstance() {
         static Factory inst;
         return inst;
     }
@@ -83,19 +104,18 @@ private:
     std::map<std::string, FCreator> creators_;
 };
 
-template<typename Base, typename Impl>
+template<typename Impl>
 class RegisterEntry {
 public:
-    template<typename... Args>
-    explicit RegisterEntry(const std::string& name, Args... args) {
-        Factory<Base>& factory = Factory<Base>::GetInstance();
-        factory.Register(name, [&] {
-            return std::make_shared<Base>(new Impl(std::forward<Args>(args)...));
+    explicit RegisterEntry(const std::string& name) {
+        Factory<Car>::GetInstance().Register(name, [] {
+            return std::make_shared<Impl>();
         });
     }
 };
 
 #define CONCAT_AB_(A, B) A##B
 #define CONCAT_AB(A, B) CONCAT_AB_(A, B)
+#define REGISTER_CAR(type, name) static RegisterEntry<type> CONCAT_AB(reg_, __COUNTER__) = RegisterEntry<type>(name)
 
 #endif//ATYPICALLIBRARY_FACTORY_PATTERN_H
