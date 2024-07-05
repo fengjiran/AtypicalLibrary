@@ -5,6 +5,8 @@
 #ifndef ATYPICALLIBRARY_OBJECT_H
 #define ATYPICALLIBRARY_OBJECT_H
 
+#include <cstdint>
+
 // nested namespace
 namespace litetvm::runtime {
 
