@@ -14,4 +14,11 @@ TEST(FactoryPatternTest, test1) {
     x->SetSize(520);
     EXPECT_EQ(x->GetName(), "M5EV");
     EXPECT_EQ(x->GetSize(), 520);
+
+    std::vector<int> arr {10, 20, 10, 15, 12, 7, 9};
+//    auto it = std::remove(arr.begin(), arr.end(), 10);
+    arr.erase(std::remove(arr.begin(), arr.end(), 10), arr.end());
+    for (auto xx: arr) {
+        std::cout << xx << std::endl;
+    }
 }
