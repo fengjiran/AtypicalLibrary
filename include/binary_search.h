@@ -63,6 +63,27 @@ public:
 
         return l;
     }
+
+    static int LeftBound(const std::vector<T>& nums, int left, int right, T target) {
+        int l = left;
+        int r = right + 1;
+        while (l < r) {
+            int mid = l + (r - l) / 2;
+            if (nums[mid] < target) {
+                l = mid + 1;
+            } else if (nums[mid] > target) {
+                r = mid;
+            } else if (nums[mid] == target) {
+                r = mid;
+            }
+        }
+
+        if (l == right + 1) {
+            return -1;
+        }
+
+        return nums[l] == target ? l : -1;
+    }
 };
 
 #endif//ATYPICALLIBRARY_BINARY_SEARCH_H

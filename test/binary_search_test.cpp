@@ -16,6 +16,13 @@ TEST(BinarySearch, t1) {
     EXPECT_EQ(BinarySearch<int>::FindFirstGTItem(nums1, 0, nums1.size() - 1, 1), 0);
     EXPECT_EQ(BinarySearch<int>::FindFirstGTItem(nums1, 0, nums1.size() - 1, 9), -1);
 
+    EXPECT_EQ(BinarySearch<int>::LeftBound(nums1, 0, nums1.size() - 1, 4), 1);
+    EXPECT_EQ(BinarySearch<int>::LeftBound(nums1, 0, nums1.size() - 1, 2), 0);
+    EXPECT_EQ(BinarySearch<int>::LeftBound(nums1, 0, nums1.size() - 1, 9), 4);
+    EXPECT_EQ(BinarySearch<int>::LeftBound(nums1, 0, nums1.size() - 1, 1), -1);
+    EXPECT_EQ(BinarySearch<int>::LeftBound(nums1, 0, nums1.size() - 1, 10), -1);
+
+
     std::vector<int> nums2{2, 3, 3, 4, 5, 6, 9};
     EXPECT_EQ(BinarySearch<int>::FindFirstGEItem(nums2, 0, nums2.size() - 1, 10), -1);
 }
