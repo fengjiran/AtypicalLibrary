@@ -25,4 +25,8 @@ TEST(BinarySearch, t1) {
 
     std::vector<int> nums2{2, 3, 3, 4, 5, 6, 9};
     EXPECT_EQ(BinarySearch<int>::FindFirstGEItem(nums2, 0, nums2.size() - 1, 10), -1);
+
+    int a = 10;
+    int& b = a;
+    static_assert(std::is_same_v<decltype((a)), int&>);
 }
