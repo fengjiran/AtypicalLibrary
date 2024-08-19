@@ -34,6 +34,10 @@ TEST(ATLVectorTest, general) {
     for (auto & it : kv) {
         std::cout << it.first << ": " << it.second << std::endl;
     }
+
+    std::shared_ptr<int> a = std::make_shared<int>(5);
+    a.reset();
+    EXPECT_TRUE(a == nullptr);
 }
 
 TEST(ATLVectorTest, ctor) {
