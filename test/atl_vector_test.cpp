@@ -5,9 +5,10 @@
 #include "atl_vector.hpp"
 #include "gtest/gtest.h"
 
+#include <deque>
 #include <list>
-#include <vector>
 #include <map>
+#include <vector>
 
 TEST(ATLVectorTest, general) {
     atp::vector<int> v{8, 4, 5, 9};
@@ -38,6 +39,13 @@ TEST(ATLVectorTest, general) {
     std::shared_ptr<int> a = std::make_shared<int>(5);
     a.reset();
     EXPECT_TRUE(a == nullptr);
+
+    std::deque<std::string> q;
+    q.push_front("hello");
+    q.push_front("world");
+    for (const auto& s: q) {
+        std::cout << s << std::endl;
+    }
 }
 
 TEST(ATLVectorTest, ctor) {
