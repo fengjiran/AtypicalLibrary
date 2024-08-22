@@ -46,6 +46,8 @@ TEST(ATLVectorTest, general) {
     for (const auto& s: q) {
         std::cout << s << std::endl;
     }
+
+    std::cout << std::numeric_limits<long>::max() << std::endl;
 }
 
 TEST(ATLVectorTest, ctor) {
