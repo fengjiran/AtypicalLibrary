@@ -9,6 +9,7 @@
 #include <list>
 #include <map>
 #include <vector>
+#include <thread>
 
 TEST(ATLVectorTest, general) {
     atp::vector<int> v{8, 4, 5, 9};
@@ -47,7 +48,7 @@ TEST(ATLVectorTest, general) {
         std::cout << s << std::endl;
     }
 
-    std::cout << std::numeric_limits<long>::max() << std::endl;
+    std::thread t;
 }
 
 TEST(ATLVectorTest, ctor) {
