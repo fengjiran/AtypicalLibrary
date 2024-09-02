@@ -55,6 +55,13 @@ public:
         return *this;
     }
 
+    T& operator*() const {
+        return *p;
+    }
+
+    T* operator->() const {
+        return p;
+    }
 
     friend void swap(shared_ptr& a, shared_ptr& b) noexcept {
         std::swap(a.p, b.p);
@@ -72,6 +79,11 @@ private:
     T* p;
     size_t* useCnt;
 };
+
+template<typename T, typename... Args>
+shared_ptr<T> make_shared(Args&&... args) {
+    return shared_ptr<T>(new T(std::forward<Args>(args)...));
+}
 
 }// namespace atp
 
