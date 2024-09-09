@@ -8,8 +8,8 @@
 #include <deque>
 #include <list>
 #include <map>
-#include <vector>
 #include <thread>
+#include <vector>
 
 TEST(ATLVectorTest, general) {
     atp::vector<int> v{8, 4, 5, 9};
@@ -30,10 +30,10 @@ TEST(ATLVectorTest, general) {
     std::string str = shape.substr(1, shape.find_last_of(')') - 1);
     std::cout << str << std::endl;
 
-    std::map<int , std::string> kv;
+    std::map<int, std::string> kv;
     std::string& val = kv[0];
     val = "hello";
-    for (auto & it : kv) {
+    for (auto& it: kv) {
         std::cout << it.first << ": " << it.second << std::endl;
     }
 
@@ -207,4 +207,40 @@ TEST(ATLVectorTest, integral_constant) {
     static_assert(atp::_has_select_on_container_copy_construction<A>::value);
     static_assert(!atp::_has_select_on_container_copy_construction<std::allocator<int>>::value);
     static_assert(atp::_has_select_on_container_copy_construction<atp::ATLAllocator<int>>::value);
+}
+
+TEST(ATLVectorTest, split_string) {
+    std::vector<std::string> token;
+    std::string s = "[(expr1,expr2)]";
+    std::string t;
+
+    for (char c: s) {
+        if (c == '[') {
+            t += c;
+            token.push_back(t);
+            t.clear();
+        } else if (c == ']') {
+            if (!t.empty()) {
+                token.push_back(t);
+                t.clear();
+            }
+            t += c;
+        } else if (c == '(' || c == ')' || c == ',') {
+            if (!t.empty()) {
+                token.push_back(t);
+                t.clear();
+            }
+        } else {
+            t += c;
+        }
+    }
+
+    if (!t.empty()) {
+        token.push_back(t);
+    }
+
+    for (const auto& x: token) {
+        std::cout << x << " ";
+    }
+    //    std::cout << "\n";
 }
