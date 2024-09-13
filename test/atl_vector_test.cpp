@@ -48,7 +48,7 @@ TEST(ATLVectorTest, general) {
         std::cout << s << std::endl;
     }
 
-    std::thread t;
+    std::cout << "concurrency num: " << std::thread::hardware_concurrency() << std::endl;
 }
 
 TEST(ATLVectorTest, ctor) {
