@@ -2,7 +2,6 @@ cmake_minimum_required(VERSION 3.22)
 project(AtypicalLibrary)
 
 set(CMAKE_CXX_STANDARD 17)
-
 find_package(glog REQUIRED)
 
 file(GLOB_RECURSE SRC_FILES ${PROJECT_SOURCE_DIR}/src/*.cpp
