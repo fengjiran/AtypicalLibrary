@@ -8,7 +8,6 @@
 #include <deque>
 #include <list>
 #include <map>
-#include <thread>
 #include <vector>
 
 TEST(ATLVectorTest, general) {
@@ -47,8 +46,6 @@ TEST(ATLVectorTest, general) {
     for (const auto& s: q) {
         std::cout << s << std::endl;
     }
-
-    std::cout << "concurrency num: " << std::thread::hardware_concurrency() << std::endl;
 }
 
 TEST(ATLVectorTest, ctor) {
