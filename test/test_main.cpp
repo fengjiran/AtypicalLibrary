@@ -1,8 +1,8 @@
 //
 // Created by richard on 4/29/24.
 //
-#include "gtest/gtest.h"
 #include "glog/logging.h"
+#include "gtest/gtest.h"
 
 int main() {
     testing::InitGoogleTest();
