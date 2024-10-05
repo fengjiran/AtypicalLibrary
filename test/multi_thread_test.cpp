@@ -23,25 +23,26 @@ public:
 
     void PopMsgFromQueue() {
         int command = 0;
-        bool flag = false;
-        for (int i = 0; i < 100; ++i) {
+        int cnt = 0;
+
+        while (true) {
             {
                 std::lock_guard guard(mtx);// CTAD
                 if (!msgQueue.empty()) {
                     command = msgQueue.front();
                     msgQueue.pop_front();
-                    flag = true;
+                    cnt++;
+                    std::cout << "Execute PopMsgFromQueue(), get element: " << command << std::endl;
+                } else {
+                    std::cout << "The message queue is empty.\n";
                 }
             }
 
-            if (flag) {
-                flag = false;
-                std::cout << "Execute PopMsgFromQueue(), get element: " << command << std::endl;
-            } else {
-                std::cout << "The message queue is empty.\n";
+            if (cnt == 100) {
+                break;
             }
         }
-        std::cout << std::endl;
+        std::cout << "The final command is: " << command << std::endl;
     }
 
 private:
@@ -154,4 +155,6 @@ TEST(MultiThreadTest, test4) {
 
     t1.join();
     t2.join();
+    // t1.detach();
+    // t2.detach();
 }
