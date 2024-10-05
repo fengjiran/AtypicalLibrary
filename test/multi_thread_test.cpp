@@ -7,6 +7,48 @@
 #include <mutex>
 #include <thread>
 
+class Msg {
+public:
+    void PushMsgToQueue() {
+        for (int i = 0; i < 100; ++i) {
+            std::cout << "Execute PushMsgToQueue(), insert element: " << i << std::endl;
+            {
+                // std::lock_guard<std::mutex> guard(mtx);
+                std::lock_guard guard(mtx);// CTAD
+                // std::cout << "Execute PushMsgToQueue(), insert element: " << i << std::endl;
+                msgQueue.push_back(i);
+            }
+        }
+    }
+
+    void PopMsgFromQueue() {
+        int command = 0;
+        bool flag = false;
+        for (int i = 0; i < 100; ++i) {
+            {
+                std::lock_guard guard(mtx);// CTAD
+                if (!msgQueue.empty()) {
+                    command = msgQueue.front();
+                    msgQueue.pop_front();
+                    flag = true;
+                }
+            }
+
+            if (flag) {
+                flag = false;
+                std::cout << "Execute PopMsgFromQueue(), get element: " << command << std::endl;
+            } else {
+                std::cout << "The message queue is empty.\n";
+            }
+        }
+        std::cout << std::endl;
+    }
+
+private:
+    std::list<int> msgQueue;
+    std::mutex mtx;
+};
+
 TEST(MultiThreadTest, test1) {
     auto f1 = [] {
         std::cout << "Hello Concurrent World\n";
@@ -103,4 +145,13 @@ TEST(MultiThreadTest, test3) {
     t2.join();
     // std::this_thread::sleep_for(std::chrono::milliseconds(100));
     std::cout << "data = " << data << std::endl;
+}
+
+TEST(MultiThreadTest, test4) {
+    Msg m;
+    std::thread t1(&Msg::PushMsgToQueue, &m);
+    std::thread t2(&Msg::PopMsgFromQueue, &m);
+
+    t1.join();
+    t2.join();
 }
