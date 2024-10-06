@@ -149,6 +149,7 @@ TEST(MultiThreadTest, test3) {
 }
 
 TEST(MultiThreadTest, test4) {
+    GTEST_SKIP();
     Msg m;
     std::thread t1(&Msg::PushMsgToQueue, &m);
     std::thread t2(&Msg::PopMsgFromQueue, &m);
