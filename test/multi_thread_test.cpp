@@ -5,6 +5,7 @@
 #include <gtest/gtest.h>
 #include <list>
 #include <mutex>
+#include <shared_mutex>
 #include <thread>
 
 class Msg {
