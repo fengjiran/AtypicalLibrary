@@ -45,6 +45,14 @@ struct integral_constant {
 using true_type = integral_constant<bool, true>;
 using false_type = integral_constant<bool, false>;
 
+#define HAS_PROPERTY(NAME, PROPERTY)      \
+    template<typename T, typename = void> \
+    struct NAME : false_type {};          \
+    template<typename T>                  \
+    struct NAME<T, void_t<typename T::PROPERTY>> : true_type {}
+
+HAS_PROPERTY(has_propagate_on_container_copy_assignment, propagate_on_container_copy_assignment);
+
 template<typename, typename = void>
 struct _has_select_on_container_copy_construction : false_type {};
 
@@ -67,16 +75,16 @@ constexpr static alloc select_on_container_copy_construction(const alloc& a) {
 }
 
 // propagate on container copy assignment
-template<typename alloc, typename = void>
-struct _has_propagate_on_container_copy_assignment : false_type {};
-
-template<typename alloc>
-struct _has_propagate_on_container_copy_assignment<
-        alloc,
-        void_t<typename alloc::propagate_on_container_copy_assignment>> : true_type {};
+// template<typename alloc, typename = void>
+// struct _has_propagate_on_container_copy_assignment : false_type {};
+//
+// template<typename alloc>
+// struct _has_propagate_on_container_copy_assignment<
+//         alloc,
+//         void_t<typename alloc::propagate_on_container_copy_assignment>> : true_type {};
 
 template<typename alloc,
-         bool = _has_propagate_on_container_copy_assignment<alloc>::value>
+         bool = has_propagate_on_container_copy_assignment<alloc>::value>
 struct propagate_on_container_copy_assignment : false_type {};
 
 template<typename alloc>

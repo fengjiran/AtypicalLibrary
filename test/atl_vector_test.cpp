@@ -199,11 +199,13 @@ TEST(ATLVectorTest, integral_constant) {
     public:
         A() = default;
         static A select_on_container_copy_construction() { return {}; }
+        using propagate_on_container_copy_assignment = atp::false_type;
     };
 
     static_assert(atp::_has_select_on_container_copy_construction<A>::value);
     static_assert(!atp::_has_select_on_container_copy_construction<std::allocator<int>>::value);
     static_assert(atp::_has_select_on_container_copy_construction<atp::ATLAllocator<int>>::value);
+    static_assert(atp::has_propagate_on_container_copy_assignment<A>::value);
 }
 
 TEST(ATLVectorTest, split_string) {
