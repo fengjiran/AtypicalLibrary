@@ -9,6 +9,7 @@
 #include "utils.hpp"
 #include <cstddef>
 #include <memory>
+#include "atl_allocator_traits.h"
 
 namespace atp {
 
@@ -50,12 +51,12 @@ public:
 };
 
 template<typename T, typename U>
-inline bool operator==(const ATLAllocator<T>&, const ATLAllocator<U>&) noexcept {
+bool operator==(const ATLAllocator<T>&, const ATLAllocator<U>&) noexcept {
     return true;
 }
 
 template<typename T, typename U>
-inline bool operator!=(const ATLAllocator<T>&, const ATLAllocator<U>&) noexcept {
+bool operator!=(const ATLAllocator<T>&, const ATLAllocator<U>&) noexcept {
     return false;
 }
 }// namespace atp
