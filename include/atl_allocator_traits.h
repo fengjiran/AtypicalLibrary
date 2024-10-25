@@ -11,8 +11,7 @@ namespace atp {
 
 #define ATL_ALLOCATOR_TRAITS_HAS_XXX(NAME, PROPERTY) \
     template<typename alloc, typename = void>        \
-    struct NAME : false_type {                       \
-    };                                               \
+    struct NAME : false_type {};                     \
     template<typename alloc>                         \
     struct NAME<alloc, void_t<typename alloc::PROPERTY>> : true_type {}
 
@@ -32,6 +31,10 @@ template<typename T,
 struct pointer<T, alloc, raw_alloc, false> {
     using type = T*;
 };
+
+// const pointer
+
+// void pointer
 
 
 template<typename alloc>
