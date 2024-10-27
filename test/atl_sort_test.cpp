@@ -23,3 +23,12 @@ TEST(SortTest, insertion) {
     atp::Insertion::Show(v.begin(), v.end());
     EXPECT_TRUE(atp::Insertion::IsSorted(v.begin(), v.end()));
 }
+
+TEST(SortTest, sort_compare) {
+    int T = 100;
+    int N = 10000;
+    auto t1 = atp::SortPerf<atp::Selection>::Evaluate(T, N);
+    auto t2 = atp::SortPerf<atp::Insertion>::Evaluate(T, N);
+    std::cout << "Selection time: " << t1 << "s.\n";
+    std::cout << "Insertion time: " << t2 << "s.\n";
+}

@@ -1,9 +1,11 @@
 #ifndef ATL_SORT_HPP
 #define ATL_SORT_HPP
 
+#include "utils.hpp"
 #include <algorithm>
 #include <iostream>
 #include <iterator>
+#include <random>
 #include <vector>
 
 namespace atp {
@@ -166,6 +168,34 @@ public:
             }
             nums[j] = x;
         }
+    }
+};
+
+template<typename sortAlgo>
+class SortPerf {
+public:
+    static double Evaluate(int T, int N) {
+        std::random_device rd;
+        std::mt19937 gen(rd());
+        std::uniform_real_distribution<float> dist(0, 1);
+
+        std::vector<float> nums(N);
+        double total = 0;
+
+        for (int t = 0; t < T; ++t) {
+            for (int i = 0; i < N; ++i) {
+                nums[i] = dist(gen);
+            }
+            total += time(nums.begin(), nums.end());
+        }
+        return total;
+    }
+
+    template<typename iterator>
+    static double time(iterator begin, iterator end) {
+        Timer t;
+        sortAlgo::sort(begin, end);
+        return t.GetElapsedTime();
     }
 };
 
