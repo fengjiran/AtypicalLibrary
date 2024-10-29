@@ -8,7 +8,7 @@
 TEST(ATLAllocatorTest, general) {
     // default allocator for ints
     atp::ATLAllocator<int> alloc1;
-    static_assert(std::is_same_v<int, decltype(alloc1)::value_type>);
+    static_assert(atp::is_same_v<int, decltype(alloc1)::value_type>);
 
     int* p1 = alloc1.allocate(1);// space for one int
     alloc1.deallocate(p1, 1);    // and it is gone
@@ -40,5 +40,5 @@ TEST(ATLAllocatorTest, general) {
     traits_t2::deallocate(alloc2, p2, 2);
 
     static_assert(atp::is_same_v<atp::pointer_traits_element_type<std::shared_ptr<int>>::type, int>);
-
+    static_assert(atp::has_rebind<atp::ATLAllocator<int>, double>::value);
 }

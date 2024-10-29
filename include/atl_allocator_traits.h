@@ -45,7 +45,6 @@ struct allocator_traits {
     using allocator_type = alloc;
 };
 
-
 }// namespace atp
 
 #endif//ATL_ALLOCATOR_TRAITS_H

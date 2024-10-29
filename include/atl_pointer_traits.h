@@ -49,6 +49,35 @@ struct pointer_traits_difference_type<Ptr, true> {
     using type = typename Ptr::difference_type;
 };
 
+template<typename T, typename U>
+struct has_rebind {
+private:
+    template<typename X>
+    static false_type test(...);
+
+    template<typename X>
+    static true_type test(typename X::template rebind<U>* = nullptr);
+
+public:
+    static const bool value = decltype(test<T>(nullptr))::value;
+};
+
+template<typename T, typename U, bool = has_rebind<T, U>::value>
+struct pointer_traits_rebind {
+    using type = typename T::template rebind<U>;
+};
+
+template<template<typename, typename...> typename Sp, typename T, typename... Args, typename U>
+struct pointer_traits_rebind<Sp<T, Args...>, U, true> {
+    using type = typename Sp<T, Args...>::template rebind<U>;
+};
+
+template<template<typename, typename...> typename Sp, typename T, typename... Args, typename U>
+struct pointer_traits_rebind<Sp<T, Args...>, U, false> {
+    using type = Sp<T, Args...>;
+};
+
+
 }// namespace atp
 
 #endif//ATL_POINTER_TRAITS_H
