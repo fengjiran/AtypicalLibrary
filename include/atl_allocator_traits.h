@@ -6,6 +6,7 @@
 #define ATL_ALLOCATOR_TRAITS_H
 
 #include "atl_type_traits.h"
+#include "atl_pointer_traits.h"
 
 namespace atp {
 
@@ -33,6 +34,8 @@ struct pointer<T, alloc, raw_alloc, false> {
 };
 
 // const pointer
+ATL_ALLOCATOR_TRAITS_HAS_XXX(has_const_pointer, const_pointer);
+
 
 // void pointer
 

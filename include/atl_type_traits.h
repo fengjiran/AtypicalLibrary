@@ -33,6 +33,7 @@ struct type_identity {
 template<typename T>
 using type_identity_t = typename type_identity<T>::type;
 
+// remove reference
 template<typename T>
 struct remove_reference {
     using type = T;
@@ -50,6 +51,22 @@ struct remove_reference<T&&> {
 
 template<typename T>
 using remove_reference_t = typename remove_reference<T>::type;
+
+// is_same_v
+template<typename T, typename U>
+constexpr bool is_same_v = false;
+
+template<typename T>
+constexpr bool is_same_v<T, T> = true;
+
+// template<typename T, typename U>
+// struct is_same : false_type{};
+//
+// template<typename T, typename U = T>
+// struct is_same<T, U> : true_type{};
+//
+// template<typename T, typename U>
+// constexpr bool is_same_v = is_same<T, U>::value;
 
 }// namespace atp
 
