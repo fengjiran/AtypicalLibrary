@@ -49,10 +49,10 @@ public:
         return {};
     }
 
-    template<typename U>
-    struct rebind {
-        using other = ATLAllocator<U>;
-    };
+    // template<typename U>
+    // struct rebind {
+    //     using other = ATLAllocator<U>;
+    // };
 };
 
 template<typename T, typename U>

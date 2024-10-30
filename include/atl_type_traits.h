@@ -68,6 +68,34 @@ constexpr bool is_same_v<T, T> = true;
 // template<typename T, typename U>
 // constexpr bool is_same_v = is_same<T, U>::value;
 
+// remove const
+template<typename T>
+struct remove_const {
+    using type = T;
+};
+
+template<typename T>
+struct remove_const<const T> {
+    using type = T;
+};
+
+template<typename T>
+using remove_const_t = typename remove_const<T>::type;
+
+// remove volatile
+template<typename T>
+struct remove_volatile {
+    using type = T;
+};
+
+template<typename T>
+struct remove_volatile<volatile T> {
+    using type = T;
+};
+
+template<typename T>
+using remove_volatile_t = typename remove_volatile<T>::type;
+
 }// namespace atp
 
 #endif//ATL_TYPE_TRAITS_H

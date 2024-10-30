@@ -77,6 +77,9 @@ struct pointer_traits_rebind<Sp<T, Args...>, U, false> {
     using type = Sp<T, Args...>;
 };
 
+template<typename Ptr, typename = void>
+struct pointer_traits_impl {};
+
 
 }// namespace atp
 
