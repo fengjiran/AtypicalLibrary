@@ -4,6 +4,7 @@
 
 #ifndef ATL_TYPE_TRAITS_H
 #define ATL_TYPE_TRAITS_H
+#include <type_traits>
 
 namespace atp {
 
@@ -95,6 +96,34 @@ struct remove_volatile<volatile T> {
 
 template<typename T>
 using remove_volatile_t = typename remove_volatile<T>::type;
+
+// remove cv
+template<typename T>
+struct remove_cv {
+    using type = remove_volatile_t<remove_const_t<T>>;
+};
+
+template<typename T>
+using remove_cv_t = remove_volatile_t<remove_const_t<T>>;
+
+// is_void
+template<typename T>
+struct is_void : false_type {};
+
+template<>
+struct is_void<void> : true_type {};
+
+template<>
+struct is_void<const void> : true_type {};
+
+template<>
+struct is_void<volatile void> : true_type {};
+
+template<>
+struct is_void<const volatile void> : true_type {};
+
+template<typename T>
+constexpr bool is_void_v = is_void<T>::value;
 
 }// namespace atp
 
