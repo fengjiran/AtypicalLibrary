@@ -171,6 +171,54 @@ public:
     }
 };
 
+class Shell : public Sort {
+public:
+    template<typename iterator>
+    static void sort(iterator begin, iterator end) {
+        if (begin == end) {
+            return;
+        }
+
+        auto n = std::distance(begin, end);
+        int h = 1;
+        while (h < n / 3) {
+            h = 3 * h + 1;
+        }
+
+        while (h >= 1) {
+            for (auto it = begin + h; it != end; ++it) {
+                auto it1 = it;
+                while (it1 >= begin + h && *it1 < *(it1 - h)) {
+                    std::iter_swap(it1, it1 - h);
+                    it1 -= h;
+                }
+            }
+            h = h / 3;
+        }
+    }
+
+    template<typename T>
+    static void sort(std::vector<T>& nums) {
+        auto n = nums.size();
+        int h = 1;
+        while (h < n / 3) {
+            h = 3 * h + 1;
+        }
+
+        while (h >= 1) {
+            for (size_t i = h; i < n; ++i) {
+                auto j = i;
+                while (j >= h && nums[j] < nums[j - h]) {
+                    std::swap(nums[j], nums[j - h]);
+                    j -= h;
+                }
+            }
+
+            h = h / 3;
+        }
+    }
+};
+
 template<typename sortAlgo>
 class SortPerf {
 public:

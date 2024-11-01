@@ -5,8 +5,8 @@
 #include "atl_sort.hpp"
 
 #include <gtest/gtest.h>
-#include <utils.hpp>
 #include <thread>
+#include <utils.hpp>
 
 TEST(SortTest, selection) {
     std::vector<int> v{8, 4, 5, 9};
@@ -24,11 +24,20 @@ TEST(SortTest, insertion) {
     EXPECT_TRUE(atp::Insertion::IsSorted(v.begin(), v.end()));
 }
 
+TEST(SortTest, Shell) {
+    std::vector<int> v{8, 4, 5, 9};
+    atp::Shell::sort(v.begin(), v.end());
+    atp::Sort::Show(v.begin(), v.end());
+    EXPECT_TRUE(atp::Sort::IsSorted(v.begin(), v.end()));
+}
+
 TEST(SortTest, sort_compare) {
     int T = 100;
-    int N = 10000;
-    auto t1 = atp::SortPerf<atp::Selection>::Evaluate(T, N);
-    auto t2 = atp::SortPerf<atp::Insertion>::Evaluate(T, N);
-    std::cout << "Selection time: " << t1 << "s.\n";
-    std::cout << "Insertion time: " << t2 << "s.\n";
+    int N = 100000;
+    // auto t1 = atp::SortPerf<atp::Selection>::Evaluate(T, N);
+    // auto t2 = atp::SortPerf<atp::Insertion>::Evaluate(T, N);
+    auto t3 = atp::SortPerf<atp::Shell>::Evaluate(T, N);
+    // std::cout << "Selection sort time: " << t1 << "s.\n";
+    // std::cout << "Insertion sort time: " << t2 << "s.\n";
+    std::cout << "Shell sort time: " << t3 << "s.\n";
 }

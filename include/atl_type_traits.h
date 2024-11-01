@@ -4,7 +4,6 @@
 
 #ifndef ATL_TYPE_TRAITS_H
 #define ATL_TYPE_TRAITS_H
-#include <type_traits>
 
 namespace atp {
 
