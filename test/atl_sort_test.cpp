@@ -31,7 +31,15 @@ TEST(SortTest, Shell) {
     EXPECT_TRUE(atp::Sort::IsSorted(v.begin(), v.end()));
 }
 
+TEST(SortTest, merge) {
+    std::vector<int> v{8, 4, 5, 9};
+    atp::MergeSortV1::sort(v);
+    atp::Sort::Show(v.begin(), v.end());
+    EXPECT_TRUE(atp::Sort::IsSorted(v.begin(), v.end()));
+}
+
 TEST(SortTest, sort_compare) {
+    // GTEST_SKIP();
     int T = 100;
     int N = 100000;
     // auto t1 = atp::SortPerf<atp::Selection>::Evaluate(T, N);

@@ -197,6 +197,35 @@ public:
         }
     }
 
+    template<typename iterator>
+    static void sort1(iterator begin, iterator end) {
+        if (begin == end) {
+            return;
+        }
+
+        auto n = std::distance(begin, end);
+        std::vector<int> hvec{1};
+        while (true) {
+            int t = 3 * hvec.back() + 1;
+            if (t >= n / 3) {
+                break;
+            }
+            hvec.push_back(t);
+        }
+
+        int m = static_cast<int>(hvec.size());
+        for (int i = m - 1; i >= 0; --i) {
+            int h = hvec[i];
+            for (auto it = begin + h; it != end; ++it) {
+                auto it1 = it;
+                while (it1 >= begin + h && *it1 < *(it1 - h)) {
+                    std::iter_swap(it1, it1 - h);
+                    it1 -= h;
+                }
+            }
+        }
+    }
+
     template<typename T>
     static void sort(std::vector<T>& nums) {
         auto n = nums.size();
@@ -217,6 +246,64 @@ public:
             h = h / 3;
         }
     }
+};
+
+// original merge sort
+class MergeSortV1 : public Sort {
+public:
+    template<typename T>
+    static void sort(std::vector<T>& nums) {
+        auto n = nums.size();
+        std::vector<T> aux(n);
+        sort(nums, aux, 0, n - 1);
+    }
+
+    template<typename iterator>
+    static void sort(iterator begin, iterator end) {
+        using T = typename std::iterator_traits<iterator>::value_type;
+        std::vector<T> aux(std::distance(begin, end));
+
+    }
+
+private:
+    template<typename T>
+    static void sort(std::vector<T>& nums, std::vector<T>& aux, int left, int right) {
+        if (left >= right) {
+            return;
+        }
+
+        int mid = left + (right - left) / 2;
+        sort(nums, aux, left, mid);
+        sort(nums, aux, mid + 1, right);
+        merge(nums, aux, left, mid, right);
+    }
+
+    template<typename T>
+    static void merge(std::vector<T>& nums, std::vector<T>& aux, int left, int mid, int right) {
+        for (int i = left; i <= right; ++i) {
+            aux[i] = nums[i];
+        }
+
+        int i = left;
+        int j = mid + 1;
+        for (int k = left; k <= right; ++k) {
+            if (i > mid) {
+                nums[k] = aux[j++];
+            } else if (j > right) {
+                nums[k] = aux[i++];
+            } else if (aux[i] > aux[j]) {
+                nums[k] = aux[j++];
+            } else {
+                nums[k] = aux[i++];
+            }
+        }
+    }
+
+};
+
+// merge sort with improvements
+class MergeSortV2 : public Sort {
+public:
 };
 
 template<typename sortAlgo>
