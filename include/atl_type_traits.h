@@ -124,6 +124,57 @@ struct is_void<const volatile void> : true_type {};
 template<typename T>
 constexpr bool is_void_v = is_void<T>::value;
 
+// if
+template<bool>
+struct IfImpl;
+
+template<>
+struct IfImpl<true> {
+    template<typename IfRes, typename ElseRes>
+    using select = IfRes;
+};
+
+template<>
+struct IfImpl<false> {
+    template<typename IfRes, typename ElseRes>
+    using select = ElseRes;
+};
+
+template<bool cond, typename IfRes, typename ElseRes>
+using If = typename IfImpl<cond>::template select<IfRes, ElseRes>;
+
+// conditional
+// template<bool b, typename T1, typename T2>
+// struct conditional {};
+//
+// template<typename T1, typename T2>
+// struct conditional<true, T1, T2> {
+//     using type = T1;
+// };
+//
+// template<typename T1, typename T2>
+// struct conditional<false, T1, T2> {
+//     using type = T2;
+// };
+//
+// template<bool b, typename T1, typename T2>
+// using conditional_t = typename conditional<b, T1, T2>::type;
+
+
+template<bool b, typename IfRes, typename ElseRes>
+struct conditional {
+    using type = IfRes;
+};
+
+template<typename IfRes, typename ElseRes>
+struct conditional<false, IfRes, ElseRes> {
+    using type = ElseRes;
+};
+
+template<bool b, typename IfRes, typename ElseRes>
+using conditional_t = typename conditional<b, IfRes, ElseRes>::type;
+
+
 }// namespace atp
 
 #endif//ATL_TYPE_TRAITS_H
