@@ -33,6 +33,47 @@ struct type_identity {
 template<typename T>
 using type_identity_t = typename type_identity<T>::type;
 
+// is const
+template<typename T>
+struct is_const : false_type {};
+
+template<typename T>
+struct is_const<const T> : true_type {};
+
+template<typename T>
+constexpr bool is_const_v = is_const<T>::value;
+
+// is reference
+template<typename T>
+struct is_lvalue_reference : false_type {};
+
+template<typename T>
+struct is_lvalue_reference<T&> : true_type {};
+
+template<typename T>
+struct is_rvalue_reference : false_type {};
+
+template<typename T>
+struct is_rvalue_reference<T&&> : true_type {};
+
+template<typename T>
+struct is_reference : false_type {};
+
+template<typename T>
+struct is_reference<T&> : true_type {};
+
+template<typename T>
+struct is_reference<T&&> : true_type {};
+
+template<typename T>
+constexpr bool is_reference_v = is_reference<T>::value;
+
+template<typename T>
+constexpr bool is_lvalue_reference_v = is_lvalue_reference<T>::value;
+
+template<typename T>
+constexpr bool is_rvalue_reference_v = is_rvalue_reference<T>::value;
+
 // remove reference
 template<typename T>
 struct remove_reference {
@@ -174,6 +215,29 @@ struct conditional<false, IfRes, ElseRes> {
 template<bool b, typename IfRes, typename ElseRes>
 using conditional_t = typename conditional<b, IfRes, ElseRes>::type;
 
+// is class
+template<typename T>
+struct is_class : integral_constant<bool, __is_class(T)> {};
+
+
+// is function
+template<typename T>
+struct is_function : integral_constant<bool, !is_const_v<const T> && !is_reference_v<T>> {};
+
+template<typename T>
+constexpr bool is_function_v = is_function<T>::value;
+
+// enable if
+template<bool b, typename = void>
+struct enable_if {};
+
+template<typename T>
+struct enable_if<true, T> {
+    using type = T;
+};
+
+template<bool b, typename T = void>
+using enable_if_t = typename enable_if<b, T>::type;
 
 }// namespace atp
 

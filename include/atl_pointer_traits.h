@@ -80,6 +80,73 @@ struct pointer_traits_rebind<Sp<T, Args...>, U, false> {
 template<typename Ptr, typename = void>
 struct pointer_traits_impl {};
 
+template<typename Ptr>
+struct pointer_traits_impl<Ptr, void_t<typename pointer_traits_element_type<Ptr>::type>> {
+    using pointer = Ptr;
+    using element_type = typename pointer_traits_element_type<pointer>::type;
+    using difference_type = typename pointer_traits_difference_type<pointer>::type;
+
+    template<typename U>
+    using rebind = typename pointer_traits_rebind<pointer, U>::type;
+
+private:
+    struct nat {};
+
+public:
+    static pointer pointer_to(conditional_t<is_void_v<element_type>, nat, element_type>& r) {
+        return pointer::pointer_to(r);
+    }
+};
+
+template<typename Ptr>
+struct pointer_traits : pointer_traits_impl<Ptr> {};
+
+template<typename T>
+struct pointer_traits<T*> {
+    using pointer = T*;
+    using element_type = T;
+    using difference_type = std::ptrdiff_t;
+
+    template<typename U>
+    using rebind = U*;
+
+private:
+    struct nat {};
+
+public:
+    static pointer pointer_to(conditional_t<is_void_v<element_type>, nat, element_type>& r) {
+        return std::addressof(r);
+    }
+};
+
+template<typename From, typename To>
+using rebind_pointer_t = typename pointer_traits<From>::template rebind<To>;
+
+
+template<typename T>
+constexpr T* to_address(T* p) noexcept {
+    static_assert(!is_function_v<T>, "value is a function type");
+    return p;
+}
+
+template<typename Pointer, typename = void>
+struct HasToAddress : false_type {};
+
+template<typename Pointer>
+struct HasToAddress<Pointer,
+                    decltype((void) pointer_traits<Pointer>::to_address(std::declval<const Pointer&>()))> : true_type {};
+
+
+template<typename Pointer, typename = void>
+struct HasArrow : false_type {};
+
+template<typename Pointer>
+struct HasArrow<Pointer, decltype((void) std::declval<const Pointer&>().operator->())> : true_type {};
+
+template<typename Pointer>
+struct IsFancyPointer {
+    static const bool value = HasArrow<Pointer>::value || HasToAddress<Pointer>::value;
+};
 
 }// namespace atp
 

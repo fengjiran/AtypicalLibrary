@@ -28,11 +28,11 @@ private:
     std::chrono::high_resolution_clock::time_point start;
 };
 
-template<typename T>
-T* to_address(T* p) noexcept {
-    static_assert(!std::is_function_v<T>, "value is a function type");
-    return p;
-}
+// template<typename T>
+// T* to_address(T* p) noexcept {
+//     static_assert(!std::is_function_v<T>, "value is a function type");
+//     return p;
+// }
 
 template<typename Iter, typename value_type>
 using has_input_iterator_category = std::enable_if<

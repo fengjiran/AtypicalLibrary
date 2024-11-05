@@ -266,6 +266,7 @@ public:
     }
 
 private:
+
     template<typename T>
     static void sort(std::vector<T>& nums, std::vector<T>& aux, int left, int right) {
         if (left >= right) {

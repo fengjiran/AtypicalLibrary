@@ -5,8 +5,8 @@
 #ifndef ATL_ALLOCATOR_TRAITS_H
 #define ATL_ALLOCATOR_TRAITS_H
 
-#include "atl_type_traits.h"
 #include "atl_pointer_traits.h"
+#include "atl_type_traits.h"
 
 namespace atp {
 
@@ -35,14 +35,34 @@ struct pointer<T, alloc, raw_alloc, false> {
 
 // const pointer
 ATL_ALLOCATOR_TRAITS_HAS_XXX(has_const_pointer, const_pointer);
+template<typename T, typename Ptr, typename alloc, bool = has_const_pointer<alloc>::value>
+struct const_pointer {
+    using type = typename alloc::const_pointer;
+};
 
+template<typename T, typename Ptr, typename alloc>
+struct const_pointer<T, Ptr, alloc, false> {
+    using type = typename pointer_traits<Ptr>::template rebind<const T>;
+};
 
 // void pointer
+ATL_ALLOCATOR_TRAITS_HAS_XXX(has_void_pointer, void_pointer);
+template<typename Ptr, typename alloc, bool = has_void_pointer<alloc>::value>
+struct void_pointer {
+    using type = typename alloc::void_pointer;
+};
+
+template<typename Ptr, typename alloc>
+struct void_pointer<Ptr, alloc, false> {
+    using type = typename pointer_traits<Ptr>::template rebind<void>;
+};
 
 
 template<typename alloc>
 struct allocator_traits {
     using allocator_type = alloc;
+    using value_type = typename allocator_type::value_type;
+    using pointer = typename pointer<value_type, allocator_type>::type;
 };
 
 }// namespace atp
