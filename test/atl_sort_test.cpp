@@ -3,7 +3,7 @@
 //
 
 #include "atl_sort.hpp"
-
+#include "atl_construct.h"
 #include <gtest/gtest.h>
 #include <thread>
 #include <utils.hpp>
@@ -45,7 +45,9 @@ TEST(SortTest, sort_compare) {
     // auto t1 = atp::SortPerf<atp::Selection>::Evaluate(T, N);
     // auto t2 = atp::SortPerf<atp::Insertion>::Evaluate(T, N);
     auto t3 = atp::SortPerf<atp::Shell>::Evaluate(T, N);
+    auto t4 = atp::SortPerf<atp::MergeSortV1>::Evaluate(T, N);
     // std::cout << "Selection sort time: " << t1 << "s.\n";
     // std::cout << "Insertion sort time: " << t2 << "s.\n";
     std::cout << "Shell sort time: " << t3 << "s.\n";
+    std::cout << "merge sort time: " << t4 << "s.\n";
 }

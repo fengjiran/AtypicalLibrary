@@ -2,6 +2,7 @@
 #define ATL_SORT_HPP
 
 #include "utils.hpp"
+#include "atl_tempbuf.h"
 #include <algorithm>
 #include <iostream>
 #include <iterator>
@@ -260,9 +261,16 @@ public:
 
     template<typename iterator>
     static void sort(iterator begin, iterator end) {
-        using T = typename std::iterator_traits<iterator>::value_type;
-        std::vector<T> aux(std::distance(begin, end));
+        // using T = typename std::iterator_traits<iterator>::value_type;
+        // std::vector<T> aux(std::distance(begin, end));
+        if (begin + 1 >= end) {
+            return;
+        }
 
+        auto mid = begin + (end - begin) / 2;
+        sort(begin, mid);
+        sort(mid, end);
+        std::inplace_merge(begin, mid, end);
     }
 
 private:

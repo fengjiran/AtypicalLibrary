@@ -551,7 +551,7 @@ private:
     void _destruct_at_end(pointer new_last) noexcept {
         pointer p = firstFree;
         while (p != new_last) {
-            alloc_traits::destroy(_alloc(), to_address(--p));
+            alloc_traits::destroy(_alloc(), atp::to_address(--p));
         }
         firstFree = new_last;
     }
