@@ -2,8 +2,8 @@
 // Created by richard on 10/22/24.
 //
 
-#include "atl_sort.hpp"
 #include "atl_construct.h"
+#include "atl_sort.hpp"
 #include <gtest/gtest.h>
 #include <thread>
 #include <utils.hpp>
@@ -33,7 +33,8 @@ TEST(SortTest, Shell) {
 
 TEST(SortTest, merge) {
     std::vector<int> v{8, 4, 5, 9};
-    atp::MergeSortV1::sort(v);
+    // atp::MergeSortV1::sort(v);
+    atp::MergeSortV1::sort(v.begin(), v.end());
     atp::Sort::Show(v.begin(), v.end());
     EXPECT_TRUE(atp::Sort::IsSorted(v.begin(), v.end()));
 }
@@ -50,5 +51,4 @@ TEST(SortTest, sort_compare) {
     // std::cout << "Insertion sort time: " << t2 << "s.\n";
     std::cout << "Shell sort time: " << t3 << "s.\n";
     std::cout << "merge sort time: " << t4 << "s.\n";
-    static_assert(__has_trivial_constructor(int));
 }

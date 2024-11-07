@@ -1,8 +1,8 @@
 #ifndef ATL_SORT_HPP
 #define ATL_SORT_HPP
 
-#include "utils.hpp"
 #include "atl_tempbuf.h"
+#include "utils.hpp"
 #include <algorithm>
 #include <iostream>
 #include <iterator>
@@ -10,6 +10,114 @@
 #include <vector>
 
 namespace atp {
+
+struct Iter_less {
+    template<typename iterator1, typename iterator2>
+    constexpr bool operator()(iterator1 it1, iterator2 it2) const {
+        return *it1 < *it2;
+    }
+};
+
+template<typename InputIterator1,
+         typename InputIterator2,
+         typename OutputIterator,
+         typename Compare>
+void MoveMergeAdaptive(InputIterator1 first1, InputIterator1 last1,
+                       InputIterator2 first2, InputIterator2 last2,
+                       OutputIterator result,
+                       Compare cmp) {
+    while (first1 != last1 && first2 != last2) {
+        if (cmp(first2, first1)) {
+            *result = std::move(*first2);
+            ++first2;
+        } else {
+            *result = std::move(*first1);
+            ++first1;
+        }
+        ++result;
+    }
+
+    if (first1 != last1) {
+        std::move(first1, last1, result);
+    }
+}
+
+/// This is a helper function for the merge routines.
+template<typename BidirectionalIterator1,
+         typename BidirectionalIterator2,
+         typename BidirectionalIterator3,
+         typename Compare>
+void MoveMergeAdaptiveBackward(BidirectionalIterator1 first1,
+                               BidirectionalIterator1 last1,
+                               BidirectionalIterator2 first2,
+                               BidirectionalIterator2 last2,
+                               BidirectionalIterator3 result,
+                               Compare cmp) {
+    if (first1 == last1) {
+        std::move_backward(first2, last2, result);
+        return;
+    }
+
+    if (first2 == last2) {
+        return;
+    }
+
+    --last1;
+    --last2;
+    while (first1 != last1 && first2 != last2) {
+        if (cmp(last2, last1)) {
+            *--result = std::move(*last1);
+            --last1;
+        } else {
+            *--result = std::move(*last2);
+            --last2;
+        }
+    }
+
+    if (first2 != last2) {
+        std::move_backward(first2, ++last2, result);
+    }
+}
+
+/// This is a helper function for the merge routines.
+template<typename BidirectionalIterator, typename Distance, typename Pointer, typename Compare>
+void MergeAdaptive(BidirectionalIterator first,
+                   BidirectionalIterator mid,
+                   BidirectionalIterator last,
+                   Distance len1,
+                   Distance len2,
+                   Pointer buffer,
+                   Compare cmp) {
+    if (len1 <= len2) {
+        Pointer bufferEnd = std::move(first, mid, buffer);
+        MoveMergeAdaptive(buffer, bufferEnd, mid, last, first, cmp);
+    } else {
+        Pointer bufferEnd = std::move(mid, last, buffer);
+        MoveMergeAdaptiveBackward(first, mid, buffer, bufferEnd, last, cmp);
+    }
+}
+
+template<typename BidirectionalIterator, typename Compare>
+void InplaceMerge(BidirectionalIterator first,
+                  BidirectionalIterator mid,
+                  BidirectionalIterator last,
+                  Compare cmp) {
+    using value_type = typename std::iterator_traits<BidirectionalIterator>::value_type;
+    using distance_type = typename std::iterator_traits<BidirectionalIterator>::difference_type;
+    using buffer_type = TemporaryBuffer<BidirectionalIterator, value_type>;
+
+    if (first == mid || mid == last) {
+        return;
+    }
+
+    const distance_type len1 = std::distance(first, mid);
+    const distance_type len2 = std::distance(mid, last);
+
+    // merge_adaptive will use a buffer for the smaller of
+    // [first,middle) and [middle,last).
+    buffer_type buf(first, std::min(len1, len2));
+    MergeAdaptive(first, mid, last, len1, len2, buf.begin(), cmp);
+}
 
 class Sort {
 public:
@@ -261,8 +369,6 @@ public:
 
     template<typename iterator>
     static void sort(iterator begin, iterator end) {
-        // using T = typename std::iterator_traits<iterator>::value_type;
-        // std::vector<T> aux(std::distance(begin, end));
         if (begin + 1 >= end) {
             return;
         }
@@ -270,11 +376,11 @@ public:
         auto mid = begin + (end - begin) / 2;
         sort(begin, mid);
         sort(mid, end);
-        std::inplace_merge(begin, mid, end);
+        InplaceMerge(begin, mid, end, Iter_less());
+        // std::inplace_merge(begin, mid, end);
     }
 
 private:
-
     template<typename T>
     static void sort(std::vector<T>& nums, std::vector<T>& aux, int left, int right) {
         if (left >= right) {
@@ -307,7 +413,6 @@ private:
             }
         }
     }
-
 };
 
 // merge sort with improvements
