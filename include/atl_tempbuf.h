@@ -49,6 +49,31 @@ public:
 
     TemporaryBuffer(ForwardIter seed, size_type original_len);
 
+    TemporaryBuffer(const TemporaryBuffer&) = delete;
+
+    TemporaryBuffer& operator=(const TemporaryBuffer&) = delete;
+
+    size_type size() const {
+        return m_len;
+    }
+
+    size_type requested_size() const {
+        return m_original_len;
+    }
+
+    iterator begin() {
+        return m_buffer;
+    }
+
+    iterator end() {
+        return m_buffer + m_len;
+    }
+
+    ~TemporaryBuffer() {
+        destroy(m_buffer, m_buffer + m_len);
+        return_temporary_buffer(m_buffer, m_len);
+    }
+
 protected:
     size_type m_original_len;
     size_type m_len;
