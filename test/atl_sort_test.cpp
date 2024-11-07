@@ -50,4 +50,5 @@ TEST(SortTest, sort_compare) {
     // std::cout << "Insertion sort time: " << t2 << "s.\n";
     std::cout << "Shell sort time: " << t3 << "s.\n";
     std::cout << "merge sort time: " << t4 << "s.\n";
+    static_assert(__has_trivial_constructor(int));
 }

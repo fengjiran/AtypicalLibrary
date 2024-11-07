@@ -7,6 +7,8 @@
 
 #include "atl_construct.h"
 
+#include <algorithm>
+
 namespace atp {
 
 template<typename T>
@@ -32,6 +34,11 @@ void return_temporary_buffer(T* p) {
     ::operator delete(p);
 }
 
+template<typename T>
+void return_temporary_buffer(T* p, size_t len) {
+    ::operator delete(p, len * sizeof(T));
+}
+
 template<typename ForwardIter, typename T>
 class TemporaryBuffer {
 public:
@@ -48,12 +55,70 @@ protected:
     pointer m_buffer;
 };
 
+template<bool>
+struct uninitialized_construct_buf_dispatch {
+    template<typename Pointer, typename ForwardIterator>
+    static void ucr(Pointer first, Pointer last, ForwardIterator seed) {
+        if (first == last) {
+            return;
+        }
+
+        Pointer cur = first;
+        try {
+            construct_at(std::addressof(*first), std::move(*seed));
+            Pointer prev = cur;
+            ++cur;
+
+            while (cur != last) {
+                construct_at(std::addressof(*cur), std::move(*prev));
+                ++cur;
+                ++prev;
+            }
+            *seed = std::move(*prev);
+        } catch (...) {
+            destroy(first, cur);
+            throw;
+        }
+    }
+};
+
+template<>
+struct uninitialized_construct_buf_dispatch<true> {
+    template<typename Pointer, typename ForwardIterator>
+    static void ucr(Pointer first, Pointer last, ForwardIterator seed) {}
+};
+
+// Constructs objects in the range [first, last).
+// Note that while these new objects will take valid values,
+// their exact value is not defined. In particular they may
+// be 'moved from'.
+//
+// While *__seed may be altered during this algorithm, it will have
+// the same value when the algorithm finishes, unless one of the
+// constructions throws.
+//
+// Requirements: _Pointer::value_type(_Tp&&) is valid.
+template<typename Pointer, typename ForwardIterator>
+void uninitialized_construct_buf(Pointer first, Pointer last, ForwardIterator seed) {
+    using value_type = typename std::iterator_traits<Pointer>::value_type;
+    uninitialized_construct_buf_dispatch<__has_trivial_constructor(value_type)>::ucr(
+            first, last, seed);
+}
+
 template<typename ForwardIter, typename T>
 TemporaryBuffer<ForwardIter, T>::TemporaryBuffer(ForwardIter seed, size_type original_len)
     : m_original_len(original_len), m_len(0), m_buffer(nullptr) {
-    std::pair<pointer, size_type> p(get_temporary_buffer<T>(original_len));
+    std::pair<pointer, size_type> p = get_temporary_buffer<T>(original_len);
+
     if (p.first) {
-        //
+        try {
+            uninitialized_construct_buf(p.first, p.first + p.second, seed);
+            m_buffer = p.first;
+            m_len = p.second;
+        } catch (...) {
+            return_temporary_buffer(p.first, p.second);
+            throw;
+        }
     }
 }
 
