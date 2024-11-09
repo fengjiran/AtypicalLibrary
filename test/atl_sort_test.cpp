@@ -41,14 +41,16 @@ TEST(SortTest, merge) {
 
 TEST(SortTest, sort_compare) {
     // GTEST_SKIP();
-    int T = 100;
-    int N = 100000;
+    int T = 10;
+    int N = 1000000;
+    auto t0 = atp::SortPerf<atp::StdSort>::Evaluate(T, N);
     // auto t1 = atp::SortPerf<atp::Selection>::Evaluate(T, N);
     // auto t2 = atp::SortPerf<atp::Insertion>::Evaluate(T, N);
     auto t3 = atp::SortPerf<atp::Shell>::Evaluate(T, N);
     auto t4 = atp::SortPerf<atp::MergeSortV1>::Evaluate(T, N);
     // std::cout << "Selection sort time: " << t1 << "s.\n";
     // std::cout << "Insertion sort time: " << t2 << "s.\n";
+    std::cout << "std sort time: " << t0 << "s.\n";
     std::cout << "Shell sort time: " << t3 << "s.\n";
     std::cout << "merge sort time: " << t4 << "s.\n";
 }

@@ -3,7 +3,9 @@
 
 #include "atl_tempbuf.h"
 #include "utils.hpp"
+
 #include <algorithm>
+#include <cassert>
 #include <iostream>
 #include <iterator>
 #include <random>
@@ -360,24 +362,32 @@ public:
 // original merge sort
 class MergeSortV1 : public Sort {
 public:
-    template<typename T>
-    static void sort(std::vector<T>& nums) {
-        auto n = nums.size();
-        std::vector<T> aux(n);
-        sort(nums, aux, 0, n - 1);
-    }
-
     template<typename iterator>
-    static void sort(iterator begin, iterator end) {
-        if (begin + 1 >= end) {
+    static void sort(iterator begin, iterator end, int cutoff = 7) {
+        // if (begin + 1 >= end) {
+        //     return;
+        // }
+
+        if (std::distance(begin, end) <= cutoff) {
+            Insertion::sort(begin, end);
             return;
         }
 
         auto mid = begin + (end - begin) / 2;
         sort(begin, mid);
         sort(mid, end);
+        if (*(mid - 1) <= *mid) {
+            return;
+        }
         InplaceMerge(begin, mid, end, Iter_less());
         // std::inplace_merge(begin, mid, end);
+    }
+
+    template<typename T>
+    static void sort(std::vector<T>& nums) {
+        auto n = nums.size();
+        std::vector<T> aux(n);
+        sort(nums, aux, 0, n - 1);
     }
 
 private:
@@ -415,9 +425,13 @@ private:
     }
 };
 
-// merge sort with improvements
-class MergeSortV2 : public Sort {
+
+class StdSort : public Sort {
 public:
+    template<typename iterator>
+    static void sort(iterator begin, iterator end) {
+        std::sort(begin, end);
+    }
 };
 
 template<typename sortAlgo>
@@ -437,6 +451,7 @@ public:
             }
             total += time(nums.begin(), nums.end());
         }
+        assert(Sort::IsSorted(nums.begin(), nums.end()));
         return total;
     }
 
