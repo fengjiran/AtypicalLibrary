@@ -57,6 +57,70 @@ struct void_pointer<Ptr, alloc, false> {
     using type = typename pointer_traits<Ptr>::template rebind<void>;
 };
 
+// const void pointer
+ATL_ALLOCATOR_TRAITS_HAS_XXX(has_const_void_pointer, const_void_pointer);
+template<typename Ptr, typename alloc, bool = has_const_void_pointer<alloc>::value>
+struct const_void_pointer {
+    using type = typename alloc::const_void_pointer;
+};
+
+template<typename Ptr, typename alloc>
+struct const_void_pointer<Ptr, alloc, false> {
+    using type = typename pointer_traits<Ptr>::template rebind<const void>;
+};
+
+// size type
+ATL_ALLOCATOR_TRAITS_HAS_XXX(has_size_type, size_type);
+template<typename alloc, typename DiffType, bool = has_size_type<alloc>::value>
+struct size_type : std::make_unsigned<DiffType> {};
+
+template<typename alloc, typename DiffType>
+struct size_type<alloc, DiffType, true> {
+    using type = typename alloc::size_type;
+};
+
+// difference type
+ATL_ALLOCATOR_TRAITS_HAS_XXX(has_alloc_traits_difference_type, difference_type);
+template<typename alloc, typename Ptr, bool = has_alloc_traits_difference_type<alloc>::value>
+struct alloc_traits_difference_type {
+    using type = typename pointer_traits<Ptr>::difference_type;
+};
+
+template<typename alloc, typename Ptr>
+struct alloc_traits_difference_type<alloc, Ptr, true> {
+    using type = typename alloc::difference_type;
+};
+
+// propagate on container copy assignment
+ATL_ALLOCATOR_TRAITS_HAS_XXX(has_propagate_on_container_copy_assignment, propagate_on_container_copy_assignment);
+template<typename alloc, bool = has_propagate_on_container_copy_assignment<alloc>::value>
+struct propagate_on_container_copy_assignment : false_type {};
+
+template<typename alloc>
+struct propagate_on_container_copy_assignment<alloc, true> {
+    using type = typename alloc::propagate_on_container_copy_assignment;
+};
+
+// propagate on container move assignment
+ATL_ALLOCATOR_TRAITS_HAS_XXX(has_propagate_on_container_move_assignment, propagate_on_container_move_assignment);
+template<typename alloc, bool = has_propagate_on_container_move_assignment<alloc>::value>
+struct propagate_on_container_move_assignment : false_type {};
+
+template<typename alloc>
+struct propagate_on_container_move_assignment<alloc, true> {
+    using type = typename alloc::propagate_on_container_move_assignment;
+};
+
+// propagate on container swap
+ATL_ALLOCATOR_TRAITS_HAS_XXX(has_propagate_on_container_swap, propagate_on_container_swap);
+template<typename alloc, bool = has_propagate_on_container_swap<alloc>::value>
+struct propagate_on_container_swap : false_type {};
+
+template<typename alloc>
+struct propagate_on_container_swap<alloc, true> {
+    using type = typename alloc::propagate_on_container_swap;
+};
+
 
 template<typename alloc>
 struct allocator_traits {

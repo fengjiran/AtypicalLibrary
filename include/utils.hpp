@@ -48,13 +48,13 @@ using has_input_iterator_category = std::enable_if<
     struct NAME<T, void_t<typename T::PROPERTY>> : true_type {}
 
 // propagate on container copy assignment
-HAS_PROPERTY(has_propagate_on_container_copy_assignment, propagate_on_container_copy_assignment);
+// HAS_PROPERTY(has_propagate_on_container_copy_assignment, propagate_on_container_copy_assignment);
 
 // propagate on container move assignment
-HAS_PROPERTY(has_propagate_on_container_move_assignment, propagate_on_container_move_assignment);
+// HAS_PROPERTY(has_propagate_on_container_move_assignment, propagate_on_container_move_assignment);
 
 // propagate on container swap
-HAS_PROPERTY(has_propagate_on_container_swap, propagate_on_container_swap);
+// HAS_PROPERTY(has_propagate_on_container_swap, propagate_on_container_swap);
 
 template<typename, typename = void>
 struct _has_select_on_container_copy_construction : false_type {};
@@ -77,32 +77,32 @@ constexpr static alloc select_on_container_copy_construction(const alloc& a) {
     return a;
 }
 
-template<typename alloc,
-         bool = has_propagate_on_container_copy_assignment<alloc>::value>
-struct propagate_on_container_copy_assignment : false_type {};
+// template<typename alloc,
+//          bool = has_propagate_on_container_copy_assignment<alloc>::value>
+// struct propagate_on_container_copy_assignment : false_type {};
+//
+// template<typename alloc>
+// struct propagate_on_container_copy_assignment<alloc, true> {
+//     using type = typename alloc::propagate_on_container_copy_assignment;
+// };
 
-template<typename alloc>
-struct propagate_on_container_copy_assignment<alloc, true> {
-    using type = typename alloc::propagate_on_container_copy_assignment;
-};
+// template<typename alloc,
+//          bool = has_propagate_on_container_move_assignment<alloc>::value>
+// struct propagate_on_container_move_assignment : false_type {};
+//
+// template<typename alloc>
+// struct propagate_on_container_move_assignment<alloc, true> {
+//     using type = typename alloc::propagate_on_container_move_assignment;
+// };
 
-template<typename alloc,
-         bool = has_propagate_on_container_move_assignment<alloc>::value>
-struct propagate_on_container_move_assignment : false_type {};
-
-template<typename alloc>
-struct propagate_on_container_move_assignment<alloc, true> {
-    using type = typename alloc::propagate_on_container_move_assignment;
-};
-
-template<typename alloc,
-         bool = has_propagate_on_container_swap<alloc>::value>
-struct propagate_on_container_swap : false_type {};
-
-template<typename alloc>
-struct propagate_on_container_swap<alloc, true> {
-    using type = typename alloc::propagate_on_container_swap;
-};
+// template<typename alloc,
+//          bool = has_propagate_on_container_swap<alloc>::value>
+// struct propagate_on_container_swap : false_type {};
+//
+// template<typename alloc>
+// struct propagate_on_container_swap<alloc, true> {
+//     using type = typename alloc::propagate_on_container_swap;
+// };
 
 }// namespace atp
 

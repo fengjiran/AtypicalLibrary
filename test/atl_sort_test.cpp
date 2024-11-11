@@ -10,8 +10,9 @@
 
 TEST(SortTest, selection) {
     std::vector<int> v{8, 4, 5, 9};
-    // atp::Selection::sort(v.begin(), v.end());
-    atp::Selection::sort(v);
+    auto cmp = atp::Iter_less();
+    atp::Selection::sort(v.begin(), v.end(), cmp);
+    // atp::Selection::sort(v);
     atp::Selection::Show(v.begin(), v.end());
     EXPECT_TRUE(atp::Selection::IsSorted(v.begin(), v.end()));
 }
@@ -32,9 +33,11 @@ TEST(SortTest, Shell) {
 }
 
 TEST(SortTest, merge) {
-    std::vector<int> v{8, 4, 5, 9};
-    // atp::MergeSortV1::sort(v);
-    atp::MergeSortV1::sort(v.begin(), v.end());
+    std::vector<int> v{1, 4, 10, 9};
+    auto mid = v.begin() + (v.end() - v.begin()) / 2;
+    // atp::MoveMedianOfThree(v.begin(), v.begin(), mid, v.end() - 1, atp::Iter_less());
+    // atp::MergeSort::sort(v);
+    atp::MergeSort::sort(v.begin(), v.end());
     atp::Sort::Show(v.begin(), v.end());
     EXPECT_TRUE(atp::Sort::IsSorted(v.begin(), v.end()));
 }
@@ -47,7 +50,7 @@ TEST(SortTest, sort_compare) {
     // auto t1 = atp::SortPerf<atp::Selection>::Evaluate(T, N);
     // auto t2 = atp::SortPerf<atp::Insertion>::Evaluate(T, N);
     auto t3 = atp::SortPerf<atp::Shell>::Evaluate(T, N);
-    auto t4 = atp::SortPerf<atp::MergeSortV1>::Evaluate(T, N);
+    auto t4 = atp::SortPerf<atp::MergeSort>::Evaluate(T, N);
     // std::cout << "Selection sort time: " << t1 << "s.\n";
     // std::cout << "Insertion sort time: " << t2 << "s.\n";
     std::cout << "std sort time: " << t0 << "s.\n";

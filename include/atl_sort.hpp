@@ -121,6 +121,23 @@ void InplaceMerge(BidirectionalIterator first,
     MergeAdaptive(first, mid, last, len1, len2, buf.begin(), cmp);
 }
 
+template<typename Iterator, typename Compare>
+void MoveMedianOfThree(Iterator result, Iterator first, Iterator mid, Iterator last, Compare cmp) {
+    if (cmp(mid, first)) {
+        std::iter_swap(first, mid);
+    }
+
+    if (cmp(last, mid)) {
+        std::iter_swap(mid, last);
+    }
+
+    if (cmp(mid, first)) {
+        std::iter_swap(first, mid);
+    }
+
+    std::iter_swap(result, mid);
+}
+
 class Sort {
 public:
     template<typename iterator>
@@ -151,9 +168,20 @@ class Selection : public Sort {
 public:
     template<typename iterator>
     static void sort(iterator begin, iterator end) {
+        sort(begin, end, Iter_less());
+    }
+
+    template<typename iterator, typename Compare>
+    static void sort(iterator begin, iterator end, Compare cmp) {
         for (auto it = begin; it != end; ++it) {
-            auto minIter = std::min_element(it, end);
-            std::iter_swap(it, minIter);
+            auto it1 = it;
+            for (auto it2 = it + 1; it2 != end; ++it2) {
+                if (cmp(it2, it1)) {
+                    it1 = it2;
+                }
+            }
+            // auto minIter = std::min_element(it, end);
+            std::iter_swap(it, it1);
         }
     }
 
@@ -175,23 +203,28 @@ public:
 class Insertion : public Sort {
 public:
     template<typename iterator>
-    static void sort(iterator begin, iterator end, bool useSentinel = true) {
+    static void sort(iterator begin, iterator end) {
+        sort(begin, end, Iter_less());
+    }
+
+    template<typename iterator, typename Compare>
+    static void sort(iterator begin, iterator end, Compare cmp, bool useSentinel = true) {
         if (useSentinel) {
-            sortWithSentinel(begin, end);
+            sortWithSentinel(begin, end, cmp);
         } else {
-            sortWithoutSentinel(begin, end);
+            sortWithoutSentinel(begin, end, cmp);
         }
     }
 
-    template<typename iterator>
-    static void sortWithSentinel(iterator begin, iterator end) {
+    template<typename iterator, typename Compare>
+    static void sortWithSentinel(iterator begin, iterator end, Compare cmp) {
         if (begin == end) {
             return;
         }
 
         size_t exchNum = 0;
         for (auto it = end - 1; it != begin; --it) {
-            if (*it < *(it - 1)) {
+            if (cmp(it, it - 1)) {
                 std::iter_swap(it, it - 1);
                 exchNum++;
             }
@@ -202,30 +235,30 @@ public:
         }
 
         for (auto it = begin + 2; it != end; ++it) {
-            auto x = *it;
+            auto x = it;
             auto it1 = it;
-            while (x < *(it1 - 1)) {
+            while (cmp(x, it1 - 1)) {
                 *it1 = *(it1 - 1);
                 --it1;
             }
-            *it1 = x;
+            *it1 = *x;
         }
     }
 
-    template<typename iterator>
-    static void sortWithoutSentinel(iterator begin, iterator end) {
+    template<typename iterator, typename Compare>
+    static void sortWithoutSentinel(iterator begin, iterator end, Compare cmp) {
         if (begin == end) {
             return;
         }
 
         for (auto it = begin + 1; it != end; ++it) {
-            auto x = *it;
+            auto x = it;
             auto it1 = it;
-            while (it1 != begin && x < *(it1 - 1)) {
+            while (it1 != begin && cmp(x, it1 - 1)) {
                 *it1 = *(it1 - 1);
                 --it1;
             }
-            *it1 = x;
+            *it1 = *x;
         }
     }
 
@@ -286,6 +319,11 @@ class Shell : public Sort {
 public:
     template<typename iterator>
     static void sort(iterator begin, iterator end) {
+        sort(begin, end, Iter_less());
+    }
+
+    template<typename iterator, typename Compare>
+    static void sort(iterator begin, iterator end, Compare cmp) {
         if (begin == end) {
             return;
         }
@@ -299,7 +337,7 @@ public:
         while (h >= 1) {
             for (auto it = begin + h; it != end; ++it) {
                 auto it1 = it;
-                while (it1 >= begin + h && *it1 < *(it1 - h)) {
+                while (it1 >= begin + h && cmp(it1, it1 - h)) {
                     std::iter_swap(it1, it1 - h);
                     it1 -= h;
                 }
@@ -360,26 +398,35 @@ public:
 };
 
 // original merge sort
-class MergeSortV1 : public Sort {
+class MergeSort : public Sort {
 public:
     template<typename iterator>
-    static void sort(iterator begin, iterator end, int cutoff = 7) {
+    static void sort(iterator begin, iterator end) {
+        sort(begin, end, Iter_less());
+    }
+
+    template<typename iterator, typename Compare>
+    static void sort(iterator begin, iterator end, Compare cmp, int cutoff = 15) {
         // if (begin + 1 >= end) {
         //     return;
         // }
 
         if (std::distance(begin, end) <= cutoff) {
-            Insertion::sort(begin, end);
+            Insertion::sort(begin, end, cmp);
             return;
         }
 
         auto mid = begin + (end - begin) / 2;
         sort(begin, mid);
         sort(mid, end);
-        if (*(mid - 1) <= *mid) {
+        if (!cmp(mid, mid - 1)) {
             return;
         }
-        InplaceMerge(begin, mid, end, Iter_less());
+
+        // if (*(mid - 1) <= *mid) {
+        //     return;
+        // }
+        InplaceMerge(begin, mid, end, cmp);
         // std::inplace_merge(begin, mid, end);
     }
 
@@ -425,22 +472,37 @@ private:
     }
 };
 
+class QuickSort : public Sort {
+public:
+    template<typename RandomAccessIterator>
+    void static sort(RandomAccessIterator begin, RandomAccessIterator end) {
+        //
+    }
+};
+
 
 class StdSort : public Sort {
 public:
     template<typename iterator>
     static void sort(iterator begin, iterator end) {
+        sort(begin, end, Iter_less());
+    }
+
+    template<typename iterator, typename Compare>
+    static void sort(iterator begin, iterator end, Compare cmp) {
         std::sort(begin, end);
     }
 };
 
-template<typename sortAlgo>
+template<typename SortAlgo>
 class SortPerf {
 public:
     static double Evaluate(int T, int N) {
         std::random_device rd;
         std::mt19937 gen(rd());
         std::uniform_real_distribution<float> dist(0, 1);
+
+        auto cmp = Iter_less();
 
         std::vector<float> nums(N);
         double total = 0;
@@ -449,16 +511,16 @@ public:
             for (int i = 0; i < N; ++i) {
                 nums[i] = dist(gen);
             }
-            total += time(nums.begin(), nums.end());
+            total += time(nums.begin(), nums.end(), cmp);
         }
         assert(Sort::IsSorted(nums.begin(), nums.end()));
         return total;
     }
 
-    template<typename iterator>
-    static double time(iterator begin, iterator end) {
+    template<typename iterator, typename Compare>
+    static double time(iterator begin, iterator end, Compare cmp) {
         Timer t;
-        sortAlgo::sort(begin, end);
+        SortAlgo::sort(begin, end, cmp);
         return t.GetElapsedTime();
     }
 };
