@@ -121,6 +121,15 @@ struct propagate_on_container_swap<alloc, true> {
     using type = typename alloc::propagate_on_container_swap;
 };
 
+ATL_ALLOCATOR_TRAITS_HAS_XXX(has_is_always_true, is_always_true);
+template<typename alloc, bool = has_is_always_true<alloc>::value>
+struct is_always_true : std::is_empty<alloc> {};
+
+template<typename alloc>
+struct is_always_true<alloc, true> {
+    using type = typename alloc::is_always_true;
+};
+
 
 template<typename alloc>
 struct allocator_traits {

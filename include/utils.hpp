@@ -41,11 +41,11 @@ using has_input_iterator_category = std::enable_if<
         int>;
 
 
-#define HAS_PROPERTY(NAME, PROPERTY)      \
-    template<typename T, typename = void> \
-    struct NAME : false_type {};          \
-    template<typename T>                  \
-    struct NAME<T, void_t<typename T::PROPERTY>> : true_type {}
+// #define HAS_PROPERTY(NAME, PROPERTY)      \
+//     template<typename T, typename = void> \
+//     struct NAME : false_type {};          \
+//     template<typename T>                  \
+//     struct NAME<T, void_t<typename T::PROPERTY>> : true_type {}
 
 // propagate on container copy assignment
 // HAS_PROPERTY(has_propagate_on_container_copy_assignment, propagate_on_container_copy_assignment);
