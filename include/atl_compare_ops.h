@@ -7,6 +7,13 @@
 
 namespace atp {
 
+struct Val_less_val {
+    template<typename T, typename U>
+    constexpr bool operator()(const T& lhs, const U& rhs) const {
+        return lhs < rhs;
+    }
+};
+
 struct Iter_less_iter {
     template<typename iterator1, typename iterator2>
     constexpr bool operator()(iterator1 it1, iterator2 it2) const {

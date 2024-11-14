@@ -210,106 +210,34 @@ class Insertion : public Sort {
 public:
     template<typename RandomAccessIterator>
     static void sort(RandomAccessIterator begin, RandomAccessIterator end) {
-        _sort(begin, end, iter_less_iter());
+        sort(begin, end, Val_less_val());
     }
 
     template<typename RandomAccessIterator, typename Compare>
     static void sort(RandomAccessIterator begin, RandomAccessIterator end, Compare cmp) {
-        _sort(begin, end, iter_comp_iter(cmp));
-    }
-
-
-    template<typename iterator, typename Compare>
-    static void sort_dep(iterator begin, iterator end, Compare cmp, bool useSentinel = true) {
-        if (useSentinel) {
-            sortWithSentinel(begin, end, cmp);
-        } else {
-            sortWithoutSentinel(begin, end, cmp);
-        }
-    }
-
-private:
-    template<typename RandomAccessIterator, typename Compare>
-    static void _sort(RandomAccessIterator begin, RandomAccessIterator end, Compare cmp) {
         if (begin == end) {
             return;
         }
 
         for (auto it = begin + 1; it != end; ++it) {
             auto val = std::move(*it);
-            if (cmp(it, begin)) {
+            if (cmp(val, *begin)) {
                 std::move_backward(begin, it, it + 1);
                 *begin = std::move(val);
             } else {
-                auto cmp1 = val_comp_iter(cmp);
-                auto next = it;
-                while (cmp1(val, next - 1)) {
-                    *next = std::move(*(next - 1));
-                    --next;
+                auto j = it;
+                while (cmp(val, *(j - 1))) {
+                    *j = std::move(*(j - 1));
+                    --j;
                 }
-                *next = std::move(val);
+                *j = std::move(val);
             }
-        }
-    }
-
-    template<typename iterator, typename Compare>
-    static void sortWithSentinel(iterator begin, iterator end, Compare cmp) {
-        if (begin == end || begin + 1 == end) {
-            return;
-        }
-
-        size_t exchNum = 0;
-        for (auto it = end - 1; it != begin; --it) {
-            if (cmp(it, it - 1)) {
-                std::iter_swap(it, it - 1);
-                exchNum++;
-            }
-        }
-
-        if (exchNum == 0) {
-            return;
-        }
-
-        for (auto it = begin + 2; it != end; ++it) {
-            auto x = it;
-            auto it1 = it;
-            while (cmp(x, it1 - 1)) {
-                *it1 = *(it1 - 1);
-                --it1;
-            }
-            *it1 = *x;
-        }
-    }
-
-    template<typename iterator, typename Compare>
-    static void sortWithoutSentinel(iterator begin, iterator end, Compare cmp) {
-        if (begin == end || begin + 1 == end) {
-            return;
-        }
-
-        for (auto it = begin + 1; it != end; ++it) {
-            auto x = *it;
-            auto it1 = it;
-            while (it1 != begin && *(it1 - 1) > x) {
-                *it1 = *(it1 - 1);
-                --it1;
-            }
-            *it1 = x;
-        }
-    }
-
-    template<typename T>
-    static void sort(std::vector<T>& nums, bool useSentinel = true) {
-        if (useSentinel) {
-            sortWithSentinel(nums);
-        } else {
-            sortWithoutSentinel(nums);
         }
     }
 
     // with sentinel
     template<typename T>
-    static void sortWithSentinel(std::vector<T>& nums) {
+    static void sort(std::vector<T>& nums) {
         auto n = nums.size();
         size_t exchNum = 0;
         for (size_t i = n - 1; i > 0; --i) {
@@ -327,22 +255,6 @@ private:
             auto x = nums[i];
             auto j = i;
             while (x < nums[j - 1]) {
-                nums[j] = nums[j - 1];
-                --j;
-            }
-            nums[j] = x;
-        }
-    }
-
-    // without sentinel
-    template<typename T>
-    static void sortWithoutSentinel(std::vector<T>& nums) {
-        auto n = nums.size();
-
-        for (size_t i = 1; i < n; ++i) {
-            auto x = nums[i];
-            auto j = i;
-            while (j > 0 && x < nums[j - 1]) {
                 nums[j] = nums[j - 1];
                 --j;
             }
@@ -438,23 +350,24 @@ class MergeSort : public Sort {
 public:
     template<typename iterator>
     static void sort(iterator begin, iterator end) {
-        sort(begin, end, Iter_less_iter());
+        sort(begin, end, iter_less_iter());
     }
 
     template<typename iterator, typename Compare>
-    static void sort(iterator begin, iterator end, Compare cmp, int cutoff = 15) {
-        // if (begin + 1 >= end) {
-        //     return;
-        // }
-
-        if (std::distance(begin, end) <= cutoff) {
-            Insertion::sort(begin, end, cmp);
+    static void sort(iterator begin, iterator end, Compare cmp) {
+        if (begin + 1 >= end) {
             return;
         }
+        //        int cutoff = 15;
+        //
+        //        if (std::distance(begin, end) <= cutoff) {
+        //            Insertion::sort(begin, end, cmp);
+        //            return;
+        //        }
 
         auto mid = begin + (end - begin) / 2;
-        sort(begin, mid);
-        sort(mid, end);
+        sort(begin, mid, cmp);
+        sort(mid, end, cmp);
         if (!cmp(mid, mid - 1)) {
             return;
         }
@@ -538,8 +451,6 @@ public:
         std::mt19937 gen(rd());
         std::uniform_real_distribution<float> dist(0, 1);
 
-        auto cmp = [](float a, float b) { return a < b; };
-
         std::vector<float> nums(N);
         double total = 0;
 
@@ -547,16 +458,16 @@ public:
             for (int i = 0; i < N; ++i) {
                 nums[i] = dist(gen);
             }
-            total += time(nums.begin(), nums.end(), cmp);
+            total += time(nums.begin(), nums.end());
         }
         assert(Sort::IsSorted(nums.begin(), nums.end()));
         return total;
     }
 
-    template<typename iterator, typename Compare>
-    static double time(iterator begin, iterator end, Compare cmp) {
+    template<typename iterator>
+    static double time(iterator begin, iterator end) {
         Timer t;
-        SortAlgo::sort(begin, end, cmp);
+        SortAlgo::sort(begin, end);
         return t.GetElapsedTime();
     }
 };

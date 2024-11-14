@@ -17,7 +17,7 @@ TEST(SortTest, selection) {
 
 TEST(SortTest, insertion) {
     // GTEST_SKIP();
-    std::vector<int> v{8, 4, 5, 9};
+    std::vector<int> v{3, 6, 2, 9, 7};
     atp::Insertion::sort(v.begin(), v.end());
     atp::Insertion::Show(v.begin(), v.end());
     EXPECT_TRUE(atp::Insertion::IsSorted(v.begin(), v.end()));
