@@ -41,7 +41,7 @@ TEST(SortTest, merge) {
 }
 
 TEST(SortTest, sort_compare) {
-    GTEST_SKIP();
+    // GTEST_SKIP();
     int T = 10;
     int N = 1000000;
     auto t0 = atp::SortPerf<atp::StdSort>::Evaluate(T, N);

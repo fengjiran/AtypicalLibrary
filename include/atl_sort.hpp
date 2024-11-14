@@ -23,7 +23,7 @@ void MoveMergeAdaptive(InputIterator1 first1, InputIterator1 last1,
                        OutputIterator result,
                        Compare cmp) {
     while (first1 != last1 && first2 != last2) {
-        if (cmp(first2, first1)) {
+        if (cmp(*first2, *first1)) {
             *result = std::move(*first2);
             ++first2;
         } else {
@@ -61,7 +61,7 @@ void MoveMergeAdaptiveBackward(BidirectionalIterator1 first1,
     --last1;
     --last2;
     while (first1 != last1 && first2 != last2) {
-        if (cmp(last2, last1)) {
+        if (cmp(*last2, *last1)) {
             *--result = std::move(*last1);
             --last1;
         } else {
@@ -258,13 +258,13 @@ public:
 
 class Shell : public Sort {
 public:
-    template<typename iterator>
-    static void sort(iterator begin, iterator end) {
-        sort(begin, end, Iter_less_iter());
+    template<typename RandomAccessIterator>
+    static void sort(RandomAccessIterator begin, RandomAccessIterator end) {
+        sort(begin, end, Val_less_val());
     }
 
-    template<typename iterator, typename Compare>
-    static void sort(iterator begin, iterator end, Compare cmp) {
+    template<typename RandomAccessIterator, typename Compare>
+    static void sort(RandomAccessIterator begin, RandomAccessIterator end, Compare cmp) {
         if (begin == end) {
             return;
         }
@@ -277,42 +277,15 @@ public:
 
         while (h >= 1) {
             for (auto it = begin + h; it != end; ++it) {
-                auto it1 = it;
-                while (it1 >= begin + h && cmp(it1, it1 - h)) {
-                    std::iter_swap(it1, it1 - h);
-                    it1 -= h;
+                auto val = std::move(*it);
+                auto j = it;
+                while (j >= begin + h && cmp(val, *(j - h))) {
+                    *j = std::move(*(j - h));
+                    j -= h;
                 }
+                *j = std::move(val);
             }
             h = h / 3;
-        }
-    }
-
-    template<typename iterator>
-    static void sort1(iterator begin, iterator end) {
-        if (begin == end) {
-            return;
-        }
-
-        auto n = std::distance(begin, end);
-        std::vector<int> hvec{1};
-        while (true) {
-            int t = 3 * hvec.back() + 1;
-            if (t >= n / 3) {
-                break;
-            }
-            hvec.push_back(t);
-        }
-
-        int m = static_cast<int>(hvec.size());
-        for (int i = m - 1; i >= 0; --i) {
-            int h = hvec[i];
-            for (auto it = begin + h; it != end; ++it) {
-                auto it1 = it;
-                while (it1 >= begin + h && *it1 < *(it1 - h)) {
-                    std::iter_swap(it1, it1 - h);
-                    it1 -= h;
-                }
-            }
         }
     }
 
@@ -341,9 +314,13 @@ public:
 // original merge sort
 class MergeSort : public Sort {
 public:
+    enum class Threshold {
+        kCutoff = 16
+    };
+
     template<typename iterator>
     static void sort(iterator begin, iterator end) {
-        sort(begin, end, iter_less_iter());
+        sort(begin, end, Val_less_val());
     }
 
     template<typename iterator, typename Compare>
@@ -351,23 +328,21 @@ public:
         if (begin + 1 >= end) {
             return;
         }
-        //        int cutoff = 15;
-        //
-        //        if (std::distance(begin, end) <= cutoff) {
-        //            Insertion::sort(begin, end, cmp);
-        //            return;
-        //        }
+
+        auto n = std::distance(begin, end);
+
+        if (n <= static_cast<decltype(n)>(Threshold::kCutoff)) {
+            Insertion::sort(begin, end, cmp);
+            return;
+        }
 
         auto mid = begin + (end - begin) / 2;
         sort(begin, mid, cmp);
         sort(mid, end, cmp);
-        if (!cmp(mid, mid - 1)) {
+        if (cmp(*(mid - 1), *mid)) {
             return;
         }
 
-        // if (*(mid - 1) <= *mid) {
-        //     return;
-        // }
         InplaceMerge(begin, mid, end, cmp);
         // std::inplace_merge(begin, mid, end);
     }
