@@ -315,7 +315,7 @@ public:
 class MergeSort : public Sort {
 public:
     enum class Threshold {
-        kCutoff = 16
+        kCutoff = 15
     };
 
     template<typename iterator>
@@ -402,7 +402,7 @@ class StdSort : public Sort {
 public:
     template<typename iterator>
     static void sort(iterator begin, iterator end) {
-        sort(begin, end, Iter_less_iter());
+        sort(begin, end, Val_less_val());
     }
 
     template<typename iterator, typename Compare>
