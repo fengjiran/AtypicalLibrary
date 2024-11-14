@@ -14,13 +14,6 @@
 
 namespace atp {
 
-// struct Iter_less {
-//     template<typename iterator1, typename iterator2>
-//     constexpr bool operator()(iterator1 it1, iterator2 it2) const {
-//         return *it1 < *it2;
-//     }
-// };
-
 template<typename InputIterator1,
          typename InputIterator2,
          typename OutputIterator,
@@ -174,20 +167,20 @@ class Selection : public Sort {
 public:
     template<typename iterator>
     static void sort(iterator begin, iterator end) {
-        sort(begin, end, Iter_less_iter());
+        sort(begin, end, Val_less_val());
     }
 
     template<typename iterator, typename Compare>
     static void sort(iterator begin, iterator end, Compare cmp) {
         for (auto it = begin; it != end; ++it) {
-            auto it1 = it;
-            for (auto it2 = it + 1; it2 != end; ++it2) {
-                if (cmp(it2, it1)) {
-                    it1 = it2;
+            auto j = it;
+            for (auto it1 = it + 1; it1 != end; ++it1) {
+                if (cmp(*it1, *j)) {
+                    j = it1;
                 }
             }
 
-            std::iter_swap(it, it1);
+            std::iter_swap(it, j);
         }
     }
 
