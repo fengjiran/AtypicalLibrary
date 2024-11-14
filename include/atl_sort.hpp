@@ -2,6 +2,7 @@
 #define ATL_SORT_HPP
 
 #include "atl_tempbuf.h"
+#include "atl_compare_ops.h"
 #include "utils.hpp"
 
 #include <algorithm>
@@ -151,12 +152,17 @@ public:
 
     template<typename iterator>
     static bool IsSorted(iterator begin, iterator end) {
+        return IsSorted(begin, end, Iter_less_iter());
+    }
+
+    template<typename iterator, typename Compare>
+    static bool IsSorted(iterator begin, iterator end, Compare cmp) {
         if (begin == end) {
             return true;
         }
 
         for (auto it = begin + 1; it != end; ++it) {
-            if (*(it - 1) > *it) {
+            if (cmp(it, it - 1)) {
                 return false;
             }
         }
@@ -180,7 +186,7 @@ public:
                     it1 = it2;
                 }
             }
-            // auto minIter = std::min_element(it, end);
+
             std::iter_swap(it, it1);
         }
     }
@@ -218,7 +224,7 @@ public:
 
     template<typename iterator, typename Compare>
     static void sortWithSentinel(iterator begin, iterator end, Compare cmp) {
-        if (begin == end) {
+        if (begin == end || begin + 1 == end) {
             return;
         }
 
@@ -230,7 +236,7 @@ public:
             }
         }
 
-        if (exchNum == 0 || begin + 1 == end) {
+        if (exchNum == 0) {
             return;
         }
 
@@ -247,18 +253,18 @@ public:
 
     template<typename iterator, typename Compare>
     static void sortWithoutSentinel(iterator begin, iterator end, Compare cmp) {
-        if (begin == end) {
+        if (begin == end || begin + 1 == end) {
             return;
         }
 
         for (auto it = begin + 1; it != end; ++it) {
-            auto x = it;
+            auto x = *it;
             auto it1 = it;
-            while (it1 != begin && cmp(x, it1 - 1)) {
+            while (it1 != begin && *(it1 - 1) > x) {
                 *it1 = *(it1 - 1);
                 --it1;
             }
-            *it1 = *x;
+            *it1 = x;
         }
     }
 

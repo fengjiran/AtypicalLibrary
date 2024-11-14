@@ -10,16 +10,17 @@
 
 TEST(SortTest, selection) {
     std::vector<int> v{8, 4, 5, 9};
-    auto cmp = atp::Iter_less();
-    atp::Selection::sort(v.begin(), v.end(), cmp);
-    // atp::Selection::sort(v);
+    atp::Selection::sort(v.begin(), v.end());
     atp::Selection::Show(v.begin(), v.end());
     EXPECT_TRUE(atp::Selection::IsSorted(v.begin(), v.end()));
+
+    // auto cmp = atp::Iter_comp_iter<atp::Iter_less_iter>(atp::Iter_less_iter());
+    auto cmp = iter_comp_iter(atp::Iter_less_iter());
+    EXPECT_TRUE(cmp(v.begin(), v.end()));
 }
 
 TEST(SortTest, insertion) {
     std::vector<int> v{8, 4, 5, 9};
-    // atp::Insertion::sort(v);
     atp::Insertion::sort(v.begin(), v.end());
     atp::Insertion::Show(v.begin(), v.end());
     EXPECT_TRUE(atp::Insertion::IsSorted(v.begin(), v.end()));
