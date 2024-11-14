@@ -1,8 +1,8 @@
 #ifndef ATL_SORT_HPP
 #define ATL_SORT_HPP
 
-#include "atl_tempbuf.h"
 #include "atl_compare_ops.h"
+#include "atl_tempbuf.h"
 #include "utils.hpp"
 
 #include <algorithm>
@@ -14,12 +14,12 @@
 
 namespace atp {
 
-struct Iter_less {
-    template<typename iterator1, typename iterator2>
-    constexpr bool operator()(iterator1 it1, iterator2 it2) const {
-        return *it1 < *it2;
-    }
-};
+// struct Iter_less {
+//     template<typename iterator1, typename iterator2>
+//     constexpr bool operator()(iterator1 it1, iterator2 it2) const {
+//         return *it1 < *it2;
+//     }
+// };
 
 template<typename InputIterator1,
          typename InputIterator2,
@@ -174,7 +174,7 @@ class Selection : public Sort {
 public:
     template<typename iterator>
     static void sort(iterator begin, iterator end) {
-        sort(begin, end, Iter_less());
+        sort(begin, end, Iter_less_iter());
     }
 
     template<typename iterator, typename Compare>
@@ -208,17 +208,47 @@ public:
 
 class Insertion : public Sort {
 public:
-    template<typename iterator>
-    static void sort(iterator begin, iterator end) {
-        sort(begin, end, Iter_less());
+    template<typename RandomAccessIterator>
+    static void sort(RandomAccessIterator begin, RandomAccessIterator end) {
+        _sort(begin, end, iter_less_iter());
     }
 
+    template<typename RandomAccessIterator, typename Compare>
+    static void sort(RandomAccessIterator begin, RandomAccessIterator end, Compare cmp) {
+        _sort(begin, end, iter_comp_iter(cmp));
+    }
+
+
     template<typename iterator, typename Compare>
-    static void sort(iterator begin, iterator end, Compare cmp, bool useSentinel = true) {
+    static void sort_dep(iterator begin, iterator end, Compare cmp, bool useSentinel = true) {
         if (useSentinel) {
             sortWithSentinel(begin, end, cmp);
         } else {
             sortWithoutSentinel(begin, end, cmp);
+        }
+    }
+
+private:
+    template<typename RandomAccessIterator, typename Compare>
+    static void _sort(RandomAccessIterator begin, RandomAccessIterator end, Compare cmp) {
+        if (begin == end) {
+            return;
+        }
+
+        for (auto it = begin + 1; it != end; ++it) {
+            auto val = std::move(*it);
+            if (cmp(it, begin)) {
+                std::move_backward(begin, it, it + 1);
+                *begin = std::move(val);
+            } else {
+                auto cmp1 = val_comp_iter(cmp);
+                auto next = it;
+                while (cmp1(val, next - 1)) {
+                    *next = std::move(*(next - 1));
+                    --next;
+                }
+                *next = std::move(val);
+            }
         }
     }
 
@@ -325,7 +355,7 @@ class Shell : public Sort {
 public:
     template<typename iterator>
     static void sort(iterator begin, iterator end) {
-        sort(begin, end, Iter_less());
+        sort(begin, end, Iter_less_iter());
     }
 
     template<typename iterator, typename Compare>
@@ -408,7 +438,7 @@ class MergeSort : public Sort {
 public:
     template<typename iterator>
     static void sort(iterator begin, iterator end) {
-        sort(begin, end, Iter_less());
+        sort(begin, end, Iter_less_iter());
     }
 
     template<typename iterator, typename Compare>
@@ -491,7 +521,7 @@ class StdSort : public Sort {
 public:
     template<typename iterator>
     static void sort(iterator begin, iterator end) {
-        sort(begin, end, Iter_less());
+        sort(begin, end, Iter_less_iter());
     }
 
     template<typename iterator, typename Compare>
@@ -508,7 +538,7 @@ public:
         std::mt19937 gen(rd());
         std::uniform_real_distribution<float> dist(0, 1);
 
-        auto cmp = Iter_less();
+        auto cmp = [](float a, float b) { return a < b; };
 
         std::vector<float> nums(N);
         double total = 0;

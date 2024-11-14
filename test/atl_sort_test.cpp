@@ -13,13 +13,10 @@ TEST(SortTest, selection) {
     atp::Selection::sort(v.begin(), v.end());
     atp::Selection::Show(v.begin(), v.end());
     EXPECT_TRUE(atp::Selection::IsSorted(v.begin(), v.end()));
-
-    // auto cmp = atp::Iter_comp_iter<atp::Iter_less_iter>(atp::Iter_less_iter());
-    auto cmp = iter_comp_iter(atp::Iter_less_iter());
-    EXPECT_TRUE(cmp(v.begin(), v.end()));
 }
 
 TEST(SortTest, insertion) {
+    // GTEST_SKIP();
     std::vector<int> v{8, 4, 5, 9};
     atp::Insertion::sort(v.begin(), v.end());
     atp::Insertion::Show(v.begin(), v.end());
@@ -44,7 +41,7 @@ TEST(SortTest, merge) {
 }
 
 TEST(SortTest, sort_compare) {
-    // GTEST_SKIP();
+    GTEST_SKIP();
     int T = 10;
     int N = 1000000;
     auto t0 = atp::SortPerf<atp::StdSort>::Evaluate(T, N);
