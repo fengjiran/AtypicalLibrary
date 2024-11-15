@@ -405,14 +405,15 @@ public:
 
     template<typename RandomAccessIterator>
     static void sort(RandomAccessIterator begin, RandomAccessIterator end) {
-        sort(begin, end, Val_less_val());
+        // sort(begin, end, Val_less_val());
+        quick3way(begin, end, Val_less_val());
     }
 
     template<typename RandomAccessIterator, typename Compare>
     static void sort(RandomAccessIterator begin, RandomAccessIterator end, const Compare& cmp) {
-        if (begin == end) {
-            return;
-        }
+        // if (begin == end) {
+        //     return;
+        // }
 
         auto n = std::distance(begin, end);
         if (n <= static_cast<decltype(n)>(Threshold::kCutoff)) {
@@ -446,6 +447,40 @@ public:
         std::iter_swap(begin, j);
         return j;
     }
+
+    template<typename RandomAccessIterator, typename Compare>
+    static void quick3way(RandomAccessIterator begin, RandomAccessIterator end, const Compare& cmp) {
+        auto n = std::distance(begin, end);
+        if (n <= static_cast<decltype(n)>(Threshold::kCutoff)) {
+            Insertion::sort(begin, end, cmp);
+            return;
+        }
+
+        auto mid = begin + n / 2;
+        if (n >= 3) {
+            MoveMedianOfThree(begin, begin + 1, mid, end - 1, cmp);
+        }
+
+        auto pivot = *begin;
+        auto lt = begin;
+        auto gt = end - 1;
+        auto i = begin + 1;
+        while (i <= gt) {
+            if (cmp(*i, pivot)) {
+                std::iter_swap(lt, i);
+                ++lt;
+                ++i;
+            } else if (*i > pivot) {
+                std::iter_swap(i, gt);
+                --gt;
+            } else {
+                ++i;
+            }
+        }
+
+        quick3way(begin, lt, cmp);
+        quick3way(gt + 1, end, cmp);
+    }
 };
 
 
@@ -470,13 +505,13 @@ public:
         std::mt19937 gen(rd());
         std::uniform_real_distribution<float> dist(0, 1);
 
-        std::vector<float> nums(N);
+        std::vector<float> nums(N, 1);
         double total = 0;
 
         for (int t = 0; t < T; ++t) {
-            for (int i = 0; i < N; ++i) {
-                nums[i] = dist(gen);
-            }
+            // for (int i = 0; i < N; ++i) {
+            //     nums[i] = dist(gen);
+            // }
             total += time(nums.begin(), nums.end());
         }
         assert(Sort::IsSorted(nums.begin(), nums.end()));
