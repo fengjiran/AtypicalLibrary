@@ -116,16 +116,16 @@ void InplaceMerge(BidirectionalIterator first,
 }
 
 template<typename Iterator, typename Compare>
-void MoveMedianOfThree(Iterator result, Iterator first, Iterator mid, Iterator last, Compare cmp) {
-    if (cmp(mid, first)) {
+void MoveMedianOfThree(Iterator result, Iterator first, Iterator mid, Iterator last, const Compare& cmp) {
+    if (cmp(*mid, *first)) {
         std::iter_swap(first, mid);
     }
 
-    if (cmp(last, mid)) {
+    if (cmp(*last, *mid)) {
         std::iter_swap(mid, last);
     }
 
-    if (cmp(mid, first)) {
+    if (cmp(*mid, *first)) {
         std::iter_swap(first, mid);
     }
 

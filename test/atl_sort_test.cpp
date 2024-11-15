@@ -32,12 +32,16 @@ TEST(SortTest, Shell) {
 
 TEST(SortTest, merge) {
     std::vector<int> v{1, 4, 10, 9};
-    auto mid = v.begin() + (v.end() - v.begin()) / 2;
-    // atp::MoveMedianOfThree(v.begin(), v.begin(), mid, v.end() - 1, atp::Iter_less());
-    // atp::MergeSort::sort(v);
     atp::MergeSort::sort(v.begin(), v.end());
     atp::Sort::Show(v.begin(), v.end());
     EXPECT_TRUE(atp::Sort::IsSorted(v.begin(), v.end()));
+}
+
+TEST(SortTest, quick) {
+    std::vector<int> v{1, 4, 10, 9};
+    auto mid = v.begin() + (v.end() - v.begin()) / 2;
+    MoveMedianOfThree(v.begin(), v.begin(), mid, v.end() - 1, atp::Val_less_val());
+    atp::Sort::Show(v.begin(), v.end());
 }
 
 TEST(SortTest, sort_compare) {
