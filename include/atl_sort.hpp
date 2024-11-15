@@ -21,7 +21,7 @@ template<typename InputIterator1,
 void MoveMergeAdaptive(InputIterator1 first1, InputIterator1 last1,
                        InputIterator2 first2, InputIterator2 last2,
                        OutputIterator result,
-                       Compare cmp) {
+                       const Compare& cmp) {
     while (first1 != last1 && first2 != last2) {
         if (cmp(*first2, *first1)) {
             *result = std::move(*first2);
@@ -48,7 +48,7 @@ void MoveMergeAdaptiveBackward(BidirectionalIterator1 first1,
                                BidirectionalIterator2 first2,
                                BidirectionalIterator2 last2,
                                BidirectionalIterator3 result,
-                               Compare cmp) {
+                               const Compare& cmp) {
     if (first1 == last1) {
         std::move_backward(first2, last2, result);
         return;
@@ -83,7 +83,7 @@ void MergeAdaptive(BidirectionalIterator first,
                    Distance len1,
                    Distance len2,
                    Pointer buffer,
-                   Compare cmp) {
+                   const Compare& cmp) {
     if (len1 <= len2) {
         Pointer bufferEnd = std::move(first, mid, buffer);
         MoveMergeAdaptive(buffer, bufferEnd, mid, last, first, cmp);
@@ -97,7 +97,7 @@ template<typename BidirectionalIterator, typename Compare>
 void InplaceMerge(BidirectionalIterator first,
                   BidirectionalIterator mid,
                   BidirectionalIterator last,
-                  Compare cmp) {
+                  const Compare& cmp) {
     using value_type = typename std::iterator_traits<BidirectionalIterator>::value_type;
     using distance_type = typename std::iterator_traits<BidirectionalIterator>::difference_type;
     using buffer_type = TemporaryBuffer<BidirectionalIterator, value_type>;
@@ -143,23 +143,31 @@ public:
         std::cout << std::endl;
     }
 
+    template<typename ForwardIterator, typename Compare>
+    static ForwardIterator IsSortedUntil(ForwardIterator begin, ForwardIterator end, Compare cmp) {
+        if (begin == end) {
+            return end;
+        }
+
+        auto next = begin + 1;
+        while (next != end) {
+            if (cmp(*next, *begin)) {
+                return next;
+            }
+            begin = next;
+            ++next;
+        }
+        return next;
+    }
+
     template<typename iterator>
     static bool IsSorted(iterator begin, iterator end) {
-        return IsSorted(begin, end, Iter_less_iter());
+        return IsSortedUntil(begin, end, Val_less_val()) == end;
     }
 
     template<typename iterator, typename Compare>
-    static bool IsSorted(iterator begin, iterator end, Compare cmp) {
-        if (begin == end) {
-            return true;
-        }
-
-        for (auto it = begin + 1; it != end; ++it) {
-            if (cmp(it, it - 1)) {
-                return false;
-            }
-        }
-        return true;
+    static bool IsSorted(iterator begin, iterator end, const Compare& cmp) {
+        return IsSortedUntil(begin, end, cmp) == end;
     }
 };
 
@@ -171,7 +179,7 @@ public:
     }
 
     template<typename iterator, typename Compare>
-    static void sort(iterator begin, iterator end, Compare cmp) {
+    static void sort(iterator begin, iterator end, const Compare& cmp) {
         for (auto it = begin; it != end; ++it) {
             auto j = it;
             for (auto it1 = it + 1; it1 != end; ++it1) {
@@ -207,7 +215,7 @@ public:
     }
 
     template<typename RandomAccessIterator, typename Compare>
-    static void sort(RandomAccessIterator begin, RandomAccessIterator end, Compare cmp) {
+    static void sort(RandomAccessIterator begin, RandomAccessIterator end, const Compare& cmp) {
         if (begin == end) {
             return;
         }
@@ -264,7 +272,7 @@ public:
     }
 
     template<typename RandomAccessIterator, typename Compare>
-    static void sort(RandomAccessIterator begin, RandomAccessIterator end, Compare cmp) {
+    static void sort(RandomAccessIterator begin, RandomAccessIterator end, const Compare& cmp) {
         if (begin == end) {
             return;
         }
@@ -315,7 +323,7 @@ public:
 class MergeSort : public Sort {
 public:
     enum class Threshold {
-        kCutoff = 15
+        kCutoff = 24
     };
 
     template<typename iterator>
@@ -324,7 +332,7 @@ public:
     }
 
     template<typename iterator, typename Compare>
-    static void sort(iterator begin, iterator end, Compare cmp) {
+    static void sort(iterator begin, iterator end, const Compare& cmp) {
         if (begin + 1 >= end) {
             return;
         }
@@ -407,7 +415,7 @@ public:
 
     template<typename iterator, typename Compare>
     static void sort(iterator begin, iterator end, Compare cmp) {
-        std::sort(begin, end);
+        std::sort(begin, end, cmp);
     }
 };
 
