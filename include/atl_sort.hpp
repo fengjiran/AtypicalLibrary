@@ -116,20 +116,20 @@ void InplaceMerge(BidirectionalIterator first,
 }
 
 template<typename Iterator, typename Compare>
-void MoveMedianOfThree(Iterator result, Iterator first, Iterator mid, Iterator last, const Compare& cmp) {
-    if (cmp(*mid, *first)) {
-        std::iter_swap(first, mid);
+void MoveMedianOfThree(Iterator result, Iterator first, Iterator second, Iterator third, const Compare& cmp) {
+    if (cmp(*second, *first)) {
+        std::iter_swap(first, second);
     }
 
-    if (cmp(*last, *mid)) {
-        std::iter_swap(mid, last);
+    if (cmp(*third, *second)) {
+        std::iter_swap(second, third);
     }
 
-    if (cmp(*mid, *first)) {
-        std::iter_swap(first, mid);
+    if (cmp(*second, *first)) {
+        std::iter_swap(first, second);
     }
 
-    std::iter_swap(result, mid);
+    std::iter_swap(result, second);
 }
 
 class Sort {
@@ -399,9 +399,52 @@ private:
 
 class QuickSort : public Sort {
 public:
+    enum class Threshold {
+        kCutoff = 16
+    };
+
     template<typename RandomAccessIterator>
-    void static sort(RandomAccessIterator begin, RandomAccessIterator end) {
-        //
+    static void sort(RandomAccessIterator begin, RandomAccessIterator end) {
+        sort(begin, end, Val_less_val());
+    }
+
+    template<typename RandomAccessIterator, typename Compare>
+    static void sort(RandomAccessIterator begin, RandomAccessIterator end, const Compare& cmp) {
+        if (begin == end) {
+            return;
+        }
+
+        auto n = std::distance(begin, end);
+        if (n <= static_cast<decltype(n)>(Threshold::kCutoff)) {
+            Insertion::sort(begin, end, cmp);
+            return;
+        }
+
+        auto cut = partition(begin, end, cmp);
+        sort(begin, cut, cmp);
+        sort(cut + 1, end, cmp);
+    }
+
+    template<typename RandomAccessIterator, typename Compare>
+    static RandomAccessIterator partition(RandomAccessIterator begin, RandomAccessIterator end, const Compare& cmp) {
+        auto n = std::distance(begin, end);
+        auto mid = begin + n / 2;
+        if (n >= 3) {
+            MoveMedianOfThree(begin, begin + 1, mid, end - 1, cmp);
+        }
+
+        auto i = begin;
+        auto j = end;
+        while (true) {
+            while (cmp(*++i, *begin)) {}
+            while (cmp(*begin, *--j)) {}
+            if (!(i < j)) {
+                break;
+            }
+            std::iter_swap(i, j);
+        }
+        std::iter_swap(begin, j);
+        return j;
     }
 };
 
