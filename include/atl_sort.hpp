@@ -407,7 +407,7 @@ public:
     template<typename RandomAccessIterator>
     static void sort(RandomAccessIterator begin, RandomAccessIterator end) {
         sort(begin, end, Val_less_val());
-        // quick3way(begin, end, Val_less_val());
+        // BentlyMcIlroyQuickSort(begin, end, Val_less_val());
     }
 
     template<typename RandomAccessIterator, typename Compare>
@@ -454,7 +454,7 @@ public:
     }
 
     template<typename RandomAccessIterator, typename Compare>
-    static void quick3way(RandomAccessIterator begin, RandomAccessIterator end, const Compare& cmp) {
+    static void BentlyMcIlroyQuickSort(RandomAccessIterator begin, RandomAccessIterator end, const Compare& cmp) {
         auto n = std::distance(begin, end);
         if (n <= static_cast<decltype(n)>(Threshold::kInsertSortCutoff)) {
             Insertion::sort(begin, end, cmp);
@@ -462,29 +462,54 @@ public:
         }
 
         auto mid = begin + n / 2;
-        if (n >= 3) {
+
+        if (n <= static_cast<decltype(n)>(Threshold::kMedian3Cutoff)) {// use median-of-3 as partitioning element
             MoveMedian3ToPos(begin, begin + 1, mid, end - 1, cmp);
+        } else {// use Tukey ninther as partitioning element
+            auto eps = n / 8;
+            MoveMedian3ToPos(begin, begin, begin + eps, begin + eps + eps, cmp);
+            MoveMedian3ToPos(mid, mid - eps, mid, mid + eps, cmp);
+            MoveMedian3ToPos(end - 1, end - 1 - eps - eps, end - 1 - eps, end - 1, cmp);
+            MoveMedian3ToPos(begin, begin, mid, end - 1, cmp);
         }
 
-        auto pivot = *begin;
-        auto lt = begin;
-        auto gt = end - 1;
-        auto i = begin + 1;
-        while (i <= gt) {
-            if (cmp(*i, pivot)) {
-                std::iter_swap(lt, i);
-                ++lt;
-                ++i;
-            } else if (!cmp(*i, pivot) && *i != pivot) {
-                std::iter_swap(i, gt);
-                --gt;
-            } else {
-                ++i;
+        auto i = begin;
+        auto j = end;
+        auto p = begin;
+        auto q = end;
+        while (true) {
+            while (cmp(*++i, *begin)) {}
+            while (cmp(*begin, *--j)) {}
+
+            if (i == j && *i == *begin) {
+                std::iter_swap(i, ++p);
+            }
+
+            if (!(i < j)) {
+                break;
+            }
+            std::iter_swap(i, j);
+
+            if (*i == *begin) {
+                std::iter_swap(i, ++p);
+            }
+
+            if (*j == *begin) {
+                std::iter_swap(j, --q);
             }
         }
 
-        quick3way(begin, lt, cmp);
-        quick3way(gt + 1, end, cmp);
+        i = j + 1;
+        for (auto k = begin; k != p + 1; ++k) {
+            std::iter_swap(k, j--);
+        }
+
+        for (auto k = end - 1; k != q - 1; --k) {
+            std::iter_swap(k, i++);
+        }
+
+        BentlyMcIlroyQuickSort(begin, j + 1, cmp);
+        BentlyMcIlroyQuickSort(i, end, cmp);
     }
 };
 
