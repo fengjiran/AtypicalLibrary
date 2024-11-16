@@ -116,7 +116,7 @@ void InplaceMerge(BidirectionalIterator first,
 }
 
 template<typename Iterator, typename Compare>
-void MoveMedianOfThree(Iterator result, Iterator first, Iterator second, Iterator third, const Compare& cmp) {
+void MoveMedian3ToPos(Iterator pos, Iterator first, Iterator second, Iterator third, const Compare& cmp) {
     if (cmp(*second, *first)) {
         std::iter_swap(first, second);
     }
@@ -129,7 +129,7 @@ void MoveMedianOfThree(Iterator result, Iterator first, Iterator second, Iterato
         std::iter_swap(first, second);
     }
 
-    std::iter_swap(result, second);
+    std::iter_swap(pos, second);
 }
 
 class Sort {
@@ -400,23 +400,20 @@ private:
 class QuickSort : public Sort {
 public:
     enum class Threshold {
-        kCutoff = 16
+        kInsertSortCutoff = 16,
+        kMedian3Cutoff = 40
     };
 
     template<typename RandomAccessIterator>
     static void sort(RandomAccessIterator begin, RandomAccessIterator end) {
-        // sort(begin, end, Val_less_val());
-        quick3way(begin, end, Val_less_val());
+        sort(begin, end, Val_less_val());
+        // quick3way(begin, end, Val_less_val());
     }
 
     template<typename RandomAccessIterator, typename Compare>
     static void sort(RandomAccessIterator begin, RandomAccessIterator end, const Compare& cmp) {
-        // if (begin == end) {
-        //     return;
-        // }
-
         auto n = std::distance(begin, end);
-        if (n <= static_cast<decltype(n)>(Threshold::kCutoff)) {
+        if (n <= static_cast<decltype(n)>(Threshold::kInsertSortCutoff)) {
             Insertion::sort(begin, end, cmp);
             return;
         }
@@ -430,8 +427,16 @@ public:
     static RandomAccessIterator partition(RandomAccessIterator begin, RandomAccessIterator end, const Compare& cmp) {
         auto n = std::distance(begin, end);
         auto mid = begin + n / 2;
-        if (n >= 3) {
-            MoveMedianOfThree(begin, begin + 1, mid, end - 1, cmp);
+
+        if (n <= static_cast<decltype(n)>(Threshold::kMedian3Cutoff)) {// use median-of-3 as partitioning element
+            MoveMedian3ToPos(begin, begin + 1, mid, end - 1, cmp);
+        } else {// use Tukey ninther as partitioning element
+            auto eps = n / 8;
+            MoveMedian3ToPos(begin, begin, begin + eps, begin + eps + eps, cmp);
+            MoveMedian3ToPos(mid, mid - eps, mid, mid + eps, cmp);
+            MoveMedian3ToPos(end - 1, end - 1 - eps - eps, end - 1 - eps, end - 1, cmp);
+
+            MoveMedian3ToPos(begin, begin, mid, end - 1, cmp);
         }
 
         auto i = begin;
@@ -451,14 +456,14 @@ public:
     template<typename RandomAccessIterator, typename Compare>
     static void quick3way(RandomAccessIterator begin, RandomAccessIterator end, const Compare& cmp) {
         auto n = std::distance(begin, end);
-        if (n <= static_cast<decltype(n)>(Threshold::kCutoff)) {
+        if (n <= static_cast<decltype(n)>(Threshold::kInsertSortCutoff)) {
             Insertion::sort(begin, end, cmp);
             return;
         }
 
         auto mid = begin + n / 2;
         if (n >= 3) {
-            MoveMedianOfThree(begin, begin + 1, mid, end - 1, cmp);
+            MoveMedian3ToPos(begin, begin + 1, mid, end - 1, cmp);
         }
 
         auto pivot = *begin;
@@ -470,7 +475,7 @@ public:
                 std::iter_swap(lt, i);
                 ++lt;
                 ++i;
-            } else if (*i > pivot) {
+            } else if (!cmp(*i, pivot) && *i != pivot) {
                 std::iter_swap(i, gt);
                 --gt;
             } else {
@@ -509,9 +514,9 @@ public:
         double total = 0;
 
         for (int t = 0; t < T; ++t) {
-            // for (int i = 0; i < N; ++i) {
-            //     nums[i] = dist(gen);
-            // }
+            for (int i = 0; i < N; ++i) {
+                nums[i] = dist(gen);
+            }
             total += time(nums.begin(), nums.end());
         }
         assert(Sort::IsSorted(nums.begin(), nums.end()));
