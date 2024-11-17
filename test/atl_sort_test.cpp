@@ -4,7 +4,9 @@
 
 #include "atl_construct.h"
 #include "atl_sort.hpp"
+
 #include <gtest/gtest.h>
+#include <queue>
 #include <thread>
 #include <utils.hpp>
 
@@ -43,11 +45,17 @@ TEST(SortTest, quick) {
     // MoveMedianOfThree(v.begin(), v.begin() + 1, mid, v.end(), atp::Val_less_val());
     atp::QuickSort::sort(v.begin(), v.end());
     atp::Sort::Show(v.begin(), v.end());
-    // EXPECT_TRUE(atp::Sort::IsSorted(v.begin(), v.end()));
+    EXPECT_TRUE(atp::Sort::IsSorted(v.begin(), v.end()));
+}
+
+TEST(SortTest, heap) {
+    std::vector<int> v{3, 6, 2, 9, 7};
+    atp::make_heap(v.begin(), v.end());
+    atp::Sort::Show(v.begin(), v.end());
 }
 
 TEST(SortTest, sort_compare) {
-    // GTEST_SKIP();
+    GTEST_SKIP();
     int T = 10;
     int N = 1000000;
     auto t0 = atp::SortPerf<atp::StdSort>::Evaluate(T, N);

@@ -3,6 +3,7 @@
 
 #include "atl_compare_ops.h"
 #include "atl_tempbuf.h"
+#include "atl_heap.h"
 #include "utils.hpp"
 
 #include <algorithm>
