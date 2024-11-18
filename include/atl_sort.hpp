@@ -514,6 +514,11 @@ public:
     }
 };
 
+class HeapSort : public Sort {
+public:
+
+};
+
 
 class StdSort : public Sort {
 public:

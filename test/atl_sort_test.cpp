@@ -52,6 +52,7 @@ TEST(SortTest, heap) {
     std::vector<int> v{3, 6, 2, 9, 7};
     atp::make_heap(v.begin(), v.end());
     atp::Sort::Show(v.begin(), v.end());
+    EXPECT_TRUE(atp::is_heap(v.begin(), v.end()));
 }
 
 TEST(SortTest, sort_compare) {
