@@ -81,7 +81,6 @@ void pop_heap(RandomAccessIterator begin, RandomAccessIterator end, const Compar
     if (end - begin > 1) {
         --end;
         std::iter_swap(begin, end);
-        // *begin = std::move(*end);
         sink(begin, static_cast<difference_type>(0), static_cast<difference_type>(end - begin), cmp);
     }
 }

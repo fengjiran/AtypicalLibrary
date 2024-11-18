@@ -61,8 +61,15 @@ TEST(SortTest, heap) {
     EXPECT_FALSE(atp::is_heap(v.begin(), v.end()));
 }
 
+TEST(SortTest, heap_sort) {
+    std::vector<int> v{3, 6, 2, 9, 7};
+    atp::HeapSort::sort(v.begin(), v.end());
+    atp::Sort::Show(v.begin(), v.end());
+    EXPECT_TRUE(atp::Sort::IsSorted(v.begin(), v.end()));
+}
+
 TEST(SortTest, sort_compare) {
-    GTEST_SKIP();
+    // GTEST_SKIP();
     int T = 10;
     int N = 1000000;
     auto t0 = atp::SortPerf<atp::StdSort>::Evaluate(T, N);
@@ -71,7 +78,7 @@ TEST(SortTest, sort_compare) {
     auto t3 = atp::SortPerf<atp::Shell>::Evaluate(T, N);
     auto t4 = atp::SortPerf<atp::MergeSort>::Evaluate(T, N);
     auto t5 = atp::SortPerf<atp::QuickSort>::Evaluate(T, N);
-
+    auto t6 = atp::SortPerf<atp::HeapSort>::Evaluate(T, N);
 
     // std::cout << "Selection sort time: " << t1 << "s.\n";
     // std::cout << "Insertion sort time: " << t2 << "s.\n";
@@ -79,4 +86,5 @@ TEST(SortTest, sort_compare) {
     std::cout << "Shell sort time: " << t3 << "s.\n";
     std::cout << "merge sort time: " << t4 << "s.\n";
     std::cout << "quick sort time: " << t5 << "s.\n";
+    std::cout << "heap sort time: " << t6 << "s.\n";
 }
