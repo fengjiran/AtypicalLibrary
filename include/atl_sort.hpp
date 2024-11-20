@@ -518,14 +518,12 @@ class HeapSort : public Sort {
 public:
     template<typename RandomAccessIterator, typename Compare>
     static void sort(RandomAccessIterator begin, RandomAccessIterator end, const Compare& cmp) {
-        using difference_type = typename std::iterator_traits<RandomAccessIterator>::difference_type;
         atp::make_heap(begin, end);
         // assert(atp::is_heap(begin, end));
         while (end - begin > 1) {
-            // pop_heap(begin, end, cmp);
             --end;
             std::iter_swap(begin, end);
-            sink(begin, static_cast<difference_type>(0), static_cast<difference_type>(end - begin), cmp);
+            sink(begin, 0, end - begin, cmp);
         }
     }
 

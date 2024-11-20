@@ -87,4 +87,5 @@ TEST(SortTest, sort_compare) {
     std::cout << "merge sort time: " << t4 << "s.\n";
     std::cout << "quick sort time: " << t5 << "s.\n";
     std::cout << "heap sort time: " << t6 << "s.\n";
+    std::priority_queue<int, std::vector<int>> a;
 }
