@@ -66,6 +66,7 @@ TEST(SortTest, heap_sort) {
     atp::HeapSort::sort(v.begin(), v.end());
     atp::Sort::Show(v.begin(), v.end());
     EXPECT_TRUE(atp::Sort::IsSorted(v.begin(), v.end()));
+    std::set<int> a;
 }
 
 TEST(SortTest, sort_compare) {
