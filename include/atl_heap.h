@@ -10,9 +10,11 @@
 namespace atp {
 
 template<typename RandomAccessIterator,
-         typename Compare,
-         typename difference_type = typename std::iterator_traits<RandomAccessIterator>::difference_type>
-void swim(RandomAccessIterator begin, difference_type childIdx, difference_type n, const Compare& cmp) {
+         typename Compare>
+void swim(RandomAccessIterator begin,
+          typename std::iterator_traits<RandomAccessIterator>::difference_type childIdx,
+          typename std::iterator_traits<RandomAccessIterator>::difference_type n,
+          const Compare& cmp) {
     if (n < 2) {
         return;
     }
@@ -34,9 +36,11 @@ void swim(RandomAccessIterator begin, difference_type childIdx, difference_type 
 }
 
 template<typename RandomAccessIterator,
-         typename Compare,
-         typename difference_type = typename std::iterator_traits<RandomAccessIterator>::difference_type>
-void sink(RandomAccessIterator begin, difference_type parentIdx, difference_type n, const Compare& cmp) {
+         typename Compare>
+void sink(RandomAccessIterator begin,
+          typename std::iterator_traits<RandomAccessIterator>::difference_type parentIdx,
+          typename std::iterator_traits<RandomAccessIterator>::difference_type n,
+          const Compare& cmp) {
     if (n < 2 || parentIdx > (n - 2) / 2) {
         return;
     }
@@ -56,7 +60,6 @@ void sink(RandomAccessIterator begin, difference_type parentIdx, difference_type
             break;
         }
 
-        // std::iter_swap(parentIter, childIter);
         *parentIter = std::move(*childIter);
         parentIdx = childIdx;
         parentIter = childIter;
@@ -75,13 +78,12 @@ void push_heap(RandomAccessIterator begin, RandomAccessIterator end) {
 }
 
 template<typename RandomAccessIterator,
-typename Compare,
-typename difference_type = typename std::iterator_traits<RandomAccessIterator>::difference_type>
+         typename Compare>
 void pop_heap(RandomAccessIterator begin, RandomAccessIterator end, const Compare& cmp) {
     if (end - begin > 1) {
         --end;
         std::iter_swap(begin, end);
-        sink(begin, static_cast<difference_type>(0), static_cast<difference_type>(end - begin), cmp);
+        sink(begin, 0, end - begin, cmp);
     }
 }
 
