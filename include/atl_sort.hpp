@@ -2,8 +2,8 @@
 #define ATL_SORT_HPP
 
 #include "atl_compare_ops.h"
-#include "atl_tempbuf.h"
 #include "atl_heap.h"
+#include "atl_tempbuf.h"
 #include "utils.hpp"
 
 #include <algorithm>
@@ -398,6 +398,25 @@ private:
     }
 };
 
+class HeapSort : public Sort {
+public:
+    template<typename RandomAccessIterator, typename Compare>
+    static void sort(RandomAccessIterator begin, RandomAccessIterator end, const Compare& cmp) {
+        atp::make_heap(begin, end);
+        // assert(atp::is_heap(begin, end));
+        while (end - begin > 1) {
+            --end;
+            std::iter_swap(begin, end);
+            sink(begin, 0, end - begin, cmp);
+        }
+    }
+
+    template<typename RandomAccessIterator>
+    static void sort(RandomAccessIterator begin, RandomAccessIterator end) {
+        sort(begin, end, Val_less_val());
+    }
+};
+
 class QuickSort : public Sort {
 public:
     enum class Threshold {
@@ -407,22 +426,56 @@ public:
 
     template<typename RandomAccessIterator>
     static void sort(RandomAccessIterator begin, RandomAccessIterator end) {
-        sort(begin, end, Val_less_val());
+        auto cmp = Val_less_val();
+        _sort(begin, end, std::__lg(end - begin) * 2, cmp);
+        Insertion::sort(begin, end, cmp);
         // BentlyMcIlroyQuickSort(begin, end, Val_less_val());
     }
 
     template<typename RandomAccessIterator, typename Compare>
     static void sort(RandomAccessIterator begin, RandomAccessIterator end, const Compare& cmp) {
-        auto n = std::distance(begin, end);
-        if (n <= static_cast<decltype(n)>(Threshold::kInsertSortCutoff)) {
-            Insertion::sort(begin, end, cmp);
-            return;
+        _sort(begin, end, std::__lg(end - begin) * 2, cmp);
+        Insertion::sort(begin, end, cmp);
+        // BentlyMcIlroyQuickSort(begin, end, Val_less_val());
+    }
+
+    // tail recursive quick sort
+    template<typename RandomAccessIterator, typename Compare>
+    static void _sort(RandomAccessIterator begin, RandomAccessIterator end, int depth_limit, const Compare& cmp) {
+        using difference_type = typename std::iterator_traits<RandomAccessIterator>::difference_type;
+        while (std::distance(begin, end) > static_cast<difference_type>(Threshold::kInsertSortCutoff)) {
+            if (depth_limit == 0) {
+                HeapSort::sort(begin, end, cmp);
+                return;
+            }
+            --depth_limit;
+
+            auto cut = partition(begin, end, cmp);
+            _sort(cut + 1, end, depth_limit, cmp);
+            end = cut;
         }
 
-        auto cut = partition(begin, end, cmp);
-        sort(begin, cut, cmp);
-        sort(cut + 1, end, cmp);
+        // if (n > static_cast<decltype(n)>(Threshold::kInsertSortCutoff)) {
+        //     // Insertion::sort(begin, end, cmp);
+        //     // return;
+        //     auto cut = partition(begin, end, cmp);
+        //     _sort(begin, cut, cmp);
+        //     _sort(cut + 1, end, cmp);
+        // }
     }
+
+    // template<typename RandomAccessIterator, typename Compare>
+    // static void sort(RandomAccessIterator begin, RandomAccessIterator end, const Compare& cmp) {
+    //     auto n = std::distance(begin, end);
+    //     if (n <= static_cast<decltype(n)>(Threshold::kInsertSortCutoff)) {
+    //         Insertion::sort(begin, end, cmp);
+    //         return;
+    //     }
+    //
+    //     auto cut = partition(begin, end, cmp);
+    //     sort(begin, cut, cmp);
+    //     sort(cut + 1, end, cmp);
+    // }
 
     template<typename RandomAccessIterator, typename Compare>
     static RandomAccessIterator partition(RandomAccessIterator begin, RandomAccessIterator end, const Compare& cmp) {
@@ -513,26 +566,6 @@ public:
         BentlyMcIlroyQuickSort(i, end, cmp);
     }
 };
-
-class HeapSort : public Sort {
-public:
-    template<typename RandomAccessIterator, typename Compare>
-    static void sort(RandomAccessIterator begin, RandomAccessIterator end, const Compare& cmp) {
-        atp::make_heap(begin, end);
-        // assert(atp::is_heap(begin, end));
-        while (end - begin > 1) {
-            --end;
-            std::iter_swap(begin, end);
-            sink(begin, 0, end - begin, cmp);
-        }
-    }
-
-    template<typename RandomAccessIterator>
-    static void sort(RandomAccessIterator begin, RandomAccessIterator end) {
-        sort(begin, end, Val_less_val());
-    }
-};
-
 
 class StdSort : public Sort {
 public:

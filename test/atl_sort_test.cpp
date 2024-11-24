@@ -72,7 +72,7 @@ TEST(SortTest, heap_sort) {
 TEST(SortTest, sort_compare) {
     // GTEST_SKIP();
     int T = 10;
-    int N = 1000000;
+    int N = 2000000;
     auto t0 = atp::SortPerf<atp::StdSort>::Evaluate(T, N);
     // auto t1 = atp::SortPerf<atp::Selection>::Evaluate(T, N);
     // auto t2 = atp::SortPerf<atp::Insertion>::Evaluate(T, N);
