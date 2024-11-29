@@ -2,8 +2,62 @@
 // Created by richard on 7/31/24.
 //
 
+#include "utils.hpp"
 #include "binary_search.h"
 #include "gtest/gtest.h"
+
+class Empty {};
+class Base1 {
+public:
+    virtual void f1() {
+        std::cout << "Base1 f1()\n";
+    }
+
+    virtual void f2() {
+        std::cout << "Base1 f2()\n";
+    }
+
+    virtual void f3() {
+        std::cout << "Base1 f3()\n";
+    }
+
+    virtual ~Base1() = default;
+};
+
+class Derived1: public Base1 {
+public:
+    void f1() override {
+        std::cout << "Derived1 f1()\n";
+    }
+
+    virtual void f4() {
+        std::cout << "Derived1 f4()\n";
+    }
+};
+
+class Derived2 : public Derived1 {
+public:
+    void f1() override {
+        std::cout << "Derived2 f1()\n";
+    }
+
+    virtual void f5() {
+        std::cout << "Derived2 f()\n";
+    }
+
+    virtual inline void f6();
+};
+
+void Derived2::f6() {
+
+}
+
+#pragma pack(4)
+struct MyStruct {
+    double a;
+    int b;
+    int c[2];
+};
 
 TEST(BinarySearch, t1) {
     std::vector<int> nums1{2, 4, 5, 6, 9};
@@ -71,4 +125,28 @@ TEST(BinarySearch, t1) {
     int a = 10;
     int& b = a;
     static_assert(std::is_same_v<decltype((a)), int&>);
+}
+
+TEST(BinarySearch, RTPolymorphism) {
+    using func = void(*)();
+
+    auto* p1 = new Base1;
+    void** vtable1 = *reinterpret_cast<void***>(p1);
+    for (int i = 0; i < 3; ++i) {
+        reinterpret_cast<func>(vtable1[i])();
+    }
+
+    Base1* p2 = new Derived1;
+    auto vtable2 = *reinterpret_cast<void***>(p2);
+    for (int i = 0; i < 3; ++i) {
+        reinterpret_cast<func>(vtable2[i])();
+    }
+
+    delete p1;
+    delete p2;
+
+    std::cout << sizeof(Empty) << std::endl;
+    Empty a;
+    std::cout << sizeof(a) << std::endl;
+    std::cout << sizeof(MyStruct) << std::endl;
 }

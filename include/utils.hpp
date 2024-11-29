@@ -7,6 +7,7 @@
 
 #include "atl_type_traits.h"
 #include <chrono>
+#include <iostream>
 #include <iterator>
 #include <type_traits>
 

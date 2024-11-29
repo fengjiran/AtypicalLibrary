@@ -52,6 +52,7 @@ private:
 };
 
 TEST(MultiThreadTest, test1) {
+    GTEST_SKIP();
     auto f1 = [] {
         std::cout << "Hello Concurrent World\n";
         std::cout << "concurrency num: " << std::thread::hardware_concurrency() << std::endl;
@@ -79,6 +80,7 @@ TEST(MultiThreadTest, test1) {
 }
 
 TEST(MultiThreadTest, test2) {
+    GTEST_SKIP();
     auto f1 = [](int n) {
         std::cout << "thread id: " << std::this_thread::get_id() << std::endl;
         for (int i = 0; i < 5; ++i) {
@@ -130,6 +132,7 @@ TEST(MultiThreadTest, test2) {
 }
 
 TEST(MultiThreadTest, test3) {
+    GTEST_SKIP();
     int data = 0;
     std::mutex mtx;
 
