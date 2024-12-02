@@ -6,7 +6,13 @@
 #include "binary_search.h"
 #include "gtest/gtest.h"
 
-class Empty {};
+class Empty {
+public:
+    virtual ~Empty() = default;
+
+    virtual void f() = 0;
+};
+
 class Base1 {
 public:
     virtual void f1() {
@@ -20,12 +26,12 @@ public:
     virtual void f3() {
         std::cout << "Base1 f3()\n";
     }
-
+// public:
     virtual ~Base1() = default;
 };
 
 class Derived1: public Base1 {
-public:
+// public:
     void f1() override {
         std::cout << "Derived1 f1()\n";
     }
@@ -79,6 +85,7 @@ TEST(BinarySearch, t1) {
 
     std::vector<int> nums2{3,5,8,10};
     // EXPECT_EQ(BinarySearch<int>::FindFirstGEItem(nums2, 0, nums2.size() - 1, 3), 2);
+    std::reverse(nums1.begin(), nums1.end());
 
     auto f = [](std::vector<int>& nums, int target) {
         int left = 0;
@@ -142,11 +149,13 @@ TEST(BinarySearch, RTPolymorphism) {
         reinterpret_cast<func>(vtable2[i])();
     }
 
+    p2->f1();
+
     delete p1;
     delete p2;
 
+    std::cout << sizeof(Derived1) << std::endl;
     std::cout << sizeof(Empty) << std::endl;
-    Empty a;
-    std::cout << sizeof(a) << std::endl;
     std::cout << sizeof(MyStruct) << std::endl;
+    std::cout << sizeof(double&&) << std::endl;
 }
