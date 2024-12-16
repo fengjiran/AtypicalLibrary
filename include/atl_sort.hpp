@@ -427,14 +427,14 @@ public:
     template<typename RandomAccessIterator>
     static void sort(RandomAccessIterator begin, RandomAccessIterator end) {
         auto cmp = Val_less_val();
-        _sort(begin, end, std::__lg(end - begin) * 2, cmp);
+        _sort(begin, end, std::log2(end - begin) * 2, cmp);
         Insertion::sort(begin, end, cmp);
         // BentlyMcIlroyQuickSort(begin, end, Val_less_val());
     }
 
     template<typename RandomAccessIterator, typename Compare>
     static void sort(RandomAccessIterator begin, RandomAccessIterator end, const Compare& cmp) {
-        _sort(begin, end, std::__lg(end - begin) * 2, cmp);
+        _sort(begin, end, std::log2(end - begin) * 2, cmp);
         Insertion::sort(begin, end, cmp);
         // BentlyMcIlroyQuickSort(begin, end, Val_less_val());
     }

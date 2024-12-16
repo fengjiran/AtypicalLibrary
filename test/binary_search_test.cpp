@@ -158,4 +158,9 @@ TEST(BinarySearch, RTPolymorphism) {
     std::cout << sizeof(Empty) << std::endl;
     std::cout << sizeof(MyStruct) << std::endl;
     std::cout << sizeof(double&&) << std::endl;
+
+    const int c = 10;
+    int* p = const_cast<int*>(&c);
+    *p = 20;
+    std::cout << c << std::endl;
 }

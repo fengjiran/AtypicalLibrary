@@ -5,6 +5,7 @@
 #ifndef ATL_HEAP_H
 #define ATL_HEAP_H
 
+#include <algorithm>
 #include <iterator>
 
 namespace atp {
