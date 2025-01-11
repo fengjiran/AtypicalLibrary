@@ -9,6 +9,7 @@
 #include <queue>
 #include <thread>
 
+
 TEST(SortTest, selection) {
     std::vector<int> v1{8, 4, 5, 9};
     atp::Selection::sort(v1.begin(), v1.end());
@@ -65,7 +66,6 @@ TEST(SortTest, heap_sort) {
     atp::HeapSort::sort(v.begin(), v.end());
     atp::Sort::Show(v.begin(), v.end());
     EXPECT_TRUE(atp::Sort::IsSorted(v.begin(), v.end()));
-    std::set<int> a;
 }
 
 TEST(SortTest, sort_compare) {

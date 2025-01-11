@@ -2,9 +2,10 @@
 // Created by richard on 7/31/24.
 //
 
-#include "utils.hpp"
 #include "binary_search.h"
+#include "utils.hpp"
 #include "gtest/gtest.h"
+// #include "LeakDetector.h"
 
 class Empty {
 public:
@@ -26,17 +27,25 @@ public:
     virtual void f3() {
         std::cout << "Base1 f3()\n";
     }
-// public:
+
+    virtual void f4() = 0;
+    // public:
     virtual ~Base1() = default;
 };
 
-class Derived1: public Base1 {
-// public:
+void Base1::f4() {
+    std::cout << "pure virtual Base1 f4()\n";
+}
+
+
+class Derived1 : public Base1 {
+    // public:
     void f1() override {
         std::cout << "Derived1 f1()\n";
     }
 
     virtual void f4() {
+        Base1::f4();
         std::cout << "Derived1 f4()\n";
     }
 };
@@ -55,7 +64,6 @@ public:
 };
 
 void Derived2::f6() {
-
 }
 
 #pragma pack(4)
@@ -63,6 +71,15 @@ struct MyStruct {
     double a;
     int b;
     int c[2];
+};
+
+class base {
+public:
+    virtual void f() {}
+    virtual ~base() = default;
+};
+
+class derived : public base {
 };
 
 TEST(BinarySearch, t1) {
@@ -82,8 +99,7 @@ TEST(BinarySearch, t1) {
     EXPECT_EQ(BinarySearch<int>::LeftBound(nums1, 0, nums1.size() - 1, 1), -1);
     EXPECT_EQ(BinarySearch<int>::LeftBound(nums1, 0, nums1.size() - 1, 10), -1);
 
-
-    std::vector<int> nums2{3,5,8,10};
+    std::vector<int> nums2{3, 5, 8, 10};
     // EXPECT_EQ(BinarySearch<int>::FindFirstGEItem(nums2, 0, nums2.size() - 1, 3), 2);
     std::reverse(nums1.begin(), nums1.end());
 
@@ -100,7 +116,7 @@ TEST(BinarySearch, t1) {
         }
 
         if (left == nums.size()) {
-            return (int)nums.size();
+            return (int) nums.size();
         }
 
         return left;
@@ -125,23 +141,23 @@ TEST(BinarySearch, t1) {
     std::cout << left + 1 << std::endl;
     std::cout << right - 1 << std::endl;
     std::vector<int> y(nums2.begin() + left + 1, nums2.begin() + right);
-    for (int t : y) {
+    for (int t: y) {
         std::cout << t << std::endl;
     }
 
-    int a = 10;
-    int& b = a;
-    static_assert(std::is_same_v<decltype((a)), int&>);
+    //    int a = 10;
+    //    int& b = a;
+    //    static_assert(std::is_same_v<decltype((a)), int&>);
 }
 
 TEST(BinarySearch, RTPolymorphism) {
-    using func = void(*)();
+    using func = void (*)();
 
-    auto* p1 = new Base1;
-    void** vtable1 = *reinterpret_cast<void***>(p1);
-    for (int i = 0; i < 3; ++i) {
-        reinterpret_cast<func>(vtable1[i])();
-    }
+    // auto* p1 = new Base1;
+    // void** vtable1 = *reinterpret_cast<void***>(p1);
+    // for (int i = 0; i < 3; ++i) {
+    //     reinterpret_cast<func>(vtable1[i])();
+    // }
 
     Base1* p2 = new Derived1;
     auto vtable2 = *reinterpret_cast<void***>(p2);
@@ -149,15 +165,16 @@ TEST(BinarySearch, RTPolymorphism) {
         reinterpret_cast<func>(vtable2[i])();
     }
 
-    p2->f1();
+    p2->f4();
 
-    delete p1;
+    // delete p1;
     delete p2;
 
     std::cout << sizeof(Derived1) << std::endl;
     std::cout << sizeof(Empty) << std::endl;
     std::cout << sizeof(MyStruct) << std::endl;
     std::cout << sizeof(double&&) << std::endl;
+    std::cout << sizeof(derived) << std::endl;
 
     const int c = 10;
     int* p = const_cast<int*>(&c);
