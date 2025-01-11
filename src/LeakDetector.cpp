@@ -5,6 +5,7 @@
 
 #include "LeakDetector.h"
 
+#include <cstring>
 #include <iostream>
 #include <string>
 
@@ -13,42 +14,55 @@ struct Chunk {
     Chunk* prev;
     size_t size;
     bool isArray;
-    std::string fileName;
+    char* fileName;
+    // std::string fileName;
     size_t line;
 };
 
-static Chunk head{&head, &head, 0, false, "", 0};
+static Chunk head{&head, &head, 0, false, nullptr, 0};
 
 static size_t memoryAllocatedSize = 0;
 
 void* Allocate(size_t size, bool isArray, const char* fileName, size_t line) {
     size_t allocSize = size + sizeof(Chunk);
-    auto* p = static_cast<Chunk*>(malloc(allocSize));
+    auto* p = (Chunk*) malloc(allocSize);
+    // auto* p = static_cast<Chunk*>(malloc(allocSize));
     p->prev = &head;
     p->next = head.next;
     p->size = size;
     p->isArray = isArray;
-    p->fileName = fileName;
+    // p->fileName = fileName;
     p->line = line;
+    if (fileName) {
+        p->fileName = (char*) malloc(strlen(fileName) + 1);
+        strcpy(p->fileName, fileName);
+    } else {
+        p->fileName = nullptr;
+    }
 
     head.next->prev = p;
     head.next = p;
     memoryAllocatedSize += size;
 
-    return (char*)p + sizeof(Chunk);
+    auto ptr = (char*) p + sizeof(Chunk);
+
+    return ptr;
 }
 
 void Deallocate(void* ptr, bool isArray) {
     // auto* p = (Chunk*)(static_cast<char*>(ptr) - sizeof(Chunk));
-    auto* p = (Chunk*)((char*)ptr - sizeof(Chunk));
+    auto* p = (Chunk*) ((char*) ptr - sizeof(Chunk));
     if (p->isArray != isArray) {
         return;
     }
 
-    p->prev->next = p->next;
     p->next->prev = p->prev;
+    p->prev->next = p->next;
 
     memoryAllocatedSize -= p->size;
+    if (p->fileName) {
+        free(p->fileName);
+    }
     free(p);
 }
 
@@ -98,7 +112,7 @@ void LeakDetector::Detect() {
 
         std::cout << "pointer: " << p << ", size: " << p->size;
 
-        if (!p->fileName.empty()) {
+        if (p->fileName) {
             std::cout << ", in file: " << p->fileName << ", line: " << p->line;
         } else {
             std::cout << "no file info";
