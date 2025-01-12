@@ -21,7 +21,9 @@
 void* operator new(size_t size, const char* file, size_t line);
 void* operator new[](size_t size, const char* file, size_t line);
 
+void operator delete(void* ptr);
 void operator delete(void* ptr, const char* file, size_t line);
+void operator delete[](void* ptr);
 void operator delete[](void* ptr, const char* file, size_t line);
 
 #ifndef NEW_OVERLOAD_IMPLEMENTATION

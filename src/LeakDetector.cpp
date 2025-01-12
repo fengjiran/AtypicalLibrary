@@ -9,9 +9,9 @@
 #include <iostream>
 #include <string>
 
-struct Chunk {
-    Chunk* next;
-    Chunk* prev;
+struct MemoryNode {
+    MemoryNode* next;
+    MemoryNode* prev;
     size_t size;
     bool isArray;
     char* fileName;
@@ -19,19 +19,19 @@ struct Chunk {
     size_t line;
 };
 
-static Chunk head{&head, &head, 0, false, nullptr, 0};
+static MemoryNode head{&head, &head, 0, false, nullptr, 0};
 
 static size_t memoryAllocatedSize = 0;
 
 void* Allocate(size_t size, bool isArray, const char* fileName, size_t line) {
-    size_t allocSize = size + sizeof(Chunk);
-    auto* p = (Chunk*) malloc(allocSize);
-    // auto* p = static_cast<Chunk*>(malloc(allocSize));
+    size_t allocSize = size + sizeof(MemoryNode);
+    auto* p = (MemoryNode*) malloc(allocSize);
+    // // auto* p = static_cast<Chunk*>(malloc(allocSize));
+    // int a = *((int*)(p + 1));
     p->prev = &head;
     p->next = head.next;
     p->size = size;
     p->isArray = isArray;
-    // p->fileName = fileName;
     p->line = line;
     if (fileName) {
         p->fileName = (char*) malloc(strlen(fileName) + 1);
@@ -44,25 +44,30 @@ void* Allocate(size_t size, bool isArray, const char* fileName, size_t line) {
     head.next = p;
     memoryAllocatedSize += size;
 
-    auto ptr = (char*) p + sizeof(Chunk);
+    auto ptr = (char*) p + sizeof(MemoryNode);
+    // auto* p = malloc(size);
 
     return ptr;
 }
 
 void Deallocate(void* ptr, bool isArray) {
     // auto* p = (Chunk*)(static_cast<char*>(ptr) - sizeof(Chunk));
-    auto* p = (Chunk*) ((char*) ptr - sizeof(Chunk));
-    if (p->isArray != isArray) {
-        return;
-    }
-
-    p->next->prev = p->prev;
-    p->prev->next = p->next;
-
-    memoryAllocatedSize -= p->size;
-    if (p->fileName) {
-        free(p->fileName);
-    }
+    auto* p = ((char*) ptr - sizeof(MemoryNode));
+    // auto* p = (MemoryNode*)ptr - 1;
+    // auto* p = (MemoryNode*)ptr;
+    // // auto p1 = (int*)(p + 1);
+    // // std::cout << "test deallocate: " << *p1 << std::endl;
+    // if (p->isArray != isArray) {
+    //     return;
+    // }
+    //
+    // p->next->prev = p->prev;
+    // p->prev->next = p->next;
+    //
+    // memoryAllocatedSize -= p->size;
+    // if (p->fileName) {
+    //     free(p->fileName);
+    // }
     free(p);
 }
 
@@ -82,11 +87,11 @@ void* operator new[](size_t size, const char* file, size_t line) {
 //     return Allocate(size, true, file, line);
 // }
 
-void operator delete(void* ptr, const char* file, size_t line) {
+void operator delete(void* ptr){
     Deallocate(ptr, false);
 }
 
-void operator delete[](void* ptr, const char* file, size_t line) {
+void operator delete[](void* ptr) {
     Deallocate(ptr, true);
 }
 
@@ -103,7 +108,7 @@ void LeakDetector::Detect() {
 
     size_t cnt = 0;
     auto* p = head.next;
-    while (p && p != &head) {
+    while ((p != nullptr) && (p != &head)) {
         if (p->isArray) {
             std::cout << "Memory leak detected, allocated by new[] operator, ";
         } else {
