@@ -6,7 +6,7 @@
 #define DATA_TYPE_H
 
 #include "c_runtime_api.h"
-
+#include "glog/logging.h"
 
 namespace litetvm::runtime {
 
@@ -36,10 +36,65 @@ struct DLDataType {
     uint16_t lanes;
 };
 
+/*!
+ * \brief Runtime primitive data type.
+ *
+ *  This class is a thin wrapper of DLDataType.
+ *  We also make use of DataType in compiler to store quick hint
+ */
 class DataType {
+public:
+    /*!
+     * \brief Type code for the DataType.
+     *
+     * DLPack consistency:
+     * 1) kInt is consistent with kDLInt
+     * 2) kUInt is consistent with kDLUInt
+     * 3) kFloat is consistent with kDLFloat
+     */
+    enum class TypeCode : uint8_t {
+        kInt = static_cast<uint8_t>(DLDataTypeCode::kDLInt),
+        kUInt = static_cast<uint8_t>(DLDataTypeCode::kDLUInt),
+        kFloat = static_cast<uint8_t>(DLDataTypeCode::kDLFloat),
+        kHandle = static_cast<uint8_t>(TVMArgTypeCode::kTVMOpaqueHandle),
+        kBFloat = static_cast<uint8_t>(DLDataTypeCode::kDLBfloat),
+        kE4M3Float = 6U,
+        kE5M2Float = 7U,
+        kCustomBegin = 129
+    };
+
+    /*!
+   * \brief Constructor
+   * \param dtype The DLDataType
+   */
+    explicit DataType(DLDataType dtype) : dtype_(dtype) {}
+
+    /*!
+   * \brief Constructor
+   * \param code The type code.
+   * \param bits The number of bits in the type.
+   * \param lanes The number of lanes.
+   * \param is_scalable Whether the data type is scalable.
+   */
+    DataType(int code, int bits, int lanes, bool is_scalable = false) {
+        dtype_.code = static_cast<uint8_t>(code);
+        dtype_.bits = static_cast<uint8_t>(bits);
+        if (is_scalable) {
+            CHECK(lanes > 1) << "Invalid value for vscale factor" << lanes;
+        }
+    }
+
+    /*!
+   * \brief Construct a Void type.
+   * \return The constructed data type.
+   */
+    static DataType Void() {
+        return {static_cast<int>(TypeCode::kHandle), 0, 0};
+    }
+
 
 private:
-    DLDataType dataType;
+    DLDataType dtype_;
 };
 
 }// namespace litetvm::runtime
