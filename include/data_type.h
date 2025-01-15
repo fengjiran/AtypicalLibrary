@@ -63,38 +63,90 @@ public:
         kCustomBegin = 129
     };
 
+    /*! \brief default constructor */
+    DataType() : dtype_(Void()) {}
+
     /*!
-   * \brief Constructor
-   * \param dtype The DLDataType
-   */
+     * \brief Constructor
+     * \param dtype The DLDataType
+     */
     explicit DataType(DLDataType dtype) : dtype_(dtype) {}
 
     /*!
-   * \brief Constructor
-   * \param code The type code.
-   * \param bits The number of bits in the type.
-   * \param lanes The number of lanes.
-   * \param is_scalable Whether the data type is scalable.
-   */
+     * \brief Constructor
+     * \param code The type code.
+     * \param bits The number of bits in the type.
+     * \param lanes The number of lanes.
+     * \param is_scalable Whether the data type is scalable (dynamic array)
+     */
     DataType(int code, int bits, int lanes, bool is_scalable = false) {
         dtype_.code = static_cast<uint8_t>(code);
         dtype_.bits = static_cast<uint8_t>(bits);
         if (is_scalable) {
-            CHECK(lanes > 1) << "Invalid value for vscale factor" << lanes;
+            CHECK(lanes > 1) << "Invalid value for vscale factor: " << lanes;
+        }
+        dtype_.lanes = is_scalable ? static_cast<uint16_t>(-lanes) : static_cast<uint16_t>(lanes);
+        if (code == static_cast<int>(TypeCode::kFloat)) {
+            CHECK_EQ(bits, 16);
+        }
+
+        if (code == static_cast<int>(TypeCode::kE4M3Float) || code == static_cast<int>(TypeCode::kE5M2Float)) {
+            CHECK_EQ(bits, 8);
         }
     }
 
+    /*! \return The type code. */
+    int code() const {
+        return dtype_.code;
+    }
+
+    /*! \return number of bits in the data. */
+    int bits() const {
+        return dtype_.bits;
+    }
+
+    /*! \return number of bytes to store each scalar. */
+    int bytes() const {
+        return (dtype_.bits + 7) / 8;
+    }
+
+    /*! \return number of lanes in the data. */
+    int lanes() const {
+        int lanes = static_cast<int16_t>(dtype_.lanes);
+        if (lanes < 0) {
+            LOG(FATAL) << "Can't fetch the lanes of a scalable vector at a compile time.";
+        }
+        return -lanes;
+    }
+
+    /*! \return the integer multiplier of vscale in a scalable vector. */
+    int vscale_factor() const {
+        int lanes = static_cast<int16_t>(dtype_.lanes);
+        if (lanes >= -1) {
+            LOG(FATAL) << "A fixed length vector doesn't have a vscale factor.";
+        }
+        return -lanes;
+    }
+
     /*!
-   * \brief Construct a Void type.
-   * \return The constructed data type.
-   */
+     * \brief Construct a Void type.
+     * \return The constructed data type.
+     */
     static DataType Void() {
-        return {static_cast<int>(TypeCode::kHandle), 0, 0};
+        return {static_cast<uint8_t>(TypeCode::kHandle), 0, 0};
+    }
+
+    /*!
+     * \brief Converter to DLDataType
+     * \return the result.
+     */
+    explicit operator DLDataType() const {
+        return dtype_;
     }
 
 
 private:
-    DLDataType dtype_;
+    DLDataType dtype_{};
 };
 
 }// namespace litetvm::runtime
