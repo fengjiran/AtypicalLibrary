@@ -5,6 +5,8 @@
 #ifndef C_RUNTIME_API_H
 #define C_RUNTIME_API_H
 
+using tvm_index_t = int64_t;
+
 /*!
  * \brief The type code options DLDataType.
  */
