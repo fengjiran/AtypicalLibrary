@@ -70,16 +70,65 @@ inline size_t DataTypeSize(DataType data_type) {
 class Status {
 public:
     Status() = default;
-    Status(StatusCode code, std::string message) : code_(code), message_(std::move(message)) {}
+    Status(StatusCode code, std::string message)
+        : code_(code), message_(std::move(message)) {}
 
     Status(const Status&) = default;
     Status& operator=(const Status&) = default;
+    Status& operator=(StatusCode code) {
+        code_ = code;
+        return *this;
+    }
 
+    bool operator==(StatusCode code) const {
+        return code_ == code;
+    }
+
+    bool operator!=(StatusCode code) const {
+        return code_ != code;
+    }
+
+    explicit operator int() const {
+        return static_cast<int>(code_);
+    }
+
+    explicit operator bool() const {
+        return code_ == StatusCode::kSuccess;
+    }
+
+    StatusCode get_err_code() const {
+        return code_;
+    }
+
+    const std::string& get_err_message() const {
+        return message_;
+    }
+
+    void set_err_message(const std::string& message) {
+        message_ = message;
+    }
 
 private:
     StatusCode code_{StatusCode::kSuccess};
     std::string message_;
 };
+
+namespace error {
+
+#define STATUS_CHECK(call)                                                                       \
+    do {                                                                                         \
+        const base::Status& status = call;                                                       \
+        if (!status) {                                                                           \
+            char buf[512];                                                                       \
+            snprintf(buf, buf_size - 1,                                                          \
+                     "Infer error\n File:%s Line:%d\n Error code:%d\n Error msg:%s\n", __FILE__, \
+                     __LINE__, int(status), status.get_err_msg().c_str());                       \
+            LOG(FATAL) << buf;                                                                   \
+        }                                                                                        \
+    } while (0);
+
+
+}// namespace error
 
 
 }// namespace base
