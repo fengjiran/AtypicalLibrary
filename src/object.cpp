@@ -3,6 +3,7 @@
 //
 
 #include "object.h"
+#include "data_type.h"
 
 #include <string>
 #include <vector>
