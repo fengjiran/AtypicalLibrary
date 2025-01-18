@@ -6,6 +6,13 @@
 #define ATYPICALLIBRARY_BASE_H
 
 #include <cstdint>
+#include <glog/logging.h>
+#include <utility>
+
+#define UNUSED(expr)   \
+    do {               \
+        (void) (expr); \
+    } while (0);
 
 namespace base {
 
@@ -42,6 +49,36 @@ enum class TokenizerType : int8_t {
     kEncodeUnknown = -1,
     kEncodeSpe = 0,
     kEncodeBpe = 1,
+};
+
+inline size_t DataTypeSize(DataType data_type) {
+    if (data_type == DataType::kDataTypeFp32) {
+        return sizeof(float);
+    }
+
+    if (data_type == DataType::kDataTypeInt8) {
+        return sizeof(int8_t);
+    }
+
+    if (data_type == DataType::kDataTypeInt32) {
+        return sizeof(int32_t);
+    }
+
+    return 0;
+}
+
+class Status {
+public:
+    Status() = default;
+    Status(StatusCode code, std::string message) : code_(code), message_(std::move(message)) {}
+
+    Status(const Status&) = default;
+    Status& operator=(const Status&) = default;
+
+
+private:
+    StatusCode code_{StatusCode::kSuccess};
+    std::string message_;
 };
 
 
