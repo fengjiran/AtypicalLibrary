@@ -115,16 +115,16 @@ private:
 
 namespace error {
 
-#define STATUS_CHECK(call)                                                                       \
-    do {                                                                                         \
-        const base::Status& status = call;                                                       \
-        if (!status) {                                                                           \
-            char buf[512];                                                                       \
-            snprintf(buf, buf_size - 1,                                                          \
-                     "Infer error\n File:%s Line:%d\n Error code:%d\n Error msg:%s\n", __FILE__, \
-                     __LINE__, int(status), status.get_err_msg().c_str());                       \
-            LOG(FATAL) << buf;                                                                   \
-        }                                                                                        \
+#define STATUS_CHECK(call)                                                             \
+    do {                                                                               \
+        const base::Status& status = call;                                             \
+        if (!status) {                                                                 \
+            char buf[512];                                                             \
+            snprintf(buf, buf_size - 1,                                                \
+                     "Infer error\n File:%s Line:%d\n Error code:%d\n Error msg:%s\n", \
+                     __FILE__, __LINE__, int(status), status.get_err_msg().c_str());   \
+            LOG(FATAL) << buf;                                                         \
+        }                                                                              \
     } while (0);
 
 
