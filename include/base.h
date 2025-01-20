@@ -14,6 +14,20 @@
         (void) (expr); \
     } while (0);
 
+#define CONCAT_(a, b) a##b
+#define CONCAT(a, b) CONCAT_(a, b)
+#define UNIQUE_ID(prefix) CONCAT(prefix, __COUNTER__)
+
+#define MAX_(t1, t2, max1, max2, x, y) ({ \
+    t1 max1 = (x);                        \
+    t2 max2 = (y);                        \
+    (void) (&max1 == &max2);              \
+    max1 > max2 ? max1 : max2;            \
+})
+
+
+#define MAX(x, y) MAX_(decltype(x), decltype(y), UNIQUE_ID(max1_), UNIQUE_ID(max2_), x, y)
+
 namespace base {
 
 enum class StatusCode : uint8_t {
@@ -63,6 +77,10 @@ inline size_t DataTypeSize(DataType data_type) {
     if (data_type == DataType::kDataTypeInt32) {
         return sizeof(int32_t);
     }
+
+    int a = 10;
+    int b = 20;
+    int c = MAX(a, b);
 
     return 0;
 }
