@@ -19,11 +19,10 @@ public:
     using reference = typename std::iterator_traits<iterator_type>::reference;
     using iterator_category = typename std::iterator_traits<iterator_type>::iterator_category;
 
-public:
     ATLIterator() noexcept : i() {}
 
     template<typename U,
-             typename std::enable_if<std::is_convertible<U, iterator_type>::value>::type* = nullptr>
+             std::enable_if_t<std::is_convertible_v<U, iterator_type>>* = nullptr>
     explicit ATLIterator(const ATLIterator<U>& u) noexcept : i(u.base()) {}
 
     reference operator*() const noexcept {

@@ -391,6 +391,44 @@ private:
     DLDataType dtype_{};
 };
 
+/*!
+ * \brief Get the number of bytes needed in a vector.
+ * \param dtype The data type.
+ * \return Number of bytes needed.
+ */
+inline int GetVectorBytes(DataType dtype) {
+    if (dtype == DataType::Bool() ||
+        dtype == DataType::Int(1) ||
+        dtype == DataType::Int(4) ||
+        dtype == DataType::UInt(4)) {
+        return 1;
+    }
+
+    int bits = dtype.bits() * dtype.lanes();
+    CHECK_EQ(bits % 8, 0U) << "Need to load/store by multiple of bytes";
+    return bits / 8;
+}
+
+/*!
+ * \brief Check whether type matches the given spec.
+ * \param t The type
+ * \param code The type code.
+ * \param bits The number of bits to be matched.
+ * \param lanes The number of lanes in the type.
+ */
+inline bool TypeMatch(DLDataType t, int code, int bits, int lanes = 1) {
+    return t.code == code && t.bits == bits && t.lanes == lanes;
+}
+
+/*!
+ * \brief Check whether two types are equal .
+ * \param lhs The left operand.
+ * \param rhs The right operand.
+ */
+inline bool TypeEqual(DLDataType lhs, DLDataType rhs) {
+    return lhs.code == rhs.code && lhs.bits == rhs.bits && lhs.lanes == rhs.lanes;
+}
+
 }// namespace litetvm::runtime
 
 
