@@ -145,6 +145,12 @@ TEST(BinarySearch, t1) {
         std::cout << t << std::endl;
     }
 
+    std::unordered_map<std::string, int> my_map;
+    my_map["hello"] = 1;
+    if (auto it = my_map.find("hello"); it != my_map.end()) {
+        std::cout << my_map["hello"] << std::endl;
+    }
+
     //    int a = 10;
     //    int& b = a;
     //    static_assert(std::is_same_v<decltype((a)), int&>);
