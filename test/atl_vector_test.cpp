@@ -50,6 +50,8 @@ TEST(ATLVectorTest, general) {
     std::vector<char> x{'h', 'e', 'l', 'l', 'o'};
     std::string key(x.begin(), x.end());
     std::cout << key.size() << std::endl;
+
+    static_assert(std::is_convertible_v<std::bidirectional_iterator_tag, std::input_iterator_tag>);
 }
 
 TEST(ATLVectorTest, ctor) {
