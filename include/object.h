@@ -6,6 +6,7 @@
 #define ATYPICALLIBRARY_OBJECT_H
 
 #include <cstdint>
+#include <string>
 
 /*!
  * \brief Whether or not use atomic reference counter.
@@ -78,7 +79,33 @@ public:
    */
     using FDeleter = void (*)(Object* self);
 
+    // default construct.
     Object() = default;
+
+    // Override the copy and assign constructors to do nothing.
+    // This is to make sure only contents, but not deleter and ref_counter
+    // are copied when a child class copies itself.
+    // This will enable us to use make_object<ObjectClass>(*obj_ptr)
+    // to copy an existing object.
+    Object(const Object&) {}
+
+    Object(Object&&) noexcept {}
+
+    Object& operator=(const Object&) {
+        return *this;
+    }
+
+    Object& operator=(Object&&) noexcept {
+        return *this;
+    }
+
+    static uint32_t RuntimeTypeIndex() {
+        return static_cast<uint32_t>(TypeIndex::kRoot);
+    }
+
+    static uint32_t _GetOrAllocRuntimeTypeIndex() {
+        return static_cast<uint32_t>(TypeIndex::kRoot);
+    }
 
 #if TVM_OBJECT_ATOMIC_REF_COUNTER
     using RefCounterType = std::atomic<int32_t>;
@@ -120,6 +147,9 @@ protected:
    * \param type_child_slots_can_overflow Whether to allow child to overflow the slots.
    * \return The allocated type index.
    */
+    static uint32_t GetOrAllocRuntimeTypeIndex(const std::string& key, uint32_t static_tindex,
+                                               uint32_t parent_tindex, uint32_t type_child_slots,
+                                               bool type_child_slots_can_overflow);
 
 
     // The fields of the base object cell.
@@ -135,6 +165,11 @@ protected:
    * The creator of the object must always set the deleter field properly.
    */
     FDeleter deleter_ = nullptr;
+
+    // Invariant checks.
+    static_assert(sizeof(int32_t) == sizeof(RefCounterType) &&
+                          alignof(int32_t) == sizeof(RefCounterType),
+                  "RefCounter ABI check.");
 };
 
 }// namespace litetvm::runtime
