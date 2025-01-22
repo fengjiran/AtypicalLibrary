@@ -7,6 +7,20 @@
 
 #include <cstdint>
 
+/*!
+ * \brief Whether or not use atomic reference counter.
+ *  If the reference counter is not atomic,
+ *  an object cannot be owned by multiple threads.
+ *  We can, however, move an object across threads
+ */
+#ifndef TVM_OBJECT_ATOMIC_REF_COUNTER
+#define TVM_OBJECT_ATOMIC_REF_COUNTER 1
+#endif
+
+#if TVM_OBJECT_ATOMIC_REF_COUNTER
+#include <atomic>
+#endif// TVM_OBJECT_ATOMIC_REF_COUNTER
+
 // nested namespace
 namespace litetvm::runtime {
 
@@ -54,6 +68,73 @@ enum class TypeIndex {
 
     /// \brief Type index is allocated during runtime.
     kDynamic = kStaticIndexEnd
+};
+
+class Object {
+public:
+    /*!
+   * \brief Object deleter
+   * \param self pointer to the Object.
+   */
+    using FDeleter = void (*)(Object* self);
+
+    Object() = default;
+
+#if TVM_OBJECT_ATOMIC_REF_COUNTER
+    using RefCounterType = std::atomic<int32_t>;
+#else
+    using RefCounterType = int32_t;
+#endif
+
+    static constexpr const char* _type_key = "runtime.Object";
+    // Default object type properties for sub-classes
+    static constexpr bool _type_final = false;
+    static constexpr uint32_t _type_child_slots = 0;
+    static constexpr bool _type_child_slots_can_overflow = true;
+
+    // member information
+    static constexpr bool _type_has_method_visit_attrs = true;
+    static constexpr bool _type_has_method_sequal_reduce = false;
+    static constexpr bool _type_has_method_shash_reduce = false;
+
+    // NOTE: the following field is not type index of Object
+    // but was intended to be used by sub-classes as default value.
+    // The type index of Object is TypeIndex::kRoot
+    static constexpr uint32_t _type_index = static_cast<uint32_t>(TypeIndex::kDynamic);
+
+protected:
+    /*!
+   * \brief Get the type index using type key.
+   *
+   *  When the function is first time called for a type,
+   *  it will register the type to the type table in the runtime.
+   *  If the static_tindex is TypeIndex::kDynamic, the function will
+   *  allocate a runtime type index.
+   *  Otherwise, we will populate the type table and return the static index.
+   *
+   * \param key the type key.
+   * \param static_tindex The current _type_index field.
+   *                      can be TypeIndex::kDynamic.
+   * \param parent_tindex The index of the parent.
+   * \param type_child_slots Number of slots reserved for its children.
+   * \param type_child_slots_can_overflow Whether to allow child to overflow the slots.
+   * \return The allocated type index.
+   */
+
+
+    // The fields of the base object cell.
+    /*! \brief Type index(tag) that indicates the type of the object. */
+    uint32_t type_index_{0};
+
+    /*! \brief The internal reference counter */
+    RefCounterType ref_counter_{0};
+
+    /*!
+   * \brief deleter of this object to enable customized allocation.
+   * If the deleter is nullptr, no deletion will be performed.
+   * The creator of the object must always set the deleter field properly.
+   */
+    FDeleter deleter_ = nullptr;
 };
 
 }// namespace litetvm::runtime
