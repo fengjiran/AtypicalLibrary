@@ -5,6 +5,8 @@
 #ifndef C_RUNTIME_API_H
 #define C_RUNTIME_API_H
 
+#include <cstdint>
+
 using tvm_index_t = int64_t;
 
 /*!

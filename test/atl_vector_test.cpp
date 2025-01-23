@@ -3,6 +3,7 @@
 //
 
 #include "atl_vector.hpp"
+#include "atl_distance.h"
 #include "gtest/gtest.h"
 
 #include <deque>
@@ -15,6 +16,7 @@ TEST(ATLVectorTest, general) {
     v.push_back(6);
     v.push_back(9);
     v[2] = -1;
+    std::cout << atp::distance(v.begin(), v.end()) << std::endl;
 
     atp::vector<int> ans{8, 4, -1, 9, 6, 9};
     ASSERT_TRUE(v == ans);

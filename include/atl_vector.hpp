@@ -496,8 +496,6 @@ public:
     void emplace_back(Args&&... args);
 
 
-
-
     /**
      * @brief Swaps data with another vector.
      *

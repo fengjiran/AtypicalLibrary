@@ -87,17 +87,14 @@ public:
 
 private:
     TypeContext()
-        : type_table_(static_cast<uint32_t>(TypeIndex::kStaticIndexEnd), TypeInfo()),
-          mutex_({}),
-          type_counter_(static_cast<uint32_t>(TypeIndex::kStaticIndexEnd)),
-          type_key2index_({}) {
+        : type_table_(static_cast<uint32_t>(TypeIndex::kStaticIndexEnd), TypeInfo()) {
         type_table_[0].name = "runtime.Object";
     }
 
     std::vector<TypeInfo> type_table_;
-    std::mutex mutex_;// mutex to avoid registration from multiple threads.
-    std::atomic<uint32_t> type_counter_;
     std::unordered_map<std::string, uint32_t> type_key2index_;
+    std::mutex mutex_{};// mutex to avoid registration from multiple threads.
+    std::atomic<uint32_t> type_counter_ = static_cast<uint32_t>(TypeIndex::kStaticIndexEnd);
 };
 
 }// namespace litetvm::runtime
