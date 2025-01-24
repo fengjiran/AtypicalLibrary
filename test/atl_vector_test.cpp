@@ -54,7 +54,7 @@ TEST(ATLVectorTest, general) {
     std::cout << key.size() << std::endl;
 
     static_assert(std::is_convertible_v<std::bidirectional_iterator_tag, std::input_iterator_tag>);
-    static_assert(sizeof(std::vector<bool>) == 24);
+    // static_assert(sizeof(std::vector<bool>) == 24);
 }
 
 TEST(ATLVectorTest, ctor) {

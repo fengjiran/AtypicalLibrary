@@ -145,7 +145,7 @@ public:
    * \tparam TargetType The target type to be checked.
    * \return Whether the target type is true.
    */
-    template <typename TargetType>
+    template<typename TargetType>
     bool IsInstance() const;
 
     /*!
@@ -254,6 +254,128 @@ private:
    * \return The derivation results.
    */
     bool DerivedFrom(uint32_t parent_tindex) const;
+
+    template<typename>
+    friend class ObjectPtr;
+};
+
+/*!
+ * \brief A custom smart pointer for Object.
+ * \tparam T the content data type.
+ * \sa make_object
+ */
+template<typename T>
+class ObjectPtr {
+public:
+    ObjectPtr() = default;
+
+    explicit ObjectPtr(std::nullptr_t) {}
+
+    ObjectPtr(const ObjectPtr& other) : ObjectPtr(other.data_) {}
+
+    /*!
+   * \brief copy constructor
+   * \param other The value to be moved
+   */
+    template<typename U,
+             typename = std::enable_if_t<std::is_base_of_v<T, U>>>
+    explicit ObjectPtr(const ObjectPtr<U>& other) : ObjectPtr(other.data_) {}
+
+    /*!
+   * \brief move constructor
+   * \param other The value to be moved
+   */
+    ObjectPtr(ObjectPtr&& other) noexcept : data_(other.data_) {
+        other.data_ = nullptr;
+    }
+
+    /*!
+   * \brief move constructor
+   * \param other The value to be moved
+   */
+    template<typename U,
+             typename = std::enable_if_t<std::is_base_of_v<T, U>>>
+    explicit ObjectPtr(ObjectPtr<U>&& other) : data_(other.data_) {
+        other.data_ = nullptr;
+    }
+
+    ~ObjectPtr() {
+        reset();
+    }
+
+    /*!
+   * \brief Swap this array with another Object
+   * \param other The other Object
+   */
+    // void swap(ObjectPtr& other) noexcept {
+    //     std::swap(data_, other.data_);
+    // }
+
+    // Get the content of the pointer
+    T* get() const {
+        return static_cast<T*>(data_);
+    }
+
+    T* operator->() const {
+        return get();
+    }
+
+    T& operator*() const {
+        return *get();
+    }
+
+    /*!
+   * \brief copy assignment
+   * \param other The value to be assigned.
+   * \return reference to self.
+   */
+    ObjectPtr& operator=(const ObjectPtr& other) {
+        ObjectPtr tmp(other);
+        swap(tmp, *this);
+        return *this;
+    }
+
+    /*!
+   * \brief move assignment
+   * \param other The value to be assigned.
+   * \return reference to self.
+   */
+    ObjectPtr& operator=(ObjectPtr&& other) noexcept {
+        ObjectPtr tmp(std::move(other));
+        swap(tmp, *this);
+        return *this;
+    }
+
+    /*!
+   * \brief nullptr check
+   * \return result of comparison of internal pointer with nullptr.
+   */
+    explicit operator bool() const {
+        return get() != nullptr;
+    }
+
+    /*! \brief reset the content of ptr to be nullptr */
+    void reset() {
+        if (data_) {
+            data_->DecRef();
+            data_ = nullptr;
+        }
+    }
+
+private:
+    Object* data_{nullptr};
+
+    explicit ObjectPtr(Object* data) : data_(data) {
+        if (data) {
+            data_->IncRef();
+        }
+    }
+
+    friend void swap(ObjectPtr& a, ObjectPtr& b) noexcept {
+        std::swap(a.data_, b.data_);
+    }
+
+    friend class Object;
 };
 
 template<typename TargetType>
@@ -272,7 +394,28 @@ bool Object::IsInstance() const {
     } else {
         // if target type is a non-leaf type
         // Check if type index falls into the range of reserved slots.
+        uint32_t begin = TargetType::RuntimeTypeIndex();
 
+        if (TargetType::_type_child_slots != 0) {
+            uint32_t end = begin + TargetType::_type_child_slots;
+            if (self->type_index_ >= begin && self->type_index_ < end) {
+                return true;
+            }
+        } else {
+            if (self->type_index_ == begin) {
+                return true;
+            }
+        }
+
+        if (!TargetType::_type_child_slots_can_overflow) {
+            return false;
+        }
+
+        if (self->type_index_ < TargetType::RuntimeTypeIndex()) {
+            return false;
+        }
+
+        return self->DerivedFrom(TargetType::RuntimeTypeIndex());
     }
 }
 
