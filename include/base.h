@@ -14,7 +14,7 @@
         (void) (expr); \
     } while (0);
 
-#define CONCAT_(a, b) a##b
+#define CONCAT_(a, b) a## b
 #define CONCAT(a, b) CONCAT_(a, b)
 #define UNIQUE_ID(prefix) CONCAT(prefix, __COUNTER__)
 
@@ -24,8 +24,6 @@
     (void) (&max1 == &max2);              \
     max1 > max2 ? max1 : max2;            \
 })
-
-
 #define MAX(x, y) MAX_(decltype(x), decltype(y), UNIQUE_ID(max1_), UNIQUE_ID(max2_), x, y)
 
 namespace base {
@@ -78,10 +76,6 @@ inline size_t DataTypeSize(DataType data_type) {
         return sizeof(int32_t);
     }
 
-    int a = 10;
-    int b = 20;
-    int c = MAX(a, b);
-
     return 0;
 }
 
@@ -89,32 +83,45 @@ class Status {
 public:
     Status() = default;
     Status(StatusCode code, std::string message)
-        : code_(code), message_(std::move(message)) {}
+        : code_(static_cast<int>(code)), message_(std::move(message)) {}
 
     Status(const Status&) = default;
     Status& operator=(const Status&) = default;
     Status& operator=(StatusCode code) {
+        code_ = static_cast<int>(code);
+        return *this;
+    }
+
+    Status& operator=(int code) {
         code_ = code;
         return *this;
     }
 
     bool operator==(StatusCode code) const {
-        return code_ == code;
+        return code_ == static_cast<int>(code);
     }
 
     bool operator!=(StatusCode code) const {
+        return code_ != static_cast<int>(code);
+    }
+
+    bool operator==(int code) const {
+        return code_ == code;
+    }
+
+    bool operator!=(int code) const {
         return code_ != code;
     }
 
-    explicit operator int() const {
-        return static_cast<int>(code_);
+    operator int() const {
+        return code_;
     }
 
-    explicit operator bool() const {
-        return code_ == StatusCode::kSuccess;
+    operator bool() const {
+        return code_ == static_cast<int>(StatusCode::kSuccess);
     }
 
-    StatusCode get_err_code() const {
+    int get_err_code() const {
         return code_;
     }
 
@@ -127,7 +134,7 @@ public:
     }
 
 private:
-    StatusCode code_{StatusCode::kSuccess};
+    int code_{static_cast<int>(StatusCode::kSuccess)};
     std::string message_;
 };
 
@@ -145,9 +152,17 @@ namespace error {
         }                                                                              \
     } while (0);
 
+Status Success(const std::string& err_msg = "");
+Status FunctionNotImplement(const std::string& err_msg = "");
+Status PathNotValid(const std::string& err_msg = "");
+Status ModelParseError(const std::string& err_msg = "");
+Status InternalError(const std::string& err_msg = "");
+Status KeyHasExits(const std::string& err_msg = "");
+Status InvalidArgument(const std::string& err_msg = "");
 
 }// namespace error
 
+std::ostream& operator<<(std::ostream& os, const Status& status);
 
 }// namespace base
 

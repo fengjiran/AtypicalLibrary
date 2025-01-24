@@ -16,14 +16,15 @@ constexpr bool is_random_access_iter =
         std::is_same_v<typename std::iterator_traits<Iter>::iterator_category, std::random_access_iterator_tag>;
 
 template<typename Iter,
-         std::enable_if_t<is_random_access_iter<Iter>>* = nullptr>
+         typename = std::enable_if_t<is_random_access_iter<Iter>>>
 typename std::iterator_traits<Iter>::difference_type
 distance(Iter first, Iter last) {
     return last - first;
 }
 
 template<typename Iter,
-         std::enable_if_t<!is_random_access_iter<Iter>>* = nullptr>
+         typename = void, // avoid template parameter redefines default argument
+         typename = std::enable_if_t<!is_random_access_iter<Iter>>>
 typename std::iterator_traits<Iter>::difference_type
 distance(Iter first, Iter last) {
     typename std::iterator_traits<Iter>::difference_type dist = 0;

@@ -99,6 +99,18 @@ public:
         return *this;
     }
 
+    /*! \return The internal runtime type index of the object. */
+    uint32_t type_index() const { return type_index_; }
+    /*!
+     * \return the type key of the object.
+     * \note this operation is expensive, can be used for error reporting.
+     */
+    std::string GetTypeKey() const { return TypeIndex2Key(type_index_); }
+    /*!
+     * \return A hash value of the return of GetTypeKey.
+     */
+    size_t GetTypeKeyHash() const { return TypeIndex2KeyHash(type_index_); }
+
     static uint32_t RuntimeTypeIndex() {
         return static_cast<uint32_t>(TypeIndex::kRoot);
     }
@@ -107,13 +119,49 @@ public:
         return static_cast<uint32_t>(TypeIndex::kRoot);
     }
 
+    /*!
+   * \brief Get the type key of the corresponding index from runtime.
+   * \param tindex The type index.
+   * \return the result.
+   */
+    static std::string TypeIndex2Key(uint32_t tindex);
+
+    /*!
+   * \brief Get the type key hash of the corresponding index from runtime.
+   * \param tindex The type index.
+   * \return the related key-hash.
+   */
+    static size_t TypeIndex2KeyHash(uint32_t tindex);
+
+    /*!
+   * \brief Get the type index of the corresponding key from runtime.
+   * \param key The type key.
+   * \return the result.
+   */
+    static uint32_t TypeKey2Index(const std::string& key);
+
+    /*!
+   * Check if the object is an instance of TargetType.
+   * \tparam TargetType The target type to be checked.
+   * \return Whether the target type is true.
+   */
+    template <typename TargetType>
+    bool IsInstance() const;
+
+    /*!
+   * \return Whether the cell has only one reference
+   * \note We use stl style naming to be consistent with known API in shared_ptr.
+   */
+    bool unique() const {
+        return use_count() == 1;
+    }
+
 #if TVM_OBJECT_ATOMIC_REF_COUNTER
     using RefCounterType = std::atomic<int32_t>;
 #else
     using RefCounterType = int32_t;
 #endif
 
-    static constexpr const char* _type_key = "runtime.Object";
     // Default object type properties for sub-classes
     static constexpr bool _type_final = false;
     static constexpr uint32_t _type_child_slots = 0;
@@ -123,6 +171,8 @@ public:
     static constexpr bool _type_has_method_visit_attrs = true;
     static constexpr bool _type_has_method_sequal_reduce = false;
     static constexpr bool _type_has_method_shash_reduce = false;
+
+    static constexpr const char* _type_key = "runtime.Object";
 
     // NOTE: the following field is not type index of Object
     // but was intended to be used by sub-classes as default value.
@@ -151,6 +201,24 @@ protected:
                                                uint32_t parent_tindex, uint32_t type_child_slots,
                                                bool type_child_slots_can_overflow);
 
+    // reference counter related operations
+    /*! \brief developer function, increases reference counter. */
+    void IncRef() {
+        ref_counter_.fetch_add(1, std::memory_order_relaxed);
+    }
+
+    /*!
+   * \brief developer function, decrease reference counter.
+   * \note The deleter will be called when ref_counter_ becomes zero.
+   */
+    void DecRef() {
+        if (ref_counter_.fetch_sub(1, std::memory_order_release) == 1) {
+            std::atomic_thread_fence(std::memory_order_acquire);
+            if (this->deleter_ != nullptr) {
+                (*this->deleter_)(this);
+            }
+        }
+    }
 
     // The fields of the base object cell.
     /*! \brief Type index(tag) that indicates the type of the object. */
@@ -170,7 +238,43 @@ protected:
     static_assert(sizeof(int32_t) == sizeof(RefCounterType) &&
                           alignof(int32_t) == sizeof(RefCounterType),
                   "RefCounter ABI check.");
+
+private:
+    /*!
+   * \return The usage count of the cell.
+   * \note We use stl style naming to be consistent with known API in shared_ptr.
+   */
+    int use_count() const {
+        return ref_counter_.load(std::memory_order_relaxed);
+    }
+
+    /*!
+   * \brief Check of this object is derived from the parent.
+   * \param parent_tindex The parent type index.
+   * \return The derivation results.
+   */
+    bool DerivedFrom(uint32_t parent_tindex) const;
 };
+
+template<typename TargetType>
+bool Object::IsInstance() const {
+    const Object* self = this;
+
+    // Everything is a subclass of object.
+    if (std::is_same_v<TargetType, Object>) {
+        return true;
+    }
+
+    if (TargetType::_type_final) {
+        // if the target type is a final type
+        // then we only need to check the equivalence.
+        return self->type_index_ == TargetType::RuntimeTypeIndex();
+    } else {
+        // if target type is a non-leaf type
+        // Check if type index falls into the range of reserved slots.
+
+    }
+}
 
 }// namespace litetvm::runtime
 
