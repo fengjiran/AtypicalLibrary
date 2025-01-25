@@ -6,6 +6,7 @@
 #define ATYPICALLIBRARY_OBJECT_H
 
 #include <cstdint>
+#include <glog/logging.h>
 #include <string>
 
 /*!
@@ -260,6 +261,21 @@ private:
 };
 
 /*!
+ * \brief Get a reference type from a raw object ptr type
+ *
+ *  It is always important to get a reference type
+ *  if we want to return a value as reference or keep
+ *  the object alive beyond the scope of the function.
+ *
+ * \param ptr The object pointer
+ * \tparam RefType The reference type
+ * \tparam ObjType The object type
+ * \return The corresponding RefType
+ */
+template<typename RefType, typename ObjType, typename>
+RefType GetRef(const ObjType* ptr);
+
+/*!
  * \brief A custom smart pointer for Object.
  * \tparam T the content data type.
  * \sa make_object
@@ -401,11 +417,17 @@ private:
     }
 
     friend class Object;
+
+    template<typename RefType, typename ObjType, typename>
+    friend RefType GetRef(const ObjType* ptr);
 };
 
 /*! \brief Base class of all object reference */
 class ObjectRef {
 public:
+    /*! \brief type indicate the container type. */
+    using ContainerType = Object;
+
     /*! \brief default constructor */
     ObjectRef() = default;
 
@@ -417,6 +439,89 @@ public:
    * \param other Another object ref.
    * \return the compare result.
    */
+    bool same_as(const ObjectRef& other) const {
+        return data_ == other.data_;
+    }
+
+    /*!
+   * \brief Comparator
+   * \param other Another object ref.
+   * \return the compare result.
+   */
+    bool operator==(const ObjectRef& other) const {
+        return data_ == other.data_;
+    }
+    /*!
+     * \brief Comparator
+     * \param other Another object ref.
+     * \return the compare result.
+     */
+    bool operator!=(const ObjectRef& other) const {
+        return data_ != other.data_;
+    }
+    /*!
+     * \brief Comparator
+     * \param other Another object ref by address.
+     * \return the compare result.
+     */
+    bool operator<(const ObjectRef& other) const {
+        return data_.get() < other.data_.get();
+    }
+
+    /*!
+   * \return whether the object is defined(not null).
+   */
+    bool defined() const { return data_ != nullptr; }
+    /*! \return the internal object pointer */
+    const Object* get() const { return data_.get(); }
+    /*! \return the internal object pointer */
+    const Object* operator->() const { return get(); }
+    /*! \return whether the reference is unique */
+    bool unique() const { return data_.unique(); }
+    /*! \return The use count of the ptr, for debug purposes */
+    int use_count() const { return data_.use_count(); }
+
+    /*!
+   * \brief Try to downcast the internal Object to a
+   *  raw pointer of a corresponding type.
+   *
+   *  The function will return a nullptr if the cast failed.
+   *
+   *      if (const AddNode *ptr = node_ref.as<AddNode>()) {
+   *        // This is an add node
+   *      }
+   *
+   * \tparam ObjectType the target type, must be a subtype of Object
+   */
+    template<typename ObjectType,
+             typename = std::enable_if_t<std::is_base_of_v<Object, ObjectType>>>
+    const ObjectType* as() const {
+        if (data_ != nullptr && data_->IsInstance<ObjectType>()) {
+            return static_cast<ObjectType*>(data_.get());
+        }
+        return nullptr;
+    }
+
+    /*!
+   * \brief Try to downcast the ObjectRef to a
+   *    Optional<T> of the requested type.
+   *
+   *  The function will return a NullOpt if the cast failed.
+   *
+   *      if (Optional<Add> opt = node_ref.as<Add>()) {
+   *        // This is an add node
+   *      }
+   *
+   * \note While this method is declared in <tvm/runtime/object.h>,
+   * the implementation is in <tvm/runtime/container/optional.h> to
+   * prevent circular includes.  This additional include file is only
+   * required in compilation units that uses this method.
+   *
+   * \tparam ObjectRefType the target type, must be a subtype of ObjectRef
+   */
+
+    // Default type properties for the reference class.
+    static constexpr bool _type_is_nullable = true;
 
 protected:
     /*! \brief Internal pointer that backs the reference. */
@@ -476,6 +581,17 @@ bool Object::IsInstance() const {
 
         return self->DerivedFrom(TargetType::RuntimeTypeIndex());
     }
+}
+
+template<typename RefType,
+         typename ObjType,
+         typename = std::enable_if_t<std::is_base_of_v<typename RefType::ContainerType, ObjType>>>
+RefType GetRef(const ObjType* ptr) {
+    if (!RefType::_type_is_nullable) {
+        CHECK(ptr != nullptr);
+    }
+
+    return RefType(ObjectPtr<Object>(const_cast<Object*>(static_cast<const Object*>(ptr))));
 }
 
 }// namespace litetvm::runtime
