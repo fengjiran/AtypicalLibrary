@@ -50,7 +50,7 @@ public:
 
     shared_ptr& operator=(shared_ptr&& rhs) noexcept {
         // use copy and swap
-        shared_ptr tmp(rhs);
+        shared_ptr tmp(std::move(rhs));
         swap(tmp, *this);
         return *this;
     }

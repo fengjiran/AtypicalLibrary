@@ -52,6 +52,11 @@ TEST(ATLVectorTest, general) {
     std::vector<char> x{'h', 'e', 'l', 'l', 'o'};
     std::string key(x.begin(), x.end());
     std::cout << key.size() << std::endl;
+    int y = 0;
+    auto f = [](int& t) {
+        return t -= 1;
+    };
+    std::cout << f(y) << std::endl;
 
     static_assert(std::is_convertible_v<std::bidirectional_iterator_tag, std::input_iterator_tag>);
     // static_assert(sizeof(std::vector<bool>) == 24);

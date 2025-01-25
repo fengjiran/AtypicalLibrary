@@ -362,6 +362,19 @@ public:
         }
     }
 
+    /*! \return The use count of the ptr, for debug purposes */
+    int use_count() const { return data_ != nullptr ? data_->use_count() : 0; }
+    /*! \return whether the reference is unique */
+    bool unique() const { return data_ != nullptr && data_->use_count() == 1; }
+    /*! \return Whether two ObjectPtr do not equal each other */
+    bool operator==(const ObjectPtr& other) const { return data_ == other.data_; }
+    /*! \return Whether two ObjectPtr equals each other */
+    bool operator!=(const ObjectPtr& other) const { return data_ != other.data_; }
+    /*! \return Whether the pointer is nullptr */
+    bool operator==(std::nullptr_t) const { return data_ == nullptr; }
+    /*! \return Whether the pointer is not nullptr */
+    bool operator!=(std::nullptr_t) const { return data_ != nullptr; }
+
 private:
     Object* data_{nullptr};
 
@@ -371,11 +384,57 @@ private:
         }
     }
 
+    /*!
+   * \brief Move an ObjectPtr from an RValueRef argument.
+   * \param ref The rvalue reference.
+   * \return the moved result.
+   */
+    static ObjectPtr MoveFromRValueRefArg(Object** ref) {
+        ObjectPtr ptr(*ref);
+        // ptr.data_ = *ref;
+        *ref = nullptr;
+        return ptr;
+    }
+
     friend void swap(ObjectPtr& a, ObjectPtr& b) noexcept {
         std::swap(a.data_, b.data_);
     }
 
     friend class Object;
+};
+
+/*! \brief Base class of all object reference */
+class ObjectRef {
+public:
+    /*! \brief default constructor */
+    ObjectRef() = default;
+
+    /*! \brief Constructor from existing object ptr */
+    explicit ObjectRef(ObjectPtr<Object> data) : data_(std::move(data)) {}
+
+    /*!
+   * \brief Comparator
+   * \param other Another object ref.
+   * \return the compare result.
+   */
+
+protected:
+    /*! \brief Internal pointer that backs the reference. */
+    ObjectPtr<Object> data_;
+
+    /*! \return return a mutable internal ptr, can be used by sub-classes. */
+    Object* get_mutable() const { return data_.get(); }
+
+    /*!
+   * \brief Internal helper function downcast a ref without check.
+   * \note Only used for internal dev purposes.
+   * \tparam T The target reference type.
+   * \return The casted result.
+   */
+    template<typename T>
+    static T DowncastNoCheck(ObjectRef ref) {
+        return T(std::move(ref.data_));
+    }
 };
 
 template<typename TargetType>
