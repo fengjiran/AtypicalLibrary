@@ -7,6 +7,7 @@
 
 #include <cstdint>
 #include <glog/logging.h>
+#include <optional>
 #include <string>
 
 /*!
@@ -534,8 +535,7 @@ public:
     template<typename ObjectRefType,
              typename = std::enable_if_t<std::is_base_of_v<ObjectRef, ObjectRefType>>>
     std::optional<ObjectRefType> as() const {
-        auto* ptr = this->as<typename ObjectRefType::ContainerType>();
-        if (ptr) {
+        if (auto* ptr = this->as<typename ObjectRefType::ContainerType>()) {
             return GetRef<ObjectRefType>(ptr);
         }
         return std::nullopt;
@@ -671,7 +671,52 @@ RefType GetRef(const ObjType* ptr) {
 
 template<typename SubRef, typename BaseRef>
 SubRef Downcast(BaseRef ref) {
+    if (ref.defined()) {
+        CHECK(ref->template IsInstance<typename SubRef::ContainerType>())
+                << "Downcast from " << ref->GetTypeKey() << " to " << SubRef::ContainerType::_type_key
+                << " failed.";
+    } else {
+        CHECK(SubRef::_type_is_nullable) << "Downcast from nullptr to not nullable reference of "
+                                         << SubRef::ContainerType::_type_key;
+    }
+    return SubRef(std::move(ref.data_));
 }
+
+/*!
+ * \brief helper macro to declare a base object type that can be inherited.
+ * \param TypeName The name of the current type.
+ * \param ParentType The name of the ParentType
+ */
+#define TVM_DECLARE_BASE_OBJECT_INFO(TypeName, ParentType)                                             \
+    static_assert(!ParentType::_type_final, "ParentObj marked as final");                              \
+                                                                                                       \
+    static uint32_t RuntimeTypeIndex() {                                                               \
+        static_assert(TypeName::_type_child_slots == 0 || ParentType::_type_child_slots == 0 ||        \
+                              TypeName::_type_child_slots < ParentType::_type_child_slots,             \
+                      "Need to set _type_child_slots when parent specifies it.");                      \
+        if (TypeName::_type_index != ::tvm::runtime::TypeIndex::kDynamic) {                            \
+            return TypeName::_type_index;                                                              \
+        }                                                                                              \
+        return _GetOrAllocRuntimeTypeIndex();                                                          \
+    }                                                                                                  \
+                                                                                                       \
+    static uint32_t _GetOrAllocRuntimeTypeIndex() {                                                    \
+        static uint32_t tindex = Object::GetOrAllocRuntimeTypeIndex(                                   \
+                TypeName::_type_key, TypeName::_type_index, ParentType::_GetOrAllocRuntimeTypeIndex(), \
+                TypeName::_type_child_slots, TypeName::_type_child_slots_can_overflow);                \
+        return tindex;                                                                                 \
+    }
+
+/*!
+ * \brief helper macro to declare type information in a final class.
+ * \param TypeName The name of the current type.
+ * \param ParentType The name of the ParentType
+ */
+#define TVM_DECLARE_FINAL_OBJECT_INFO(TypeName, ParentType) \
+    static const constexpr bool _type_final = true;         \
+    static const constexpr int _type_child_slots = 0;       \
+    TVM_DECLARE_BASE_OBJECT_INFO(TypeName, ParentType)
+
 
 }// namespace litetvm::runtime
 
