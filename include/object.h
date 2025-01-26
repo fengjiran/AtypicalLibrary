@@ -276,6 +276,17 @@ template<typename RefType, typename ObjType, typename>
 RefType GetRef(const ObjType* ptr);
 
 /*!
+ * \brief Downcast a base reference type to a more specific type.
+ *
+ * \param ref The input reference
+ * \return The corresponding SubRef.
+ * \tparam SubRef The target specific reference type.
+ * \tparam BaseRef the current reference type.
+ */
+template<typename SubRef, typename BaseRef>
+SubRef Downcast(BaseRef ref);
+
+/*!
  * \brief A custom smart pointer for Object.
  * \tparam T the content data type.
  * \sa make_object
@@ -417,6 +428,7 @@ private:
     }
 
     friend class Object;
+    friend class ObjectRef;
 
     template<typename RefType, typename ObjType, typename>
     friend RefType GetRef(const ObjType* ptr);
@@ -519,6 +531,15 @@ public:
    *
    * \tparam ObjectRefType the target type, must be a subtype of ObjectRef
    */
+    template<typename ObjectRefType,
+             typename = std::enable_if_t<std::is_base_of_v<ObjectRef, ObjectRefType>>>
+    std::optional<ObjectRefType> as() const {
+        auto* ptr = this->as<typename ObjectRefType::ContainerType>();
+        if (ptr) {
+            return GetRef<ObjectRefType>(ptr);
+        }
+        return std::nullopt;
+    }
 
     // Default type properties for the reference class.
     static constexpr bool _type_is_nullable = true;
@@ -539,6 +560,61 @@ protected:
     template<typename T>
     static T DowncastNoCheck(ObjectRef ref) {
         return T(std::move(ref.data_));
+    }
+
+    /*!
+   * \brief Internal helper function get data_ as ObjectPtr of ObjectType.
+   * \note only used for internal dev purpose.
+   * \tparam ObjectType The corresponding object type.
+   * \return the corresponding type.
+   */
+    template<typename ObjectType>
+    static ObjectPtr<ObjectType> GetDataPtr(const ObjectRef& ref) {
+        return ObjectPtr<ObjectType>(ref.data_.data_);
+    }
+
+    /*!
+   * \brief Clear the object ref data field without DecRef
+   *        after we successfully moved the field.
+   * \param ref The reference data.
+   */
+    static void FFIClearAfterMove(ObjectRef* ref) { ref->data_.data_ = nullptr; }
+
+    // friend classes and functions
+    friend struct ObjectPtrHash;
+
+    template<typename SubRef, typename BaseRef>
+    friend SubRef Downcast(BaseRef ref);
+};
+
+template<typename BaseType,
+         typename ObjType,
+         typename = std::enable_if_t<std::is_base_of_v<BaseType, ObjType>>>
+ObjectPtr<BaseType> GetObjectPtr(ObjType* ptr) {
+    return ObjectPtr<BaseType>(static_cast<Object*>(ptr));
+}
+
+/*! \brief ObjectRef hash functor */
+struct ObjectPtrHash {
+    template<typename T>
+    size_t operator()(const ObjectPtr<T>& ptr) const {
+        return std::hash<Object*>()(ptr.get());
+    }
+
+    size_t operator()(const ObjectRef& ref) const {
+        return operator()(ref.data_);
+    }
+};
+
+/*! \brief ObjectRef equal functor */
+struct ObjectPtrEqual {
+    template<typename T>
+    bool operator()(const ObjectPtr<T>& a, const ObjectPtr<T>& b) const {
+        return a == b;
+    }
+
+    bool operator()(const ObjectRef& a, const ObjectRef& b) const {
+        return a.same_as(b);
     }
 };
 
@@ -590,8 +666,11 @@ RefType GetRef(const ObjType* ptr) {
     if (!RefType::_type_is_nullable) {
         CHECK(ptr != nullptr);
     }
-
     return RefType(ObjectPtr<Object>(const_cast<Object*>(static_cast<const Object*>(ptr))));
+}
+
+template<typename SubRef, typename BaseRef>
+SubRef Downcast(BaseRef ref) {
 }
 
 }// namespace litetvm::runtime
