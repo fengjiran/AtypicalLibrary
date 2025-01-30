@@ -4,15 +4,14 @@
 #include "glog/logging.h"
 #include "gtest/gtest.h"
 // #include "LeakDetector.h"
-#include "memory.h"
+// #include "memory.h"
+#include "shape_tuple.h"
 
 int main() {
-    // auto* ptr = new int(10);
-    // // std::cout << "a = " << *ptr << std::endl;
-    // delete ptr;
-    int a = 1;
-    auto b = static_cast<uint16_t>(-a);
-    std::cout << b << std::endl;
+
+    litetvm::runtime::IntTuple t = {10, 3, 256, 356};
+    std::cout << t << std::endl;
+
     testing::InitGoogleTest();
     google::InitGoogleLogging("openXAE_test");
     FLAGS_logtostderr = true;

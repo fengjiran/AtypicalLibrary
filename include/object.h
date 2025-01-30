@@ -323,7 +323,7 @@ public:
    */
     template<typename U,
              typename = std::enable_if_t<std::is_base_of_v<T, U>>>
-    explicit ObjectPtr(const ObjectPtr<U>& other) : ObjectPtr(other.data_) {}
+    ObjectPtr(const ObjectPtr<U>& other) : ObjectPtr(other.data_) {}
 
     /*!
    * \brief move constructor
@@ -339,7 +339,7 @@ public:
    */
     template<typename U,
              typename = std::enable_if_t<std::is_base_of_v<T, U>>>
-    explicit ObjectPtr(ObjectPtr<U>&& other) : data_(other.data_) {
+    ObjectPtr(ObjectPtr<U>&& other) : data_(other.data_) {
         other.data_ = nullptr;
     }
 
@@ -454,6 +454,8 @@ private:
 
     friend class Object;
     friend class ObjectRef;
+    template<typename>
+    friend class BaseAllocator;
 
     template<typename RefType, typename ObjType, typename>
     friend RefType GetRef(const ObjType* ptr);
@@ -718,7 +720,7 @@ SubRef Downcast(BaseRef ref) {
         static_assert(TypeName::_type_child_slots == 0 || ParentType::_type_child_slots == 0 ||        \
                               TypeName::_type_child_slots < ParentType::_type_child_slots,             \
                       "Need to set _type_child_slots when parent specifies it.");                      \
-        if (TypeName::_type_index != ::tvm::runtime::TypeIndex::kDynamic) {                            \
+        if (TypeName::_type_index != static_cast<uint32_t>(::litetvm::runtime::TypeIndex::kDynamic)) { \
             return TypeName::_type_index;                                                              \
         }                                                                                              \
         return _GetOrAllocRuntimeTypeIndex();                                                          \
@@ -781,11 +783,11 @@ SubRef Downcast(BaseRef ref) {
  * \param ParentType The parent type of the objectref
  * \param ObjectName The type name of the object.
  */
-#define TVM_DEFINE_OBJECT_REF_METHODS_WITHOUT_DEFAULT_CONSTRUCTOR(TypeName, ParentType, ObjectName) \
-    explicit TypeName(::tvm::runtime::ObjectPtr<::tvm::runtime::Object> n) : ParentType(n) {}       \
-    TVM_DEFINE_DEFAULT_COPY_MOVE_AND_ASSIGN(TypeName);                                              \
-    const ObjectName* operator->() const { return static_cast<const ObjectName*>(data_.get()); }    \
-    const ObjectName* get() const { return operator->(); }                                          \
+#define TVM_DEFINE_OBJECT_REF_METHODS_WITHOUT_DEFAULT_CONSTRUCTOR(TypeName, ParentType, ObjectName)   \
+    explicit TypeName(::litetvm::runtime::ObjectPtr<::litetvm::runtime::Object> n) : ParentType(n) {} \
+    TVM_DEFINE_DEFAULT_COPY_MOVE_AND_ASSIGN(TypeName);                                                \
+    const ObjectName* operator->() const { return static_cast<const ObjectName*>(data_.get()); }      \
+    const ObjectName* get() const { return operator->(); }                                            \
     using ContainerType = ObjectName;
 
 
@@ -807,12 +809,12 @@ SubRef Downcast(BaseRef ref) {
  * \param ParentType The parent type of the objectref
  * \param ObjectName The type name of the object.
  */
-#define TVM_DEFINE_NOTNULLABLE_OBJECT_REF_METHODS(TypeName, ParentType, ObjectName)              \
-    explicit TypeName(::tvm::runtime::ObjectPtr<::tvm::runtime::Object> n) : ParentType(n) {}    \
-    TVM_DEFINE_DEFAULT_COPY_MOVE_AND_ASSIGN(TypeName);                                           \
-    const ObjectName* operator->() const { return static_cast<const ObjectName*>(data_.get()); } \
-    const ObjectName* get() const { return operator->(); }                                       \
-    static constexpr bool _type_is_nullable = false;                                             \
+#define TVM_DEFINE_NOTNULLABLE_OBJECT_REF_METHODS(TypeName, ParentType, ObjectName)                   \
+    explicit TypeName(::litetvm::runtime::ObjectPtr<::litetvm::runtime::Object> n) : ParentType(n) {} \
+    TVM_DEFINE_DEFAULT_COPY_MOVE_AND_ASSIGN(TypeName);                                                \
+    const ObjectName* operator->() const { return static_cast<const ObjectName*>(data_.get()); }      \
+    const ObjectName* get() const { return operator->(); }                                            \
+    static constexpr bool _type_is_nullable = false;                                                  \
     using ContainerType = ObjectName;
 
 
@@ -824,11 +826,11 @@ SubRef Downcast(BaseRef ref) {
  * \note We recommend making objects immutable when possible.
  *       This macro is only reserved for objects that stores runtime states.
  */
-#define TVM_DEFINE_MUTABLE_OBJECT_REF_METHODS(TypeName, ParentType, ObjectName)               \
-    TypeName() = default;                                                                     \
-    TVM_DEFINE_DEFAULT_COPY_MOVE_AND_ASSIGN(TypeName);                                        \
-    explicit TypeName(::tvm::runtime::ObjectPtr<::tvm::runtime::Object> n) : ParentType(n) {} \
-    ObjectName* operator->() const { return static_cast<ObjectName*>(data_.get()); }          \
+#define TVM_DEFINE_MUTABLE_OBJECT_REF_METHODS(TypeName, ParentType, ObjectName)                       \
+    TypeName() = default;                                                                             \
+    TVM_DEFINE_DEFAULT_COPY_MOVE_AND_ASSIGN(TypeName);                                                \
+    explicit TypeName(::litetvm::runtime::ObjectPtr<::litetvm::runtime::Object> n) : ParentType(n) {} \
+    ObjectName* operator->() const { return static_cast<ObjectName*>(data_.get()); }                  \
     using ContainerType = ObjectName;
 
 
@@ -839,12 +841,12 @@ SubRef Downcast(BaseRef ref) {
  * \param ParentType The parent type of the objectref
  * \param ObjectName The type name of the object.
  */
-#define TVM_DEFINE_MUTABLE_NOTNULLABLE_OBJECT_REF_METHODS(TypeName, ParentType, ObjectName)   \
-    explicit TypeName(::tvm::runtime::ObjectPtr<::tvm::runtime::Object> n) : ParentType(n) {} \
-    TVM_DEFINE_DEFAULT_COPY_MOVE_AND_ASSIGN(TypeName);                                        \
-    ObjectName* operator->() const { return static_cast<ObjectName*>(data_.get()); }          \
-    ObjectName* get() const { return operator->(); }                                          \
-    static constexpr bool _type_is_nullable = false;                                          \
+#define TVM_DEFINE_MUTABLE_NOTNULLABLE_OBJECT_REF_METHODS(TypeName, ParentType, ObjectName)           \
+    explicit TypeName(::litetvm::runtime::ObjectPtr<::litetvm::runtime::Object> n) : ParentType(n) {} \
+    TVM_DEFINE_DEFAULT_COPY_MOVE_AND_ASSIGN(TypeName);                                                \
+    ObjectName* operator->() const { return static_cast<ObjectName*>(data_.get()); }                  \
+    ObjectName* get() const { return operator->(); }                                                  \
+    static constexpr bool _type_is_nullable = false;                                                  \
     using ContainerType = ObjectName;
 
 
