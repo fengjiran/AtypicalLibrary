@@ -39,6 +39,8 @@ public:
     static constexpr uint32_t _type_index = static_cast<uint32_t>(TypeIndex::kRuntimeShapeTuple);
     static constexpr const char* _type_key = "runtime.ShapeTuple";
     TVM_DECLARE_FINAL_OBJECT_INFO(ShapeTupleNode, Object);
+
+    friend class ShapeTuple;
 };
 
 class ShapeTuple : public ObjectRef {

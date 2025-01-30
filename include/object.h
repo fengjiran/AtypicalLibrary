@@ -275,6 +275,9 @@ private:
 
     template<typename>
     friend class ObjectPtr;
+
+    template<typename>
+    friend class BaseAllocator;
 };
 
 /*!
@@ -375,7 +378,8 @@ public:
    */
     ObjectPtr& operator=(const ObjectPtr& other) {
         ObjectPtr tmp(other);
-        swap(tmp, *this);
+        tmp.swap(*this);
+        // swap(tmp, *this);
         return *this;
     }
 
@@ -386,7 +390,8 @@ public:
    */
     ObjectPtr& operator=(ObjectPtr&& other) noexcept {
         ObjectPtr tmp(std::move(other));
-        swap(tmp, *this);
+        tmp.swap(*this);
+        // swap(tmp, *this);
         return *this;
     }
 
@@ -448,12 +453,16 @@ private:
         return ptr;
     }
 
-    friend void swap(ObjectPtr& a, ObjectPtr& b) noexcept {
-        std::swap(a.data_, b.data_);
-    }
+    // friend void swap(ObjectPtr& a, ObjectPtr& b) noexcept {
+    //     std::swap(a.data_, b.data_);
+    // }
 
     friend class Object;
     friend class ObjectRef;
+
+    template<typename>
+    friend class ObjectPtr;
+
     template<typename>
     friend class BaseAllocator;
 
