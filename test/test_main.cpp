@@ -4,6 +4,7 @@
 #include "glog/logging.h"
 #include "gtest/gtest.h"
 // #include "LeakDetector.h"
+#include "memory.h"
 
 int main() {
     // auto* ptr = new int(10);

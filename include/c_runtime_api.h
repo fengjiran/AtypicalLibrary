@@ -33,6 +33,91 @@ enum class DLDataTypeCode : uint8_t {
     kDLComplex = 5U,
 };
 
+enum class DLDeviceType : uint8_t {
+    /*! \brief CPU device */
+    kDLCPU = 1,
+    /*! \brief CUDA GPU device */
+    kDLCUDA = 2,
+    /*!
+   * \brief Pinned CUDA CPU memory by cudaMallocHost
+   */
+    kDLCUDAHost = 3,
+    /*! \brief OpenCL devices. */
+    kDLOpenCL = 4,
+    /*! \brief Vulkan buffer for next generation graphics. */
+    kDLVulkan = 7,
+    /*! \brief Metal for Apple GPU. */
+    kDLMetal = 8,
+    /*! \brief Verilog simulator buffer */
+    kDLVPI = 9,
+    /*! \brief ROCm GPUs for AMD GPUs */
+    kDLROCM = 10,
+    /*!
+   * \brief Pinned ROCm CPU memory allocated by hipMallocHost
+   */
+    kDLROCMHost = 11,
+    /*!
+   * \brief Reserved extension device type,
+   * used for quickly test extension device
+   * The semantics can differ depending on the implementation.
+   */
+    kDLExtDev = 12,
+    /*!
+   * \brief CUDA managed/unified memory allocated by cudaMallocManaged
+   */
+    kDLCUDAManaged = 13,
+    /*!
+   * \brief Unified shared memory allocated on a oneAPI non-partititioned
+   * device. Call to oneAPI runtime is required to determine the device
+   * type, the USM allocation type and the sycl context it is bound to.
+   *
+   */
+    kDLOneAPI = 14,
+    /*! \brief GPU support for next generation WebGPU standard. */
+    kDLWebGPU = 15,
+    /*! \brief Qualcomm Hexagon DSP */
+    kDLHexagon = 16
+};
+
+/*!
+ * \brief A Device for Tensor and operator.
+ */
+struct DLDevice {
+    /*! \brief The device type used in the device. */
+    DLDeviceType device_type;
+    /*!
+   * \brief The device index.
+   * For vanilla CPU memory, pinned memory, or managed memory, this is set to 0.
+   */
+    int32_t device_id;
+};
+
+/*!
+ * \brief The data type the tensor can hold. The data type is assumed to follow the
+ * native endian-ness. An explicit error message should be raised when attempting to
+ * export an array with non-native endianness
+ *
+ *  Examples
+ *   - float: type_code = 2, bits = 32, lanes=1
+ *   - float4(vectorized 4 float): type_code = 2, bits = 32, lanes=4
+ *   - int8: type_code = 0, bits = 8, lanes=1
+ *   - std::complex<float>: type_code = 5, bits = 64, lanes = 1
+ */
+struct DLDataType {
+    /*!
+ * \brief Type code of base types.
+ * We keep it uint8_t instead of DLDataTypeCode for minimal memory
+ * footprint, but the value should be one of DLDataTypeCode enum values.
+ * */
+    uint8_t code;
+    /*!
+ * \brief Number of bits, common choices are 8, 16, 32.
+ */
+    uint8_t bits;
+    /*! \brief Number of lanes in the type, used for vector types. */
+    uint16_t lanes;
+};
+
 
 /*!
  * \brief The type code in used and only used in TVM FFI for argument passing.
@@ -76,6 +161,19 @@ enum class TVMArgTypeCode : uint8_t {
     // The following section of code is used for non-reserved types.
     kTVMExtReserveEnd = 64U,
     kTVMExtEnd = 128U,
+};
+
+/*!
+ * \brief Union type of values
+ *  being passed through API and function calls.
+ */
+union TVMValue {
+    int64_t v_int64;
+    double v_float64;
+    void* v_handle;
+    const char* v_str;
+    DLDataType v_type;
+    DLDevice v_device;
 };
 
 #endif//C_RUNTIME_API_H
