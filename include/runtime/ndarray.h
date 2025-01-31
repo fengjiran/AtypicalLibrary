@@ -25,19 +25,19 @@ public:
         dl_tensor.byte_offset = 0;
     }
 
-  NDArrayNode(void* data, ShapeTuple shape, DLDataType dtype, Device dev) {
-      type_index_ = RuntimeTypeIndex();
-      shape_ = std::move(shape);
-      dl_tensor.data = data;
-      dl_tensor.ndim = static_cast<int>(shape_.size());
-      dl_tensor.shape = const_cast<ShapeTuple::index_type*>(shape_.data());
-      dl_tensor.dtype = dtype;
-      dl_tensor.strides = nullptr;
-      dl_tensor.byte_offset = 0;
-      dl_tensor.device = dev;
+    NDArrayNode(void* data, ShapeTuple shape, DLDataType dtype, Device dev) {
+        type_index_ = RuntimeTypeIndex();
+        shape_ = std::move(shape);
+        dl_tensor.data = data;
+        dl_tensor.ndim = static_cast<int>(shape_.size());
+        dl_tensor.shape = const_cast<ShapeTuple::index_type*>(shape_.data());
+        dl_tensor.dtype = dtype;
+        dl_tensor.strides = nullptr;
+        dl_tensor.byte_offset = 0;
+        dl_tensor.device = dev;
     }
 
-
+private:
     /*!
    * \brief The corresponding dl_tensor field.
    * \note it is important that the first field is DLTensor
@@ -59,6 +59,7 @@ public:
    */
     ShapeTuple shape_;
 
+public:
     // Information for object protocol.
     static constexpr uint32_t _type_index = static_cast<uint32_t>(TypeIndex::kRuntimeNDArray);
     static constexpr uint32_t _type_child_slots = 0;
@@ -66,6 +67,20 @@ public:
     static constexpr const char* _type_key = "runtime.NDArray";
 
     TVM_DECLARE_BASE_OBJECT_INFO(NDArrayNode, Object);
+};
+
+class NDArray : public ObjectRef {
+public:
+    /*! \brief Container type for Object system. */
+    using ContainerType = NDArrayNode;
+
+    /*! \brief default constructor */
+    NDArray() = default;
+
+
+
+
+
 };
 
 }// namespace litetvm::runtime

@@ -26,5 +26,9 @@ TEST(ObjectTest, object) {
     CHECK_EQ(t2.size(), 0);
     CHECK_EQ(t2.use_count(), 1);
 
+    ShapeTuple t3(t1);
+    CHECK_EQ(t1.use_count(), t3.use_count());
+    CHECK_EQ(t1.use_count(), 2);
+
     TypeContext::Global().Dump(0);
 }
