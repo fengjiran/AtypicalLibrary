@@ -6,7 +6,25 @@
 
 #include "runtime/shape_tuple.h"
 
+#include <runtime/type_context.h>
+
+using namespace litetvm::runtime;
+
 TEST(ObjectTest, object) {
-    litetvm::runtime::IntTuple t = {10, 3, 256, 356};
-    std::cout << t << std::endl;
+    IntTuple t1 = {10, 3, 256, 256};
+    CHECK(!t1.empty());
+    CHECK_EQ(t1.size(), 4);
+    CHECK_EQ(t1.front(), t1[0]);
+    CHECK_EQ(t1.front(), t1.at(0));
+    CHECK_EQ(t1.back(), t1[t1.size() - 1]);
+    CHECK_EQ(t1.use_count(), 1);
+
+    std::cout << t1 << std::endl;
+
+    ShapeTuple t2;
+    CHECK(t2.empty());
+    CHECK_EQ(t2.size(), 0);
+    CHECK_EQ(t2.use_count(), 1);
+
+    TypeContext::Global().Dump(0);
 }

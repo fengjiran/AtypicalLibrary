@@ -77,6 +77,7 @@ public:
 
     private:
         static void Deleter_(Object* objptr) {
+            // std::cout << "delete object.\n";
             T* tptr = static_cast<T*>(objptr);
             tptr->T::~T();
             delete reinterpret_cast<StorageType*>(tptr);

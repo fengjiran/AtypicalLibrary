@@ -350,7 +350,7 @@ public:
    */
     template<typename U,
              typename = std::enable_if_t<std::is_base_of_v<T, U>>>
-    ObjectPtr(ObjectPtr<U>&& other) : data_(other.data_) {
+    ObjectPtr(ObjectPtr<U>&& other) noexcept : data_(other.data_) {
         other.data_ = nullptr;
     }
 
@@ -358,12 +358,8 @@ public:
         reset();
     }
 
-    /*!
-   * \brief Swap this array with another Object
-   * \param other The other Object
-   */
-    // void swap(ObjectPtr& other) noexcept {
-    //     std::swap(data_, other.data_);
+    // NODISCARD const Object* get_raw_pointer() const {
+    //     return data_;
     // }
 
     // Get the content of the pointer
@@ -387,7 +383,6 @@ public:
     ObjectPtr& operator=(const ObjectPtr& other) {
         ObjectPtr tmp(other);
         tmp.swap(*this);
-        // swap(tmp, *this);
         return *this;
     }
 
@@ -399,7 +394,6 @@ public:
     ObjectPtr& operator=(ObjectPtr&& other) noexcept {
         ObjectPtr tmp(std::move(other));
         tmp.swap(*this);
-        // swap(tmp, *this);
         return *this;
     }
 
@@ -460,10 +454,6 @@ private:
         *ref = nullptr;
         return ptr;
     }
-
-    // friend void swap(ObjectPtr& a, ObjectPtr& b) noexcept {
-    //     std::swap(a.data_, b.data_);
-    // }
 
     friend class Object;
     friend class ObjectRef;
