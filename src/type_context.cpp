@@ -2,7 +2,7 @@
 // Created by 赵丹 on 25-1-22.
 //
 
-#include "type_context.h"
+#include "runtime/type_context.h"
 #include <iostream>
 
 namespace litetvm::runtime {

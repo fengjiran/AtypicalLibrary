@@ -5,8 +5,8 @@
 #ifndef SHAPE_TUPLE_H
 #define SHAPE_TUPLE_H
 
-#include "memory.h"
-#include "object.h"
+#include "runtime/memory.h"
+#include "runtime/object.h"
 
 // nested namespace
 namespace litetvm::runtime {

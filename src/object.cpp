@@ -2,9 +2,9 @@
 // Created by richard on 7/3/24.
 //
 
-#include "object.h"
-#include "data_type.h"
-#include "type_context.h"
+#include "runtime/object.h"
+#include "runtime/data_type.h"
+#include "runtime/type_context.h"
 
 #include <mutex>
 #include <string>

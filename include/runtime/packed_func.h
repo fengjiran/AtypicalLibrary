@@ -5,9 +5,9 @@
 #ifndef PACKED_FUNC_H
 #define PACKED_FUNC_H
 
-#include "c_runtime_api.h"
-#include "data_type.h"
-#include "object.h"
+#include "runtime/c_runtime_api.h"
+#include "runtime/data_type.h"
+#include "runtime/object.h"
 
 // nested namespace
 namespace litetvm::runtime {

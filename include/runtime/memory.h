@@ -5,7 +5,7 @@
 #ifndef MEMORY_H
 #define MEMORY_H
 
-#include "object.h"
+#include "runtime/object.h"
 #include <type_traits>
 #include <utility>
 

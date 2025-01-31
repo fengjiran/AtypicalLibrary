@@ -5,7 +5,7 @@
 #include "gtest/gtest.h"
 // #include "LeakDetector.h"
 // #include "memory.h"
-#include "shape_tuple.h"
+#include "runtime/shape_tuple.h"
 
 int main() {
 
