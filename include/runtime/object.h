@@ -10,6 +10,14 @@
 #include <optional>
 #include <string>
 
+#ifdef __has_cpp_attribute
+#if __has_cpp_attribute(nodiscard)
+#define NODISCARD [[nodiscard]]
+#else
+#define NODISCARD
+#endif
+#endif
+
 /*!
  * \brief Whether or not use atomic reference counter.
  *  If the reference counter is not atomic,
@@ -102,16 +110,16 @@ public:
     }
 
     /*! \return The internal runtime type index of the object. */
-    uint32_t type_index() const { return type_index_; }
+    NODISCARD uint32_t type_index() const { return type_index_; }
     /*!
      * \return the type key of the object.
      * \note this operation is expensive, can be used for error reporting.
      */
-    std::string GetTypeKey() const { return TypeIndex2Key(type_index_); }
+    NODISCARD std::string GetTypeKey() const { return TypeIndex2Key(type_index_); }
     /*!
      * \return A hash value of the return of GetTypeKey.
      */
-    size_t GetTypeKeyHash() const { return TypeIndex2KeyHash(type_index_); }
+    NODISCARD size_t GetTypeKeyHash() const { return TypeIndex2KeyHash(type_index_); }
 
     static uint32_t RuntimeTypeIndex() {
         return static_cast<uint32_t>(TypeIndex::kRoot);
@@ -148,13 +156,13 @@ public:
    * \return Whether the target type is true.
    */
     template<typename TargetType>
-    bool IsInstance() const;
+    NODISCARD bool IsInstance() const;
 
     /*!
    * \return Whether the cell has only one reference
    * \note We use stl style naming to be consistent with known API in shared_ptr.
    */
-    bool unique() const {
+    NODISCARD bool unique() const {
         return use_count() == 1;
     }
 
@@ -260,7 +268,7 @@ private:
    * \return The usage count of the cell.
    * \note We use stl style naming to be consistent with known API in shared_ptr.
    */
-    int use_count() const {
+    NODISCARD int use_count() const {
         return ref_counter_.load(std::memory_order_relaxed);
     }
 #else
@@ -271,7 +279,7 @@ private:
    * \param parent_tindex The parent type index.
    * \return The derivation results.
    */
-    bool DerivedFrom(uint32_t parent_tindex) const;
+    NODISCARD bool DerivedFrom(uint32_t parent_tindex) const;
 
     template<typename>
     friend class ObjectPtr;
@@ -359,7 +367,7 @@ public:
     // }
 
     // Get the content of the pointer
-    T* get() const {
+    NODISCARD T* get() const {
         return static_cast<T*>(data_);
     }
 
@@ -420,9 +428,9 @@ public:
     }
 
     /*! \return The use count of the ptr, for debug purposes */
-    int use_count() const { return data_ != nullptr ? data_->use_count() : 0; }
+    NODISCARD int use_count() const { return data_ != nullptr ? data_->use_count() : 0; }
     /*! \return whether the reference is unique */
-    bool unique() const { return data_ != nullptr && data_->use_count() == 1; }
+    NODISCARD bool unique() const { return data_ != nullptr && data_->use_count() == 1; }
     /*! \return Whether two ObjectPtr do not equal each other */
     bool operator==(const ObjectPtr& other) const { return data_ == other.data_; }
     /*! \return Whether two ObjectPtr equals each other */
@@ -487,7 +495,7 @@ public:
    * \param other Another object ref.
    * \return the compare result.
    */
-    bool same_as(const ObjectRef& other) const {
+    NODISCARD bool same_as(const ObjectRef& other) const {
         return data_ == other.data_;
     }
 
@@ -519,15 +527,15 @@ public:
     /*!
    * \return whether the object is defined(not null).
    */
-    bool defined() const { return data_ != nullptr; }
+    NODISCARD bool defined() const { return data_ != nullptr; }
     /*! \return the internal object pointer */
-    const Object* get() const { return data_.get(); }
+    NODISCARD const Object* get() const { return data_.get(); }
     /*! \return the internal object pointer */
     const Object* operator->() const { return get(); }
     /*! \return whether the reference is unique */
-    bool unique() const { return data_.unique(); }
+    NODISCARD bool unique() const { return data_.unique(); }
     /*! \return The use count of the ptr, for debug purposes */
-    int use_count() const { return data_.use_count(); }
+    NODISCARD int use_count() const { return data_.use_count(); }
 
     /*!
    * \brief Try to downcast the internal Object to a
@@ -584,7 +592,7 @@ protected:
     ObjectPtr<Object> data_;
 
     /*! \return return a mutable internal ptr, can be used by sub-classes. */
-    Object* get_mutable() const { return data_.get(); }
+    NODISCARD Object* get_mutable() const { return data_.get(); }
 
     /*!
    * \brief Internal helper function downcast a ref without check.

@@ -20,16 +20,16 @@ public:
     explicit ShapeTupleNode(std::vector<index_type> shape) : data_container(std::move(shape)) {}
 
     /*! \brief The size of the shape tuple object. */
-    uint64_t size() const {
+    NODISCARD uint64_t size() const {
         return data_container.size();
     }
 
-    const index_type* data() const {
+    NODISCARD const index_type* data() const {
         return data_container.data();
     }
 
     /*! \brief Get "numel", meaning the number of elements of an array if the array has this shape */
-    index_type Product() const;
+    NODISCARD index_type Product() const;
 
 private:
     /*! \brief Container that holds the memory. */
@@ -76,14 +76,14 @@ public:
    * \note If user passes const reference, it will trigger copy. If it's rvalue,
    * it will be moved into other.
    */
-    ShapeTuple(std::vector<index_type> shape);
+    explicit ShapeTuple(std::vector<index_type> shape);
 
     /*!
    * \brief Return the data pointer
    *
    * \return const index_type* data pointer
    */
-    const index_type* data() const {
+    NODISCARD const index_type* data() const {
         return get()->data();
     }
 
@@ -92,7 +92,7 @@ public:
    *
    * \return size_t shape tuple size
    */
-    size_t size() const {
+    NODISCARD size_t size() const {
         return get()->size();
     }
 
@@ -111,30 +111,30 @@ public:
    * \param idx The index
    * \return the i-th element.
    */
-    index_type at(size_t idx) const {
+    NODISCARD index_type at(size_t idx) const {
         return operator[](idx);
     }
 
     /*! \return Whether shape tuple is empty */
-    bool empty() const {
+    NODISCARD bool empty() const {
         return size() == 0;
     }
 
     /*! \return The first element of the shape tuple */
-    index_type front() const {
+    NODISCARD index_type front() const {
         return at(0);
     }
 
     /*! \return The last element of the shape tuple */
-    index_type back() const {
+    NODISCARD index_type back() const {
         return at(size() - 1);
     }
 
-    const index_type* begin() const {
+    NODISCARD const index_type* begin() const {
         return data();
     }
 
-    const index_type* end() const {
+    NODISCARD const index_type* end() const {
         return data() + size();
     }
 

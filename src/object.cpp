@@ -6,10 +6,7 @@
 #include "runtime/data_type.h"
 #include "runtime/type_context.h"
 
-#include <mutex>
 #include <string>
-#include <unordered_map>
-#include <vector>
 
 namespace litetvm::runtime {
 
