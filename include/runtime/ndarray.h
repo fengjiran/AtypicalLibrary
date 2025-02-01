@@ -79,9 +79,62 @@ public:
 
 
 
+    /*! \return Whether the tensor is contiguous */
+    inline bool IsContiguous() const;
 
+protected:
+    /*!
+   * \brief Get mutable internal container pointer.
+   * \return a mutable container pointer.
+   */
+    NODISCARD ContainerType* get_mutable() const {
+        return static_cast<ContainerType*>(data_.get());
+    }
 
 };
+
+// implementations of inline functions
+/*!
+ * \brief return the size of data the DLTensor hold, in terms of number of bytes
+ *
+ *  \param arr the input DLTensor
+ *  \return number of bytes of data in the DLTensor.
+ */
+inline size_t GetDataSize(const DLTensor& arr) {
+    size_t size = 1;
+    for (tvm_index_t i = 0; i < arr.ndim; ++i) {
+        size *= static_cast<size_t>(arr.shape[i]);
+    }
+    size *= (arr.dtype.bits * arr.dtype.lanes + 7) / 8;
+    return size;
+}
+
+/*!
+ * \brief check if a DLTensor is contiguous.
+ * \param arr The input DLTensor.
+ * \return The check result.
+ */
+static bool IsContiguous(const DLTensor& arr) {
+    if (arr.strides == nullptr) return true;
+    int64_t expected_stride = 1;
+    for (int32_t i = arr.ndim; i != 0; --i) {
+        int32_t k = i - 1;
+        if (arr.shape[k] == 1) {
+            // Skip stride check if shape[k] is 1, where the dimension is contiguous
+            // regardless of the value of stride.
+            //
+            // For example, PyTorch will normalize stride to 1 if shape is 1 when exporting
+            // to DLPack.
+            // More context: https://github.com/pytorch/pytorch/pull/83158
+            continue;
+        }
+        if (arr.strides[k] != expected_stride) return false;
+        expected_stride *= arr.shape[k];
+    }
+    return true;
+}
+
+
 
 }// namespace litetvm::runtime
 

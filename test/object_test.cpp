@@ -4,9 +4,9 @@
 
 #include <gtest/gtest.h>
 
+#include "runtime/packed_func.h"
 #include "runtime/shape_tuple.h"
-
-#include <runtime/type_context.h>
+#include "runtime/type_context.h"
 
 using namespace litetvm::runtime;
 
@@ -31,4 +31,5 @@ TEST(ObjectTest, object) {
     CHECK_EQ(t1.use_count(), 2);
 
     TypeContext::Global().Dump(0);
+
 }
