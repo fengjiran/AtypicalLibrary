@@ -222,6 +222,9 @@ enum class TVMArgTypeCode : uint8_t {
     kTVMExtEnd = 128U,
 };
 
+/*! \brief the array handle */
+using TVMArrayHandle = DLTensor*;
+
 /*!
  * \brief Union type of values
  *  being passed through API and function calls.

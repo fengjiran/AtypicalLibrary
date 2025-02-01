@@ -37,7 +37,14 @@ public:
         dl_tensor.device = dev;
     }
 
-private:
+    /*!
+   * \brief Set the deleter field.
+   * \param deleter The deleter.
+   */
+    void SetDeleter(FDeleter deleter) {
+        deleter_ = deleter;
+    }
+
     /*!
    * \brief The corresponding dl_tensor field.
    * \note it is important that the first field is DLTensor
@@ -53,6 +60,7 @@ private:
      */
     void* manager_ctx{nullptr};
 
+protected:
     /*!
    * \brief The shape container,
    *  can be used for shape data.
@@ -77,7 +85,18 @@ public:
     /*! \brief default constructor */
     NDArray() = default;
 
+    /*!
+   * \return the reference counter
+   * \note this number is approximate in multi-threaded setting.
+   */
+    int use_count() const {
+        return data_.use_count();
+    }
 
+    /*! \return Pointer to content of DLTensor */
+    const DLTensor* operator->() const {
+        return &get_mutable()->dl_tensor;
+    }
 
     /*! \return Whether the tensor is contiguous */
     inline bool IsContiguous() const;
@@ -90,7 +109,6 @@ protected:
     NODISCARD ContainerType* get_mutable() const {
         return static_cast<ContainerType*>(data_.get());
     }
-
 };
 
 // implementations of inline functions
@@ -134,6 +152,9 @@ static bool IsContiguous(const DLTensor& arr) {
     return true;
 }
 
+inline bool NDArray::IsContiguous() const {
+    return runtime::IsContiguous(get_mutable()->dl_tensor);
+}
 
 
 }// namespace litetvm::runtime

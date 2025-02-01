@@ -7,6 +7,7 @@
 #include "runtime/packed_func.h"
 #include "runtime/shape_tuple.h"
 #include "runtime/type_context.h"
+#include "runtime/device_api.h"
 
 using namespace litetvm::runtime;
 
