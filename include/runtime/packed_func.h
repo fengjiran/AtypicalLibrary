@@ -219,7 +219,7 @@ public:
     // ObjectRef handling
     template<typename TObjectRef,
              typename = std::enable_if_t<std::is_base_of_v<ObjectRef, TObjectRef>>>
-    inline bool IsObjectRef() const;
+    NODISCARD inline bool IsObjectRef() const;
 
     template<typename TObjectRef>
     TObjectRef AsObjectRef() const;

@@ -5,6 +5,8 @@
 #ifndef NDARRAY_H
 #define NDARRAY_H
 
+#include <utility>
+
 #include "runtime/c_runtime_api.h"
 #include "runtime/object.h"
 #include "shape_tuple.h"
@@ -14,9 +16,86 @@ namespace litetvm::runtime {
 
 using Device = DLDevice;
 
-class NDArrayNode : public Object {
+class NDArray : public ObjectRef {
 public:
-    NDArrayNode() {
+    class ContainerBase;
+    class Container;
+    /*! \brief Container type for Object system. */
+    using ContainerType = Container;
+
+    /*! \brief default constructor */
+    NDArray() = default;
+
+    /*!
+   * \brief constructor.
+   * \param data ObjectPtr to the data container.
+   */
+    explicit NDArray(ObjectPtr<Object> data) : ObjectRef(std::move(data)) {}
+
+    /*!
+   * \return the reference counter
+   * \note this number is approximate in multi-threaded setting.
+   */
+    NODISCARD int use_count() const {
+        return data_.use_count();
+    }
+
+    /*! \return Pointer to content of DLTensor */
+    inline const DLTensor* operator->() const;
+
+    /*! \return Whether the tensor is contiguous */
+    NODISCARD inline bool IsContiguous() const;
+
+protected:
+    /*!
+   * \brief Get mutable internal container pointer.
+   * \return a mutable container pointer.
+   */
+    NODISCARD inline Container* get_mutable() const;
+};
+
+/*!
+ * \brief The container base structure
+ *        contains all the fields except for the Object header.
+ *
+ * \note We explicitly declare this structure in order to pass
+ *       PackedFunc argument using ContainerBase*.
+ */
+class NDArray::ContainerBase {
+public:
+    /*!
+     * \brief The corresponding dl_tensor field.
+     * \note it is important that the first field is DLTensor
+     *  So that this data structure is DLTensor compatible.
+     *  The head ptr of this struct can be viewed as DLTensor*.
+     */
+    DLTensor dl_tensor{};
+
+    /*!
+     * \brief additional context, reserved for recycling
+     * \note We can attach additional content here
+     *  which the current container depend on
+     *  (e.g. reference to original memory when creating views).
+     */
+    void* manager_ctx{nullptr};
+
+protected:
+    /*!
+     * \brief The shape container,
+     *  can be used for shape data.
+     */
+    ShapeTuple shape_;
+};
+
+/*!
+ * \brief Object container class that backs NDArray.
+ * \note do not use this function directly, use NDArray.
+ */
+class NDArray::Container : public Object, public ContainerBase {
+public:
+    /*! \brief default constructor */
+    Container() {
+        // Initialize the type index.
         type_index_ = RuntimeTypeIndex();
         dl_tensor.data = nullptr;
         dl_tensor.ndim = 0;
@@ -25,10 +104,11 @@ public:
         dl_tensor.byte_offset = 0;
     }
 
-    NDArrayNode(void* data, ShapeTuple shape, DLDataType dtype, Device dev) {
+    Container(void* data, ShapeTuple shape, DLDataType dtype, Device dev) {
+        // Initialize the type index.
         type_index_ = RuntimeTypeIndex();
-        shape_ = std::move(shape);
         dl_tensor.data = data;
+        shape_ = std::move(shape);
         dl_tensor.ndim = static_cast<int>(shape_.size());
         dl_tensor.shape = const_cast<ShapeTuple::index_type*>(shape_.data());
         dl_tensor.dtype = dtype;
@@ -45,70 +125,21 @@ public:
         deleter_ = deleter;
     }
 
-    /*!
-   * \brief The corresponding dl_tensor field.
-   * \note it is important that the first field is DLTensor
-   *  So that this data structure is DLTensor compatible.
-   *  The head ptr of this struct can be viewed as DLTensor*.
-   */
-    DLTensor dl_tensor;
-    /*!
-     * \brief additional context, reserved for recycling
-     * \note We can attach additional content here
-     *  which the current container depend on
-     *  (e.g. reference to original memory when creating views).
-     */
-    void* manager_ctx{nullptr};
+    // Expose DecRef and IncRef as public function
+    // NOTE: they are only for developer purposes only.
+    using Object::DecRef;
+    using Object::IncRef;
 
-protected:
-    /*!
-   * \brief The shape container,
-   *  can be used for shape data.
-   */
-    ShapeTuple shape_;
-
-public:
     // Information for object protocol.
     static constexpr uint32_t _type_index = static_cast<uint32_t>(TypeIndex::kRuntimeNDArray);
     static constexpr uint32_t _type_child_slots = 0;
     static constexpr uint32_t _type_child_slots_can_overflow = true;
     static constexpr const char* _type_key = "runtime.NDArray";
-
-    TVM_DECLARE_BASE_OBJECT_INFO(NDArrayNode, Object);
-};
-
-class NDArray : public ObjectRef {
-public:
-    /*! \brief Container type for Object system. */
-    using ContainerType = NDArrayNode;
-
-    /*! \brief default constructor */
-    NDArray() = default;
-
-    /*!
-   * \return the reference counter
-   * \note this number is approximate in multi-threaded setting.
-   */
-    int use_count() const {
-        return data_.use_count();
-    }
-
-    /*! \return Pointer to content of DLTensor */
-    const DLTensor* operator->() const {
-        return &get_mutable()->dl_tensor;
-    }
-
-    /*! \return Whether the tensor is contiguous */
-    inline bool IsContiguous() const;
+    TVM_DECLARE_BASE_OBJECT_INFO(NDArray::Container, Object);
 
 protected:
-    /*!
-   * \brief Get mutable internal container pointer.
-   * \return a mutable container pointer.
-   */
-    NODISCARD ContainerType* get_mutable() const {
-        return static_cast<ContainerType*>(data_.get());
-    }
+    // friend class RPCWrappedFunc;
+    friend class NDArray;
 };
 
 // implementations of inline functions
@@ -154,6 +185,14 @@ static bool IsContiguous(const DLTensor& arr) {
 
 inline bool NDArray::IsContiguous() const {
     return runtime::IsContiguous(get_mutable()->dl_tensor);
+}
+
+inline NDArray::Container* NDArray::get_mutable() const {
+    return static_cast<Container*>(data_.get());
+}
+
+inline const DLTensor* NDArray::operator->() const {
+    return &get_mutable()->dl_tensor;
 }
 
 
