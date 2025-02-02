@@ -457,6 +457,7 @@ private:
 
     friend class Object;
     friend class ObjectRef;
+    friend class TVMPODValue_;
 
     template<typename>
     friend class ObjectPtr;
@@ -466,6 +467,9 @@ private:
 
     template<typename RefType, typename ObjType, typename>
     friend RefType GetRef(const ObjType* ptr);
+
+    // template<typename BaseType, typename ObjType>
+    // friend ObjectPtr<BaseType> GetObjectPtr(ObjType* ptr);
 };
 
 /*! \brief Base class of all object reference */

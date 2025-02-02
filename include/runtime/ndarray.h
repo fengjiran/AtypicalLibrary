@@ -9,7 +9,8 @@
 
 #include "runtime/c_runtime_api.h"
 #include "runtime/object.h"
-#include "shape_tuple.h"
+#include "runtime/shape_tuple.h"
+#include "runtime/data_type.h"
 
 // nested namespace
 namespace litetvm::runtime {
@@ -32,6 +33,9 @@ public:
    */
     explicit NDArray(ObjectPtr<Object> data) : ObjectRef(std::move(data)) {}
 
+    /*! \brief reset the content of NDArray to be nullptr */
+    inline void reset();
+
     /*!
    * \return the reference counter
    * \note this number is approximate in multi-threaded setting.
@@ -46,12 +50,73 @@ public:
     /*! \return Whether the tensor is contiguous */
     NODISCARD inline bool IsContiguous() const;
 
+    ShapeTuple Shape() const;
+
+    DataType DataType() const;
+
+    /*!
+   * \brief Copy data content from another array.
+   * \param other The source array to be copied from.
+   * \note The copy may happen asynchronously if it involves a GPU context.
+   *       TVMSynchronize is necessary.
+   */
+    inline void CopyFrom(const DLTensor* other);
+    inline void CopyFrom(const NDArray& other);
+
+    /*!
+   * \brief Copy data content from a byte buffer.
+   * \param data The source bytes to be copied from.
+   * \param nbytes The size of the buffer in bytes
+   *        Must be equal to the size of the NDArray.
+   * \note The copy always triggers a TVMSynchronize.
+   */
+    void CopyFromBytes(const void* data, size_t nbytes);
+
+    /*!
+   * \brief Copy data content into another array.
+   * \param other The source array to be copied from.
+   * \note The copy may happen asynchronously if it involves a GPU context.
+   *       TVMSynchronize is necessary.
+   */
+    inline void CopyTo(DLTensor* other) const;
+    inline void CopyTo(const NDArray& other) const;
+
+    /*!
+   * \brief Copy data content into another array.
+   * \param data The source bytes to be copied from.
+   * \param nbytes The size of the data buffer.
+   *        Must be equal to the size of the NDArray.
+   * \note The copy always triggers a TVMSynchronize.
+   */
+    void CopyToBytes(void* data, size_t nbytes) const;
+
+    /*!
+   * \brief Copy the data to another device.
+   * \param dev The target device.
+   * \param mem_scope The memory scope of the target array.
+   * \return The array under another device.
+   * \note The copy always triggers a TVMSynchronize.
+   */
+    // NDArray CopyTo(const Device& dev, Optional<String> mem_scope = NullOpt) const;
+
 protected:
     /*!
    * \brief Get mutable internal container pointer.
    * \return a mutable container pointer.
    */
     NODISCARD inline Container* get_mutable() const;
+
+    // Helper functions for FFI handling.
+    /*!
+     * \brief Construct NDArray's Data field from array handle in FFI.
+     * \param handle The array handle.
+     * \return The corresponding ObjectPtr to the constructed container object.
+     *
+     * \note We keep a special calling convention for NDArray by passing
+     *       ContainerBase pointer in FFI.
+     *       As a result, the argument is compatible to DLTensor*.
+     */
+    inline static ObjectPtr<Object> FFIDataFromHandle(TVMArrayHandle handle);
 };
 
 /*!
@@ -187,12 +252,20 @@ inline bool NDArray::IsContiguous() const {
     return runtime::IsContiguous(get_mutable()->dl_tensor);
 }
 
+inline const DLTensor* NDArray::operator->() const {
+    return &get_mutable()->dl_tensor;
+}
+
 inline NDArray::Container* NDArray::get_mutable() const {
     return static_cast<Container*>(data_.get());
 }
 
-inline const DLTensor* NDArray::operator->() const {
-    return &get_mutable()->dl_tensor;
+inline ObjectPtr<Object> NDArray::FFIDataFromHandle(TVMArrayHandle handle) {
+    return GetObjectPtr<Object>(static_cast<Container*>(reinterpret_cast<ContainerBase*>(handle)));
+}
+
+inline Object* TVMArrayHandleToObjectHandle(TVMArrayHandle handle) {
+    return static_cast<NDArray::Container*>(reinterpret_cast<NDArray::ContainerBase*>(handle));
 }
 
 
