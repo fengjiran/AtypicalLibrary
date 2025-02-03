@@ -468,8 +468,8 @@ private:
     template<typename RefType, typename ObjType, typename>
     friend RefType GetRef(const ObjType* ptr);
 
-    // template<typename BaseType, typename ObjType>
-    // friend ObjectPtr<BaseType> GetObjectPtr(ObjType* ptr);
+    template<typename BaseType, typename ObjType, typename>
+    friend ObjectPtr<BaseType> GetObjectPtr(ObjType* ptr);
 };
 
 /*! \brief Base class of all object reference */
@@ -600,6 +600,15 @@ protected:
     }
 
     /*!
+   * \brief Clear the object ref data field without DecRef
+   *        after we successfully moved the field.
+   * \param ref The reference data.
+   */
+    static void FFIClearAfterMove(ObjectRef* ref) {
+        ref->data_.data_ = nullptr;
+    }
+
+    /*!
    * \brief Internal helper function get data_ as ObjectPtr of ObjectType.
    * \note only used for internal dev purpose.
    * \tparam ObjectType The corresponding object type.
@@ -609,13 +618,6 @@ protected:
     static ObjectPtr<ObjectType> GetDataPtr(const ObjectRef& ref) {
         return ObjectPtr<ObjectType>(ref.data_.data_);
     }
-
-    /*!
-   * \brief Clear the object ref data field without DecRef
-   *        after we successfully moved the field.
-   * \param ref The reference data.
-   */
-    static void FFIClearAfterMove(ObjectRef* ref) { ref->data_.data_ = nullptr; }
 
     // friend classes and functions
     friend struct ObjectPtrHash;

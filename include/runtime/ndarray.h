@@ -8,9 +8,9 @@
 #include <utility>
 
 #include "runtime/c_runtime_api.h"
+#include "runtime/data_type.h"
 #include "runtime/object.h"
 #include "runtime/shape_tuple.h"
-#include "runtime/data_type.h"
 
 // nested namespace
 namespace litetvm::runtime {
@@ -23,6 +23,9 @@ public:
     class Container;
     /*! \brief Container type for Object system. */
     using ContainerType = Container;
+
+    // internal namespace
+    struct Internal;
 
     /*! \brief default constructor */
     NDArray() = default;
@@ -50,9 +53,9 @@ public:
     /*! \return Whether the tensor is contiguous */
     NODISCARD inline bool IsContiguous() const;
 
-    ShapeTuple Shape() const;
+    NODISCARD ShapeTuple Shape() const;
 
-    DataType DataType() const;
+    NODISCARD DataType DataType() const;
 
     /*!
    * \brief Copy data content from another array.
@@ -99,6 +102,13 @@ public:
    */
     // NDArray CopyTo(const Device& dev, Optional<String> mem_scope = NullOpt) const;
 
+    /*!
+   * \brief Create a reference view of NDArray that
+   *  represents as DLManagedTensor.
+   * \return A DLManagedTensor
+   */
+  NODISCARD DLManagedTensor* ToDLPack() const;
+
 protected:
     /*!
    * \brief Get mutable internal container pointer.
@@ -117,6 +127,25 @@ protected:
      *       As a result, the argument is compatible to DLTensor*.
      */
     inline static ObjectPtr<Object> FFIDataFromHandle(TVMArrayHandle handle);
+
+    /*!
+   * \brief DecRef resource managed by an FFI array handle.
+   * \param handle The array handle.
+   */
+    inline static void FFIDecRef(TVMArrayHandle handle);
+
+    /*!
+   * \brief Get FFI Array handle from ndarray.
+   * \param nd The object with ndarray type.
+   * \return The result array handle.
+   */
+    inline static TVMArrayHandle FFIGetHandle(const ObjectRef& nd);
+
+    friend class TVMPODValue_;
+    template <typename Derived>
+    friend class TVMPODValue_CRTP_;
+    friend class TVMRetValue;
+    friend class TVMArgsSetter;
 };
 
 /*!
@@ -263,6 +292,19 @@ inline NDArray::Container* NDArray::get_mutable() const {
 inline ObjectPtr<Object> NDArray::FFIDataFromHandle(TVMArrayHandle handle) {
     return GetObjectPtr<Object>(static_cast<Container*>(reinterpret_cast<ContainerBase*>(handle)));
 }
+
+inline void NDArray::FFIDecRef(TVMArrayHandle handle) {
+    static_cast<Container*>(reinterpret_cast<ContainerBase*>(handle))->DecRef();
+}
+
+inline TVMArrayHandle NDArray::FFIGetHandle(const ObjectRef& nd) {
+    // NOTE: it is necessary to cast to container then to base
+    //       so that the FFI handle uses the ContainerBase address.
+    auto ptr = reinterpret_cast<TVMArrayHandle>(static_cast<ContainerBase*>(
+            static_cast<Container*>(const_cast<Object*>(nd.get()))));
+    return ptr;
+}
+
 
 inline Object* TVMArrayHandleToObjectHandle(TVMArrayHandle handle) {
     return static_cast<NDArray::Container*>(reinterpret_cast<NDArray::ContainerBase*>(handle));

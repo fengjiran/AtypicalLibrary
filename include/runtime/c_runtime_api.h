@@ -177,6 +177,28 @@ struct DLTensor {
     uint64_t byte_offset;
 };
 
+/*!
+ * \brief C Tensor object, manage memory of DLTensor. This data structure is
+ *  intended to facilitate the borrowing of DLTensor by another framework. It is
+ *  not meant to transfer the tensor. When the borrowing framework doesn't need
+ *  the tensor, it should call the deleter to notify the host that the resource
+ *  is no longer needed.
+ */
+struct DLManagedTensor {
+  /*! \brief DLTensor which is being memory managed */
+  DLTensor dl_tensor;
+  /*! \brief the context of the original host framework of DLManagedTensor in
+   *   which DLManagedTensor is used in the framework. It can also be NULL.
+   */
+  void * manager_ctx;
+  /*! \brief Destructor signature void (*)(void*) - this should be called
+   *   to destruct manager_ctx which holds the DLManagedTensor. It can be NULL
+   *   if there is no way for the caller to provide a reasonable destructor.
+   *   The destructors deletes the argument self as well.
+   */
+  void (*deleter)(DLManagedTensor * self);
+};
+
 
 /*!
  * \brief The type code in used and only used in TVM FFI for argument passing.

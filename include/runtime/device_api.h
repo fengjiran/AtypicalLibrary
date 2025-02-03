@@ -70,6 +70,31 @@ public:
    * \param dev The device to be set.
    */
     virtual void SetDevice(Device dev) = 0;
+
+    /*!
+   * \brief Get attribute of specified device.
+   * \param dev The device device
+   * \param kind The result kind
+   * \param rv The return value.
+   * \sa DeviceAttrKind
+   */
+    //     virtual void GetAttr(Device dev, DeviceAttrKind kind, TVMRetValue* rv) = 0;
+
+
+    /*!
+   * \brief Free a data space on device.
+   * \param dev The device device to perform operation.
+   * \param ptr The data space.
+   */
+    virtual void FreeDataSpace(Device dev, void* ptr) = 0;
+
+    /*!
+   * \brief Get device API based on device.
+   * \param dev The device
+   * \param allow_missing Whether allow missing
+   * \return The corresponding device API.
+   */
+    static DeviceAPI* Get(Device dev, bool allow_missing = false);
 };
 
 }// namespace litetvm::runtime
