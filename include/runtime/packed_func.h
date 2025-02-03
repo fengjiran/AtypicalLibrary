@@ -46,11 +46,7 @@ public:
      * \param i the index.
      * \return the ith argument.
      */
-    TVMArgValue operator[](int i) const {
-        CHECK_LT(i, num_args) << "not enough argument passed, " << num_args << " passed"
-                              << " but request arg[" << i << "].";
-        return TVMArgValue(values[i], type_codes[i]);
-    }
+    inline TVMArgValue operator[](int i) const;
     /*!
      * \brief Get the i-th argument and do proper type checking with detailed error messages.
      * \tparam T The expected type.
@@ -113,22 +109,22 @@ public:
         return NDArray(NDArray::FFIDataFromHandle(static_cast<TVMArrayHandle>(value_.v_handle)));
     }
 
-    operator Module() const {
-      if (type_code_ == static_cast<int>(TVMArgTypeCode::kTVMNullptr)) {
-        return Module(ObjectPtr<Object>(nullptr));
-      }
-      TVM_CHECK_TYPE_CODE(type_code_, (int)TVMArgTypeCode::kTVMModuleHandle);
-      return Module(ObjectPtr<Object>(static_cast<Object*>(value_.v_handle)));
-    }
+    // operator Module() const {
+    //   if (type_code_ == static_cast<int>(TVMArgTypeCode::kTVMNullptr)) {
+    //     return Module(ObjectPtr<Object>(nullptr));
+    //   }
+    //   TVM_CHECK_TYPE_CODE(type_code_, static_cast<int>(TVMArgTypeCode::kTVMModuleHandle));
+    //   return Module(ObjectPtr<Object>(static_cast<Object*>(value_.v_handle)));
+    // }
 
-    operator PackedFunc() const {
-      if (type_code_ == (int)TVMArgTypeCode::kTVMNullptr) {
-        return PackedFunc(ObjectPtr<Object>(nullptr));
-      }
-
-      TVM_CHECK_TYPE_CODE(type_code_, (int)TVMArgTypeCode::kTVMPackedFuncHandle);
-      return PackedFunc(ObjectPtr<Object>(static_cast<Object*>(value_.v_handle)));
-    }
+    // operator PackedFunc() const {
+    //   if (type_code_ == static_cast<int>(TVMArgTypeCode::kTVMNullptr)) {
+    //     return PackedFunc(ObjectPtr<Object>(nullptr));
+    //   }
+    //
+    //   TVM_CHECK_TYPE_CODE(type_code_, static_cast<int>(TVMArgTypeCode::kTVMPackedFuncHandle));
+    //   return PackedFunc(ObjectPtr<Object>(static_cast<Object*>(value_.v_handle)));
+    // }
 
     operator Device() const {
         TVM_CHECK_TYPE_CODE(type_code_, static_cast<int>(TVMArgTypeCode::kDLDevice));
@@ -312,7 +308,7 @@ public:
     using TVMPODValue_CRTP_::operator bool;
     using TVMPODValue_::operator void*;
     using TVMPODValue_::operator DLTensor*;
-    // using TVMPODValue_::operator NDArray;
+    using TVMPODValue_::operator NDArray;
     using TVMPODValue_::operator Device;
     // using TVMPODValue_::operator Module;
     // using TVMPODValue_::operator PackedFunc;
@@ -337,7 +333,9 @@ public:
     //     return TypedPackedFunc<FType>(operator PackedFunc());
     // }
 
-    NODISCARD const TVMValue& value() const { return value_; }
+    NODISCARD const TVMValue& value() const {
+        return value_;
+    }
 
     template<typename T, typename = typename std::enable_if<std::is_class<T>::value>::type>
     inline operator T() const;
@@ -397,6 +395,18 @@ private:
         return {value_, type_code_};
     }
 };
+
+inline TVMArgValue TVMArgs::operator[](int i) const {
+    CHECK_LT(i, num_args) << "not enough argument passed, " << num_args << " passed"
+                          << " but request arg[" << i << "].";
+    return TVMArgValue(values[i], type_codes[i]);
+}
+
+template<typename T>
+T TVMArgs::At(int i) const {
+    TVMArgValue arg = operator[](i);
+    return arg.operator T();
+}
 
 
 // internal namespace
@@ -525,125 +535,145 @@ bool TVMPODValue_CRTP_<Derived>::IsObjectRef() const {
             ObjectTypeChecker<TObjectRef>::Check(static_cast<Object*>(value_.v_handle)));
 }
 
-template <typename Derived>
-template <typename TObjectRef>
+template<typename Derived>
+template<typename TObjectRef>
 TObjectRef TVMPODValue_CRTP_<Derived>::AsObjectRef() const {
-  static_assert(std::is_base_of<ObjectRef, TObjectRef>::value,
-                "Conversion only works for ObjectRef");
-  using ContainerType = typename TObjectRef::ContainerType;
+    static_assert(std::is_base_of<ObjectRef, TObjectRef>::value,
+                  "Conversion only works for ObjectRef");
+    using ContainerType = typename TObjectRef::ContainerType;
 
-  if (type_code_ == static_cast<int>(TVMArgTypeCode::kTVMNullptr)) {
-    CHECK(TObjectRef::_type_is_nullable)
-        << "Expect a not null value of " << ContainerType::_type_key;
+    if (type_code_ == static_cast<int>(TVMArgTypeCode::kTVMNullptr)) {
+        CHECK(TObjectRef::_type_is_nullable)
+                << "Expect a not null value of " << ContainerType::_type_key;
+        return TObjectRef(ObjectPtr<Object>(nullptr));
+    }
+
+    // NOTE: The following code uses "if constexpr" wherever possible to
+    // minimize the number of runtime checks.
+    if constexpr (std::is_base_of_v<NDArray::ContainerType, ContainerType>) {
+        // Casting to a sub-class of NDArray
+        TVM_CHECK_TYPE_CODE(type_code_, static_cast<int>(TVMArgTypeCode::kTVMNDArrayHandle));
+        ObjectPtr<Object> data =
+                NDArray::FFIDataFromHandle(static_cast<TVMArrayHandle>(value_.v_handle));
+        CHECK(data->IsInstance<ContainerType>())
+                << "Expected " << ContainerType::_type_key << " but got " << data->GetTypeKey();
+        return TObjectRef(data);
+    }
+
+    if constexpr (std::is_base_of_v<Module::ContainerType, ContainerType>) {
+        // Casting to a sub-class of Module
+        TVM_CHECK_TYPE_CODE(type_code_, static_cast<int>(TVMArgTypeCode::kTVMModuleHandle));
+        ObjectPtr<Object> data = GetObjectPtr<Object>(static_cast<Object*>(value_.v_handle));
+        CHECK(data->IsInstance<ContainerType>())
+                << "Expected " << ContainerType::_type_key << " but got " << data->GetTypeKey();
+        return TObjectRef(data);
+    }
+
+    if constexpr (std::is_base_of_v<PackedFunc::ContainerType, ContainerType>) {
+        // Casting to a sub-class of PackedFunc
+        TVM_CHECK_TYPE_CODE(type_code_, static_cast<int>(TVMArgTypeCode::kTVMPackedFuncHandle));
+        ObjectPtr<Object> data = GetObjectPtr<Object>(static_cast<Object*>(value_.v_handle));
+        CHECK(data->IsInstance<ContainerType>())
+                << "Expected " << ContainerType::_type_key << " but got " << data->GetTypeKey();
+        return TObjectRef(data);
+    }
+
+    if (type_code_ == static_cast<int>(TVMArgTypeCode::kTVMObjectHandle)) {
+        // normal object type check.
+        auto* ptr = static_cast<Object*>(value_.v_handle);
+        Optional<String> checked_type = ObjectTypeChecker<TObjectRef>::CheckAndGetMismatch(ptr);
+        CHECK(!checked_type.defined()) << "Expected " << ObjectTypeChecker<TObjectRef>::TypeName()
+                                       << ", but got " << checked_type.value();
+        return TObjectRef(GetObjectPtr<Object>(ptr));
+    }
+
+    if (type_code_ == static_cast<int>(TVMArgTypeCode::kTVMObjectRValueRefArg)) {
+        Object* ptr = *static_cast<Object**>(value_.v_handle);
+        Optional<String> checked_type = ObjectTypeChecker<TObjectRef>::CheckAndGetMismatch(ptr);
+        CHECK(!checked_type.defined()) << "Expected " << ObjectTypeChecker<TObjectRef>::TypeName()
+                                       << ", but got " << checked_type.value();
+        return TObjectRef(GetObjectPtr<Object>(ptr));
+    }
+
+    if constexpr (std::is_base_of_v<ContainerType, NDArray::ContainerType>) {
+        if (type_code_ == static_cast<int>(TVMArgTypeCode::kTVMNDArrayHandle)) {
+            // Casting to a base class that NDArray can sub-class
+            ObjectPtr<Object> data =
+                    NDArray::FFIDataFromHandle(static_cast<TVMArrayHandle>(value_.v_handle));
+            return TObjectRef(data);
+        }
+    }
+
+    if constexpr (std::is_base_of_v<ContainerType, Module::ContainerType>) {
+        if (type_code_ == static_cast<int>(TVMArgTypeCode::kTVMModuleHandle)) {
+            // Casting to a base class that Module can sub-class
+            return TObjectRef(GetObjectPtr<Object>(static_cast<Object*>(value_.v_handle)));
+        }
+    }
+
+    if constexpr (std::is_base_of_v<ContainerType, PackedFunc::ContainerType>) {
+        if (type_code_ == static_cast<int>(TVMArgTypeCode::kTVMPackedFuncHandle)) {
+            // Casting to a base class that PackedFunc can sub-class
+            return TObjectRef(GetObjectPtr<Object>(static_cast<Object*>(value_.v_handle)));
+        }
+    }
+
+    if constexpr (std::is_base_of_v<TObjectRef, Int>) {
+        if (type_code_ == static_cast<int>(TVMArgTypeCode::kTVMArgInt)) {
+            return Int(value_.v_int64);
+        }
+    }
+
+    if constexpr (std::is_base_of_v<TObjectRef, Float>) {
+        if (type_code_ == static_cast<int>(TVMArgTypeCode::kTVMArgFloat)) {
+            return Float(value_.v_float64);
+        }
+    }
+
+    if constexpr (std::is_base_of_v<TObjectRef, Bool>) {
+        if (type_code_ == static_cast<int>(TVMArgTypeCode::kTVMArgBool)) {
+            return Bool(value_.v_int64);
+        }
+    }
+
+    if constexpr (std::is_base_of_v<TObjectRef, String>) {
+        if (type_code_ == static_cast<int>(TVMArgTypeCode::kTVMStr) ||
+            type_code_ == static_cast<int>(TVMArgTypeCode::kTVMBytes)) {
+            // This step is the reason why `AsObjectRef` cannot be provided
+            // in the base `TVMPODValue_` class.  Because `TVMArgValue` and
+            // `TVMRetValue` have different implementations of `operator
+            // std::string`, with different interpretations of `kTVMStr` and
+            // `kTVMBytes`, we must delegate to those implementations.
+            //
+            // This could be done with a pure virtual method in
+            // `TVMPODValue_`, but that would require a vtable lookup during
+            // FFI conversions, imposing a runtime overhead.
+            return String(static_cast<const Derived*>(this)->operator std::string());
+        }
+    }
+
+    TVM_CHECK_TYPE_CODE(type_code_, static_cast<int>(TVMArgTypeCode::kTVMObjectHandle));
     return TObjectRef(ObjectPtr<Object>(nullptr));
-  }
+}
 
-  // NOTE: The following code uses "if constexpr" wherever possible to
-  // minimize the number of runtime checks.
-  if constexpr (std::is_base_of_v<NDArray::ContainerType, ContainerType>) {
-    // Casting to a sub-class of NDArray
-    TVM_CHECK_TYPE_CODE(type_code_, static_cast<int>(TVMArgTypeCode::kTVMNDArrayHandle));
-    ObjectPtr<Object> data =
-        NDArray::FFIDataFromHandle(static_cast<TVMArrayHandle>(value_.v_handle));
-    CHECK(data->IsInstance<ContainerType>())
-        << "Expected " << ContainerType::_type_key << " but got " << data->GetTypeKey();
-    return TObjectRef(data);
-  }
-
-  if constexpr (std::is_base_of_v<Module::ContainerType, ContainerType>) {
-    // Casting to a sub-class of Module
-    TVM_CHECK_TYPE_CODE(type_code_, static_cast<int>(TVMArgTypeCode::kTVMModuleHandle));
-    ObjectPtr<Object> data = GetObjectPtr<Object>(static_cast<Object*>(value_.v_handle));
-    CHECK(data->IsInstance<ContainerType>())
-        << "Expected " << ContainerType::_type_key << " but got " << data->GetTypeKey();
-    return TObjectRef(data);
-  }
-
-  if constexpr (std::is_base_of_v<PackedFunc::ContainerType, ContainerType>) {
-    // Casting to a sub-class of PackedFunc
-    TVM_CHECK_TYPE_CODE(type_code_, static_cast<int>(TVMArgTypeCode::kTVMPackedFuncHandle));
-    ObjectPtr<Object> data = GetObjectPtr<Object>(static_cast<Object*>(value_.v_handle));
-    CHECK(data->IsInstance<ContainerType>())
-        << "Expected " << ContainerType::_type_key << " but got " << data->GetTypeKey();
-    return TObjectRef(data);
-  }
-
-  if (type_code_ == static_cast<int>(TVMArgTypeCode::kTVMObjectHandle)) {
-      // normal object type check.
-      auto* ptr = static_cast<Object*>(value_.v_handle);
-      Optional<String> checked_type = ObjectTypeChecker<TObjectRef>::CheckAndGetMismatch(ptr);
-      CHECK(!checked_type.defined()) << "Expected " << ObjectTypeChecker<TObjectRef>::TypeName()
-                                     << ", but got " << checked_type.value();
-      return TObjectRef(GetObjectPtr<Object>(ptr));
-  }
-
-  if (type_code_ == static_cast<int>(TVMArgTypeCode::kTVMObjectRValueRefArg)) {
-      Object* ptr = *static_cast<Object**>(value_.v_handle);
-      Optional<String> checked_type = ObjectTypeChecker<TObjectRef>::CheckAndGetMismatch(ptr);
-      CHECK(!checked_type.defined()) << "Expected " << ObjectTypeChecker<TObjectRef>::TypeName()
-                                     << ", but got " << checked_type.value();
-      return TObjectRef(GetObjectPtr<Object>(ptr));
-  }
-
-  if constexpr (std::is_base_of_v<ContainerType, NDArray::ContainerType>) {
-    if (type_code_ == static_cast<int>(TVMArgTypeCode::kTVMNDArrayHandle)) {
-      // Casting to a base class that NDArray can sub-class
-      ObjectPtr<Object> data =
-          NDArray::FFIDataFromHandle(static_cast<TVMArrayHandle>(value_.v_handle));
-      return TObjectRef(data);
+inline TVMArgValue::operator DLDataType() const {
+    if (String::CanConvertFrom(*this)) {
+        return String2DLDataType(PackedFuncValueConverter<String>::From(*this).operator std::string());
     }
-  }
-
-  if constexpr (std::is_base_of_v<ContainerType, Module::ContainerType>) {
-    if (type_code_ == static_cast<int>(TVMArgTypeCode::kTVMModuleHandle)) {
-      // Casting to a base class that Module can sub-class
-      return TObjectRef(GetObjectPtr<Object>(static_cast<Object*>(value_.v_handle)));
+    // None type
+    if (type_code_ == static_cast<int>(TVMArgTypeCode::kTVMNullptr)) {
+        DLDataType t;
+        t.code = static_cast<uint8_t>(TVMArgTypeCode::kTVMOpaqueHandle);
+        t.bits = 0;
+        t.lanes = 0;
+        return t;
     }
-  }
+    TVM_CHECK_TYPE_CODE(type_code_, static_cast<int>(TVMArgTypeCode::kTVMDataType));
+    return value_.v_type;
+}
 
-  if constexpr (std::is_base_of_v<ContainerType, PackedFunc::ContainerType>) {
-    if (type_code_ == static_cast<int>(TVMArgTypeCode::kTVMPackedFuncHandle)) {
-      // Casting to a base class that PackedFunc can sub-class
-      return TObjectRef(GetObjectPtr<Object>(static_cast<Object*>(value_.v_handle)));
-    }
-  }
-
-  if constexpr (std::is_base_of_v<TObjectRef, Int>) {
-    if (type_code_ == static_cast<int>(TVMArgTypeCode::kTVMArgInt)) {
-      return Int(value_.v_int64);
-    }
-  }
-
-  if constexpr (std::is_base_of_v<TObjectRef, Float>) {
-    if (type_code_ == static_cast<int>(TVMArgTypeCode::kTVMArgFloat)) {
-      return Float(value_.v_float64);
-    }
-  }
-
-  if constexpr (std::is_base_of_v<TObjectRef, Bool>) {
-    if (type_code_ == static_cast<int>(TVMArgTypeCode::kTVMArgBool)) {
-      return Bool(value_.v_int64);
-    }
-  }
-
-  if constexpr (std::is_base_of_v<TObjectRef, String>) {
-    if (type_code_ == static_cast<int>(TVMArgTypeCode::kTVMStr) ||
-        type_code_ == static_cast<int>(TVMArgTypeCode::kTVMBytes)) {
-      // This step is the reason why `AsObjectRef` cannot be provided
-      // in the base `TVMPODValue_` class.  Because `TVMArgValue` and
-      // `TVMRetValue` have different implementations of `operator
-      // std::string`, with different interpretations of `kTVMStr` and
-      // `kTVMBytes`, we must delegate to those implementations.
-      //
-      // This could be done with a pure virtual method in
-      // `TVMPODValue_`, but that would require a vtable lookup during
-      // FFI conversions, imposing a runtime overhead.
-      return String(static_cast<const Derived*>(this)->operator std::string());
-    }
-  }
-
-  TVM_CHECK_TYPE_CODE(type_code_, static_cast<int>(TVMArgTypeCode::kTVMObjectHandle));
-  return TObjectRef(ObjectPtr<Object>(nullptr));
+inline TVMArgValue::operator DataType() const {
+    return DataType(operator DLDataType());
 }
 
 }// namespace litetvm::runtime
