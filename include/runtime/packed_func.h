@@ -7,12 +7,13 @@
 
 #include <utility>
 
+#include "runtime/boxed_primitive.h"
 #include "runtime/c_runtime_api.h"
 #include "runtime/data_type.h"
+#include "runtime/module.h"
 #include "runtime/ndarray.h"
 #include "runtime/object.h"
 #include "runtime/string.h"
-#include "runtime/module.h"
 
 // nested namespace
 namespace litetvm::runtime {
@@ -81,11 +82,13 @@ inline const char* ArgTypeCode2Str(int type_code);
 class TVMPODValue_ {
 public:
     operator void*() const {
-        if (type_code_ == static_cast<uint8_t>(TVMArgTypeCode::kTVMNullptr))
+        if (type_code_ == static_cast<int>(TVMArgTypeCode::kTVMNullptr)) {
             return nullptr;
+        }
 
-        if (type_code_ == static_cast<int>(TVMArgTypeCode::kTVMDLTensorHandle))
+        if (type_code_ == static_cast<int>(TVMArgTypeCode::kTVMDLTensorHandle)) {
             return value_.v_handle;
+        }
 
         TVM_CHECK_TYPE_CODE(type_code_, static_cast<int>(TVMArgTypeCode::kTVMOpaqueHandle));
         return value_.v_handle;
@@ -97,8 +100,9 @@ public:
             return static_cast<DLTensor*>(value_.v_handle);
         }
 
-        if (type_code_ == static_cast<int>(TVMArgTypeCode::kTVMNullptr))
+        if (type_code_ == static_cast<int>(TVMArgTypeCode::kTVMNullptr)) {
             return nullptr;
+        }
 
         LOG(FATAL) << "Expected "
                    << "DLTensor* or NDArray but got " << ArgTypeCode2Str(type_code_);
@@ -106,20 +110,21 @@ public:
     }
 
     operator NDArray() const {
-        if (type_code_ == static_cast<int>(TVMArgTypeCode::kTVMNullptr))
+        if (type_code_ == static_cast<int>(TVMArgTypeCode::kTVMNullptr)) {
             return NDArray(ObjectPtr<Object>(nullptr));
+        }
 
-        TVM_CHECK_TYPE_CODE(type_code_, (int) TVMArgTypeCode::kTVMNDArrayHandle);
+        TVM_CHECK_TYPE_CODE(type_code_, static_cast<int>(TVMArgTypeCode::kTVMNDArrayHandle));
         return NDArray(NDArray::FFIDataFromHandle(static_cast<TVMArrayHandle>(value_.v_handle)));
     }
 
-    // operator Module() const {
-    //   if (type_code_ == static_cast<int>(TVMArgTypeCode::kTVMNullptr)) {
-    //     return Module(ObjectPtr<Object>(nullptr));
-    //   }
-    //   TVM_CHECK_TYPE_CODE(type_code_, static_cast<int>(TVMArgTypeCode::kTVMModuleHandle));
-    //   return Module(ObjectPtr<Object>(static_cast<Object*>(value_.v_handle)));
-    // }
+    operator Module() const {
+        if (type_code_ == static_cast<int>(TVMArgTypeCode::kTVMNullptr)) {
+            return Module(ObjectPtr<Object>(nullptr));
+        }
+        TVM_CHECK_TYPE_CODE(type_code_, static_cast<int>(TVMArgTypeCode::kTVMModuleHandle));
+        return Module(ObjectPtr<Object>(static_cast<Object*>(value_.v_handle)));
+    }
 
     // operator PackedFunc() const {
     //   if (type_code_ == static_cast<int>(TVMArgTypeCode::kTVMNullptr)) {
@@ -181,9 +186,9 @@ public:
     }
 
 protected:
-    //  friend class TVMArgsSetter;
-    //  friend class TVMRetValue;
-    //  friend class TVMMovableArgValue_;
+    friend class TVMArgsSetter;
+    friend class TVMRetValue;
+    friend class TVMMovableArgValue_;
 
     TVMPODValue_() : type_code_(static_cast<int>(TVMArgTypeCode::kTVMNullptr)) {}
 
@@ -1240,9 +1245,9 @@ inline PackedFunc Module::GetFunction(const String& name, bool query_imports) {
 }
 
 // specializations of PackedFuncValueConverter
-template <>
+template<>
 struct PackedFuncValueConverter<String> {
-    template <typename PODSubclass>
+    template<typename PODSubclass>
     static String From(const PODSubclass& val) {
         if (val.template IsObjectRef<String>()) {
             return val.template AsObjectRef<String>();
