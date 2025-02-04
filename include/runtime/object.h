@@ -19,6 +19,19 @@
 #endif
 
 /*!
+ * \brief Use little endian for binary serialization
+ *  if this is set to 0, use big endian.
+ */
+#ifndef IO_USE_LITTLE_ENDIAN
+#define IO_USE_LITTLE_ENDIAN 1
+#endif
+
+#define LITTLE_ENDIAN (__BYTE_ORDER == __LITTLE_ENDIAN)
+
+/*! \brief whether serialize using little endian */
+#define IO_NO_ENDIAN_SWAP (LITTLE_ENDIAN == IO_USE_LITTLE_ENDIAN)
+
+/*!
  * \brief Whether or not use atomic reference counter.
  *  If the reference counter is not atomic,
  *  an object cannot be owned by multiple threads.
@@ -281,6 +294,8 @@ private:
    */
     NODISCARD bool DerivedFrom(uint32_t parent_tindex) const;
 
+    friend class TVMRetValue;
+
     template<typename>
     friend class ObjectPtr;
 
@@ -324,7 +339,7 @@ class ObjectPtr {
 public:
     ObjectPtr() = default;
 
-    explicit ObjectPtr(std::nullptr_t) {}
+    ObjectPtr(std::nullptr_t) {}
 
     ObjectPtr(const ObjectPtr& other) : ObjectPtr(other.data_) {}
 
@@ -458,6 +473,9 @@ private:
     friend class Object;
     friend class ObjectRef;
     friend class TVMPODValue_;
+    friend class TVMRetValue;
+    friend class TVMArgValue;
+    friend class TVMMovableArgValue_;
 
     template<typename>
     friend class ObjectPtr;
@@ -621,6 +639,7 @@ protected:
 
     // friend classes and functions
     friend struct ObjectPtrHash;
+    friend class TVMRetValue;
 
     template<typename SubRef, typename BaseRef>
     friend SubRef Downcast(BaseRef ref);

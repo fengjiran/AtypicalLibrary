@@ -185,18 +185,18 @@ struct DLTensor {
  *  is no longer needed.
  */
 struct DLManagedTensor {
-  /*! \brief DLTensor which is being memory managed */
-  DLTensor dl_tensor;
-  /*! \brief the context of the original host framework of DLManagedTensor in
+    /*! \brief DLTensor which is being memory managed */
+    DLTensor dl_tensor;
+    /*! \brief the context of the original host framework of DLManagedTensor in
    *   which DLManagedTensor is used in the framework. It can also be NULL.
    */
-  void * manager_ctx;
-  /*! \brief Destructor signature void (*)(void*) - this should be called
+    void* manager_ctx;
+    /*! \brief Destructor signature void (*)(void*) - this should be called
    *   to destruct manager_ctx which holds the DLManagedTensor. It can be NULL
    *   if there is no way for the caller to provide a reasonable destructor.
    *   The destructors deletes the argument self as well.
    */
-  void (*deleter)(DLManagedTensor * self);
+    void (*deleter)(DLManagedTensor* self);
 };
 
 
@@ -258,6 +258,15 @@ union TVMValue {
     const char* v_str;
     DLDataType v_type;
     DLDevice v_device;
+};
+
+/*!
+ * \brief Byte array type used to pass in byte array
+ *  When kTVMBytes is used as data type.
+ */
+struct TVMByteArray {
+    const char* data;
+    size_t size;
 };
 
 #endif//C_RUNTIME_API_H
