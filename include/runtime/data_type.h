@@ -409,6 +409,13 @@ inline bool TypeEqual(DLDataType lhs, DLDataType rhs) {
 std::string GetCustomTypeName(uint8_t type_code);
 
 /*!
+ * \brief Runtime utility for checking whether custom type is registered
+ * \param type_code Custom type code
+ * \return Bool representing whether type is registered
+ */
+bool GetCustomTypeRegistered(uint8_t type_code);
+
+/*!
  * \brief Runtime utility for parsing string of the form "custom[<typename>]"
  * \param s String to parse
  * \param scan pointer to parsing pointer, which is scanning across s

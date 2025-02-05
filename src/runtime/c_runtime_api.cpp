@@ -10,6 +10,23 @@
 
 namespace litetvm::runtime {
 
+std::string GetCustomTypeName(uint8_t type_code) {
+    auto f = runtime::Registry::Get("runtime._datatype_get_type_name");
+    CHECK(f) << "Function runtime._datatype_get_type_name not found";
+    return (*f)(type_code).operator std::string();
+}
+
+uint8_t GetCustomTypeCode(const std::string& type_name) {
+    auto f = runtime::Registry::Get("runtime._datatype_get_type_code");
+    CHECK(f) << "Function runtime._datatype_get_type_code not found";
+    return (*f)(type_name).operator int();
+}
+
+bool GetCustomTypeRegistered(uint8_t type_code) {
+    auto f = runtime::Registry::Get("runtime._datatype_get_type_registered");
+    CHECK(f) << "Function runtime._datatype_get_type_registered not found";
+    return (*f)(type_code).operator bool();
+}
 
 uint8_t ParseCustomDatatype(const std::string& s, const char** scan) {
     CHECK(s.substr(0, 6) == "custom") << "Not a valid custom datatype string";
