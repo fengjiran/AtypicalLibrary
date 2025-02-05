@@ -19,6 +19,28 @@
 #endif
 
 /*!
+ * \brief Macro helper to force a function not to be inlined.
+ * It is only used in places that we know not inlining is good,
+ * e.g. some logging functions.
+ */
+#if defined(_MSC_VER)
+#define TVM_NO_INLINE __declspec(noinline)
+#else
+#define TVM_NO_INLINE __attribute__((noinline))
+#endif
+
+/*!
+ * \brief Macro helper to force a function to be inlined.
+ * It is only used in places that we know inline is important,
+ * e.g. some template expansion cases.
+ */
+#ifdef _MSC_VER
+#define TVM_ALWAYS_INLINE __forceinline
+#else
+#define TVM_ALWAYS_INLINE inline __attribute__((always_inline))
+#endif
+
+/*!
  * \brief Use little endian for binary serialization
  *  if this is set to 0, use big endian.
  */
