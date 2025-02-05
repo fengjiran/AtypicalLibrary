@@ -247,6 +247,20 @@ enum class TVMArgTypeCode : uint8_t {
 /*! \brief the array handle */
 using TVMArrayHandle = DLTensor*;
 
+/*! \brief Handle to TVM runtime modules. */
+using TVMModuleHandle = void*;
+/*! \brief Handle to packed function handle. */
+using TVMFunctionHandle = void*;
+/*! \brief Handle to hold return value. */
+using TVMRetValueHandle = void* ;
+/*!
+ * \brief The stream that is specific to device
+ * can be NULL, which indicates the default one.
+ */
+using TVMStreamHandle = void*;
+/*! \brief Handle to Object. */
+using TVMObjectHandle = void*;
+
 /*!
  * \brief Union type of values
  *  being passed through API and function calls.

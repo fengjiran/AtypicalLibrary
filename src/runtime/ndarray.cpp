@@ -31,8 +31,8 @@ inline void VerifyDataType(DLDataType dtype) {
 
 struct NDArray::Internal {
     // Default deleter for the container
-    static void DefaultDeleter(Object* ptr_obj) {
-        auto* ptr = static_cast<Container*>(ptr_obj);
+    static void DefaultDeleter(Object* p) {
+        auto* ptr = static_cast<Container*>(p);
         if (ptr->manager_ctx != nullptr) {
             static_cast<Container*>(ptr->manager_ctx)->DecRef();
         } else if (ptr->dl_tensor.data != nullptr) {
@@ -47,8 +47,8 @@ struct NDArray::Internal {
     // that are not allocated inside of TVM.
     // This enables us to create NDArray from memory allocated by other
     // frameworks that are DLPack compatible
-    static void DLPackDeleter(Object* ptr_obj) {
-        auto* ptr = static_cast<Container*>(ptr_obj);
+    static void DLPackDeleter(Object* p) {
+        auto* ptr = static_cast<Container*>(p);
         auto* tensor = static_cast<DLManagedTensor*>(ptr->manager_ctx);
         if (tensor->deleter != nullptr) {
             (*tensor->deleter)(tensor);
