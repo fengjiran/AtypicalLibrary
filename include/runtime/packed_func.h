@@ -14,6 +14,7 @@
 #include "runtime/object.h"
 #include "runtime/optional.h"
 #include "runtime/string.h"
+#include "runtime/variant.h"
 
 #include <functional>
 #include <utility>
