@@ -110,6 +110,18 @@ public:
                                  DLDataType type_hint) = 0;
 
     /*!
+   * \brief Allocate a data space on device with memory scope support.
+   * \param dev The device device to perform operation.
+   * \param ndim The number of dimension of allocated tensor.
+   * \param shape The shape of allocated tensor.
+   * \param dtype The type of elements.
+   * \param mem_scope The memory scope of allocated tensor.
+   * \return The allocated device pointer.
+   */
+    virtual void* AllocDataSpace(Device dev, int ndim, const int64_t* shape, DLDataType dtype,
+                                 Optional<String> mem_scope = NullOpt);
+
+    /*!
    * \brief Free a data space on device.
    * \param dev The device device to perform operation.
    * \param ptr The data space.
