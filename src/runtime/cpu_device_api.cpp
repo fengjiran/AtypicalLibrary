@@ -118,13 +118,13 @@ struct CPUWorkspacePool : WorkspacePool {
     CPUWorkspacePool() : WorkspacePool(DLDeviceType::kDLCPU, CPUDeviceAPI::Global()) {}
 };
 
-void* CPUDeviceAPI::AllocWorkspace(Device dev, size_t size, DLDataType type_hint) {
-    return dmlc::ThreadLocalStore<CPUWorkspacePool>::Get()->AllocWorkspace(dev, size);
-}
-
-void CPUDeviceAPI::FreeWorkspace(Device dev, void* data) {
-    dmlc::ThreadLocalStore<CPUWorkspacePool>::Get()->FreeWorkspace(dev, data);
-}
+// void* CPUDeviceAPI::AllocWorkspace(Device dev, size_t size, DLDataType type_hint) {
+//     return dmlc::ThreadLocalStore<CPUWorkspacePool>::Get()->AllocWorkspace(dev, size);
+// }
+//
+// void CPUDeviceAPI::FreeWorkspace(Device dev, void* data) {
+//     dmlc::ThreadLocalStore<CPUWorkspacePool>::Get()->FreeWorkspace(dev, data);
+// }
 
 // TVM_REGISTER_GLOBAL("device_api.cpu").set_body([](TVMArgs args, TVMRetValue* rv) {
 //   DeviceAPI* ptr = CPUDeviceAPI::Global();

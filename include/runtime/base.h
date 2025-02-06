@@ -17,6 +17,7 @@
 
 namespace litetvm {
 namespace runtime {
+
 /*! \brief String-aware ObjectRef equal functor */
 struct ObjectHash {
     /*!

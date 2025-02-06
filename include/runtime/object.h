@@ -5,7 +5,7 @@
 #ifndef ATYPICALLIBRARY_OBJECT_H
 #define ATYPICALLIBRARY_OBJECT_H
 
-#include "runtime/base.h"
+// #include "runtime/base.h"
 #include "runtime/utils.h"
 
 #include <cstdint>
@@ -468,7 +468,7 @@ private:
     template<typename RefType, typename ObjType, typename>
     friend RefType GetRef(const ObjType* ptr);
 
-    template<typename BaseType, typename ObjType, typename>
+    template<typename BaseType, typename ObjType>
     friend ObjectPtr<BaseType> GetObjectPtr(ObjType* ptr);
 };
 
@@ -627,12 +627,17 @@ protected:
     friend SubRef Downcast(BaseRef ref);
 };
 
-template<typename BaseType,
-         typename ObjType,
-         typename = std::enable_if_t<std::is_base_of_v<BaseType, ObjType>>>
-ObjectPtr<BaseType> GetObjectPtr(ObjType* ptr) {
-    return ObjectPtr<BaseType>(static_cast<Object*>(ptr));
-}
+/*!
+ * \brief Get an object ptr type from a raw object ptr.
+ *
+ * \param ptr The object pointer
+ * \tparam BaseType The reference type
+ * \tparam ObjectType The object type
+ * \return The corresponding RefType
+ */
+template <typename BaseType, typename ObjectType>
+ObjectPtr<BaseType> GetObjectPtr(ObjectType* ptr);
+
 
 /*! \brief ObjectRef hash functor */
 struct ObjectPtrHash {
@@ -707,6 +712,14 @@ RefType GetRef(const ObjType* ptr) {
         CHECK(ptr != nullptr);
     }
     return RefType(ObjectPtr<Object>(const_cast<Object*>(static_cast<const Object*>(ptr))));
+}
+
+template<typename BaseType,
+         typename ObjType>
+ObjectPtr<BaseType> GetObjectPtr(ObjType* ptr) {
+    static_assert(std::is_base_of_v<BaseType, ObjType>,
+                "Can only cast to the ref of same container type");
+    return ObjectPtr<BaseType>(static_cast<Object*>(ptr));
 }
 
 template<typename SubRef, typename BaseRef>

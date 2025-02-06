@@ -55,7 +55,7 @@ public:
 
     NODISCARD ShapeTuple Shape() const;
 
-    NODISCARD DataType DataType() const;
+    NODISCARD runtime::DataType DataType() const;
 
     /*!
    * \brief Copy data content from another array.

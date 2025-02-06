@@ -5,6 +5,7 @@
 #ifndef UTILS_H
 #define UTILS_H
 
+#include <endian.h>
 
 #ifdef __has_cpp_attribute
 #if __has_cpp_attribute(nodiscard)
@@ -44,7 +45,7 @@
 #define IO_USE_LITTLE_ENDIAN 1
 #endif
 
-#define LITTLE_ENDIAN (__BYTE_ORDER == __LITTLE_ENDIAN)
+// #define LITTLE_ENDIAN (__BYTE_ORDER == __LITTLE_ENDIAN)
 
 /*! \brief whether serialize using little endian */
 #define IO_NO_ENDIAN_SWAP (LITTLE_ENDIAN == IO_USE_LITTLE_ENDIAN)

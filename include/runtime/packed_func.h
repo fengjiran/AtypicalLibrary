@@ -403,6 +403,48 @@ inline std::ostream& operator<<(std::ostream& os, DLDevice dev);// NOLINT(*)
 // macro to check type code.
 #define TVM_CHECK_TYPE_CODE(CODE, T) CHECK_EQ(CODE, T) << TVM_LOG_INCORRECT_TYPE_CODE(CODE, T)
 
+/*!
+ * \brief Type traits for runtime type check during FFI conversion.
+ * \tparam T the type to be checked.
+ */
+template<typename T>
+struct ObjectTypeChecker {
+    /*!
+     * \brief Check if an object matches the template type and return the
+     *        mismatched type if it exists.
+     * \param ptr The object to check the type of.
+     * \return An Optional containing the actual type of the pointer if it does not match the
+     *         template type. If the Optional does not contain a value, then the types match.
+     */
+    static Optional<String> CheckAndGetMismatch(const Object* ptr) {
+        using ContainerType = typename T::ContainerType;
+        if (ptr == nullptr) {
+            if (T::_type_is_nullable) {
+                return NullOpt;
+            }
+            return String("nullptr");
+        }
+        if (ptr->IsInstance<ContainerType>()) {
+            return NullOpt;
+        }
+        return String(ptr->GetTypeKey());
+    }
+    /*!
+     * \brief Check if an object matches the template type.
+     * \param ptr The object to check the type of.
+     * \return Whether or not the template type matches the objects type.
+     */
+    static bool Check(const Object* ptr) {
+        using ContainerType = typename T::ContainerType;
+        if (ptr == nullptr) return T::_type_is_nullable;
+        return ptr->IsInstance<ContainerType>();
+    }
+    static std::string TypeName() {
+        using ContainerType = typename T::ContainerType;
+        return ContainerType::_type_key;
+    }
+};
+
 // Additional overloads for PackedFunc checking.
 template<typename T>
 struct ObjectTypeChecker<Array<T>> {
@@ -454,7 +496,7 @@ struct ObjectTypeChecker<Map<K, V>> {
             return NullOpt;
         }
 
-        const MapNode* n = static_cast<const MapNode*>(ptr);
+        const auto* n = static_cast<const MapNode*>(ptr);
         for (const auto& kv: *n) {
             Optional<String> key_type = NullOpt;
             if constexpr (!std::is_same_v<K, ObjectRef>) {
