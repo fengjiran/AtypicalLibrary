@@ -22,7 +22,7 @@ namespace litetvm::runtime {
  *  - The release order is usually in reverse order of allocate
  *  - Repeative pattern of same allocations over different runs.
  */
-class TVM_DLL WorkspacePool {
+class WorkspacePool {
 public:
     /*!
    * \brief Create pool with specific device type and device.

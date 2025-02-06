@@ -13,6 +13,15 @@
 namespace litetvm::runtime {
 
 /*!
+ * \brief Allocate an object using default allocator.
+ * \param args arguments to the constructor.
+ * \tparam T the node type.
+ * \return The ObjectPtr to the allocated object.
+ */
+template <typename T, typename... Args>
+ObjectPtr<T> make_object(Args&&... args);
+
+/*!
  * \brief Base class of object allocators that implements make.
  *  Use curiously recurring template pattern.
  *

@@ -8,6 +8,13 @@
 #include "runtime/memory.h"
 #include "runtime/object.h"
 
+#include <glog/logging.h>
+#include <algorithm>
+#include <initializer_list>
+#include <utility>
+
+#include <cstddef>
+
 namespace litetvm {
 namespace runtime {
 /*! \brief String-aware ObjectRef equal functor */
@@ -261,16 +268,16 @@ private:
 }// namespace runtime
 
 // expose the functions to the root namespace.
-using runtime::Downcast;
-using runtime::IterAdapter;
-using runtime::make_object;
-using runtime::Object;
-using runtime::ObjectEqual;
-using runtime::ObjectHash;
-using runtime::ObjectPtr;
-using runtime::ObjectPtrEqual;
-using runtime::ObjectPtrHash;
-using runtime::ObjectRef;
+// using runtime::Downcast;
+// using runtime::IterAdapter;
+// using runtime::make_object;
+// using runtime::Object;
+// using runtime::ObjectEqual;
+// using runtime::ObjectHash;
+// using runtime::ObjectPtr;
+// using runtime::ObjectPtrEqual;
+// using runtime::ObjectPtrHash;
+// using runtime::ObjectRef;
 }// namespace litetvm
 
 #endif//BASE_H
