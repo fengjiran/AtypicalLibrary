@@ -8,8 +8,8 @@
 #include "runtime/memory.h"
 #include "runtime/object.h"
 
-namespace litetvm::runtime {
-
+namespace litetvm {
+namespace runtime {
 /*! \brief String-aware ObjectRef equal functor */
 struct ObjectHash {
     /*!
@@ -154,6 +154,123 @@ protected:
     }
 };
 
-}// namespace litetvm::runtime
+/*!
+ * \brief iterator adapter that adapts TIter to return another type.
+ * \tparam Converter a struct that contains converting function
+ * \tparam TIter the content iterator type.
+ */
+template<typename Converter, typename TIter>
+class IterAdapter {
+public:
+    using difference_type = typename std::iterator_traits<TIter>::difference_type;
+    using value_type = typename Converter::ResultType;
+    using pointer = typename Converter::ResultType*;
+    using reference = typename Converter::ResultType&;
+    using iterator_category = typename std::iterator_traits<TIter>::iterator_category;
+
+    explicit IterAdapter(TIter iter) : iter_(iter) {}
+    IterAdapter& operator++() {
+        ++iter_;
+        return *this;
+    }
+    IterAdapter& operator--() {
+        --iter_;
+        return *this;
+    }
+    IterAdapter operator++(int) {
+        IterAdapter copy = *this;
+        ++iter_;
+        return copy;
+    }
+    IterAdapter operator--(int) {
+        IterAdapter copy = *this;
+        --iter_;
+        return copy;
+    }
+
+    IterAdapter operator+(difference_type offset) const { return IterAdapter(iter_ + offset); }
+
+    IterAdapter operator-(difference_type offset) const { return IterAdapter(iter_ - offset); }
+
+    template<typename T = IterAdapter>
+    typename std::enable_if<std::is_same<iterator_category, std::random_access_iterator_tag>::value,
+                            typename T::difference_type>::type inline
+    operator-(const IterAdapter& rhs) const {
+        return iter_ - rhs.iter_;
+    }
+
+    bool operator==(IterAdapter other) const { return iter_ == other.iter_; }
+    bool operator!=(IterAdapter other) const { return !(*this == other); }
+    const value_type operator*() const { return Converter::convert(*iter_); }
+
+private:
+    TIter iter_;
+};
+
+/*!
+ * \brief iterator adapter that adapts TIter to return another type.
+ * \tparam Converter a struct that contains converting function
+ * \tparam TIter the content iterator type.
+ */
+template<typename Converter, typename TIter>
+class ReverseIterAdapter {
+public:
+    using difference_type = typename std::iterator_traits<TIter>::difference_type;
+    using value_type = typename Converter::ResultType;
+    using pointer = typename Converter::ResultType*;
+    using reference = typename Converter::ResultType&;// NOLINT(*)
+    using iterator_category = typename std::iterator_traits<TIter>::iterator_category;
+
+    explicit ReverseIterAdapter(TIter iter) : iter_(iter) {}
+    ReverseIterAdapter& operator++() {
+        --iter_;
+        return *this;
+    }
+    ReverseIterAdapter& operator--() {
+        ++iter_;
+        return *this;
+    }
+    ReverseIterAdapter operator++(int) {
+        ReverseIterAdapter copy = *this;
+        --iter_;
+        return copy;
+    }
+    ReverseIterAdapter operator--(int) {
+        ReverseIterAdapter copy = *this;
+        ++iter_;
+        return copy;
+    }
+    ReverseIterAdapter operator+(difference_type offset) const {
+        return ReverseIterAdapter(iter_ - offset);
+    }
+
+    template<typename T = ReverseIterAdapter>
+    typename std::enable_if<std::is_same<iterator_category, std::random_access_iterator_tag>::value,
+                            typename T::difference_type>::type inline
+    operator-(const ReverseIterAdapter& rhs) const {
+        return rhs.iter_ - iter_;
+    }
+
+    bool operator==(ReverseIterAdapter other) const { return iter_ == other.iter_; }
+    bool operator!=(ReverseIterAdapter other) const { return !(*this == other); }
+    const value_type operator*() const { return Converter::convert(*iter_); }
+
+private:
+    TIter iter_;
+};
+}// namespace runtime
+
+// expose the functions to the root namespace.
+using runtime::Downcast;
+using runtime::IterAdapter;
+using runtime::make_object;
+using runtime::Object;
+using runtime::ObjectEqual;
+using runtime::ObjectHash;
+using runtime::ObjectPtr;
+using runtime::ObjectPtrEqual;
+using runtime::ObjectPtrHash;
+using runtime::ObjectRef;
+}// namespace litetvm
 
 #endif//BASE_H

@@ -5,17 +5,17 @@
 #ifndef PACKED_FUNC_H
 #define PACKED_FUNC_H
 
-
+#include "runtime/array.h"
 #include "runtime/boxed_primitive.h"
 #include "runtime/c_runtime_api.h"
 #include "runtime/data_type.h"
+#include "runtime/map.h"
 #include "runtime/module.h"
 #include "runtime/ndarray.h"
 #include "runtime/object.h"
 #include "runtime/optional.h"
 #include "runtime/string.h"
 #include "runtime/variant.h"
-#include "runtime/map.h"
 
 #include <functional>
 #include <utility>
@@ -395,11 +395,140 @@ public:
  */
 inline const char* ArgTypeCode2Str(int type_code);
 
+inline std::ostream& operator<<(std::ostream& os, DLDevice dev);// NOLINT(*)
+
 #define TVM_LOG_INCORRECT_TYPE_CODE(CODE, T) \
     "expected " << ArgTypeCode2Str(T) << " but got " << ArgTypeCode2Str(CODE)
 
 // macro to check type code.
 #define TVM_CHECK_TYPE_CODE(CODE, T) CHECK_EQ(CODE, T) << TVM_LOG_INCORRECT_TYPE_CODE(CODE, T)
+
+// Additional overloads for PackedFunc checking.
+template<typename T>
+struct ObjectTypeChecker<Array<T>> {
+    static Optional<String> CheckAndGetMismatch(const Object* ptr) {
+        if (ptr == nullptr) {
+            return NullOpt;
+        }
+        if (!ptr->IsInstance<ArrayNode>()) {
+            return String(ptr->GetTypeKey());
+        }
+
+        if constexpr (std::is_same_v<T, ObjectRef>) {
+            return NullOpt;
+        }
+
+        const ArrayNode* n = static_cast<const ArrayNode*>(ptr);
+        for (size_t i = 0; i < n->size(); i++) {
+            const ObjectRef& p = (*n)[i];
+            Optional<String> check_subtype = ObjectTypeChecker<T>::CheckAndGetMismatch(p.get());
+            if (check_subtype.defined()) {
+                return String("Array[index " + std::to_string(i) + ": " + check_subtype.value() + "]");
+            }
+        }
+        return NullOpt;
+    }
+    static bool Check(const Object* ptr) {
+        if (ptr == nullptr) return true;
+        if (!ptr->IsInstance<ArrayNode>()) return false;
+        if constexpr (std::is_same_v<T, ObjectRef>) return true;
+
+        const ArrayNode* n = static_cast<const ArrayNode*>(ptr);
+        for (const ObjectRef& p: *n) {
+            if (!ObjectTypeChecker<T>::Check(p.get())) {
+                return false;
+            }
+        }
+        return true;
+    }
+    static std::string TypeName() { return "Array[" + ObjectTypeChecker<T>::TypeName() + "]"; }
+};
+
+template<typename K, typename V>
+struct ObjectTypeChecker<Map<K, V>> {
+    static Optional<String> CheckAndGetMismatch(const Object* ptr) {
+        if (ptr == nullptr) return NullOpt;
+        if (!ptr->IsInstance<MapNode>()) return String(ptr->GetTypeKey());
+
+        if constexpr (std::is_same_v<K, ObjectRef> && std::is_same_v<V, ObjectRef>) {
+            return NullOpt;
+        }
+
+        const MapNode* n = static_cast<const MapNode*>(ptr);
+        for (const auto& kv: *n) {
+            Optional<String> key_type = NullOpt;
+            if constexpr (!std::is_same_v<K, ObjectRef>) {
+                key_type = ObjectTypeChecker<K>::CheckAndGetMismatch(kv.first.get());
+            }
+            Optional<String> value_type = NullOpt;
+            if constexpr (!std::is_same_v<V, ObjectRef>) {
+                value_type = ObjectTypeChecker<K>::CheckAndGetMismatch(kv.first.get());
+            }
+            if (key_type.defined() || value_type.defined()) {
+                std::string key_name =
+                        key_type.defined() ? std::string(key_type.value()) : ObjectTypeChecker<K>::TypeName();
+                std::string value_name = value_type.defined() ? std::string(value_type.value())
+                                                              : ObjectTypeChecker<V>::TypeName();
+                return String("Map[" + key_name + ", " + value_name + "]");
+            }
+        }
+        return NullOpt;
+    }
+    static bool Check(const Object* ptr) {
+        if (ptr == nullptr) return true;
+        if (!ptr->IsInstance<MapNode>()) return false;
+
+        if constexpr (std::is_same_v<K, ObjectRef> && std::is_same_v<V, ObjectRef>) {
+            return true;
+        }
+
+        const MapNode* n = static_cast<const MapNode*>(ptr);
+        for (const auto& kv: *n) {
+            if constexpr (!std::is_same_v<K, ObjectRef>) {
+                if (!ObjectTypeChecker<K>::Check(kv.first.get())) return false;
+            }
+            if constexpr (!std::is_same_v<V, ObjectRef>) {
+                if (!ObjectTypeChecker<V>::Check(kv.second.get())) return false;
+            }
+        }
+        return true;
+    }
+    static std::string TypeName() {
+        return "Map[" + ObjectTypeChecker<K>::TypeName() + ", " + ObjectTypeChecker<V>::TypeName() +
+               ']';
+    }
+};
+
+template<typename OnlyVariant>
+struct ObjectTypeChecker<Variant<OnlyVariant>> {
+    static Optional<String> CheckAndGetMismatch(const Object* ptr) {
+        return ObjectTypeChecker<OnlyVariant>::CheckAndGetMismatch(ptr);
+    }
+    static bool Check(const Object* ptr) { return ObjectTypeChecker<OnlyVariant>::Check(ptr); }
+    static std::string TypeName() { return "Variant[" + VariantNames() + "]"; }
+    static std::string VariantNames() { return ObjectTypeChecker<OnlyVariant>::TypeName(); }
+};
+
+template<typename FirstVariant, typename... RemainingVariants>
+struct ObjectTypeChecker<Variant<FirstVariant, RemainingVariants...>> {
+    static Optional<String> CheckAndGetMismatch(const Object* ptr) {
+        auto try_first = ObjectTypeChecker<FirstVariant>::CheckAndGetMismatch(ptr);
+        if (!try_first.defined()) {
+            return try_first;
+        }
+
+        return ObjectTypeChecker<Variant<RemainingVariants...>>::CheckAndGetMismatch(ptr);
+    }
+    static bool Check(const Object* ptr) {
+        return ObjectTypeChecker<FirstVariant>::Check(ptr) ||
+               ObjectTypeChecker<Variant<RemainingVariants...>>::Check(ptr);
+    }
+    static std::string TypeName() { return "Variant[" + VariantNames() + "]"; }
+    static std::string VariantNames() {
+        return ObjectTypeChecker<FirstVariant>::TypeName() + ", " +
+               ObjectTypeChecker<Variant<RemainingVariants...>>::VariantNames();
+    }
+};
 
 /*!
  * \brief Internal base class to
@@ -707,15 +836,15 @@ public:
     using TVMPODValue_::operator DLTensor*;
     using TVMPODValue_::operator NDArray;
     using TVMPODValue_::operator Device;
-    // using TVMPODValue_::operator Module;
-    // using TVMPODValue_::operator PackedFunc;
+    using TVMPODValue_::operator Module;
+    using TVMPODValue_::operator PackedFunc;
     // reuse conversion rule from ArgValue.
     operator std::string() const { return AsArgValue().operator std::string(); }
 
-    // template <typename FType>
-    // operator TypedPackedFunc<FType>() const {
-    //     return TypedPackedFunc<FType>(operator PackedFunc());
-    // }
+    template<typename FType>
+    operator TypedPackedFunc<FType>() const {
+        return TypedPackedFunc<FType>(operator PackedFunc());
+    }
 
     operator DLDataType() const { return AsArgValue().operator DLDataType(); }
     operator DataType() const { return AsArgValue().operator DataType(); }
@@ -824,8 +953,8 @@ public:
     using TVMPODValue_::operator DLTensor*;
     using TVMPODValue_::operator Device;
     using TVMPODValue_::operator NDArray;
-    // using TVMPODValue_::operator Module;
-    // using TVMPODValue_::operator PackedFunc;
+    using TVMPODValue_::operator Module;
+    using TVMPODValue_::operator PackedFunc;
     using TVMPODValue_CRTP_::AsObjectRef;
     using TVMPODValue_CRTP_::IsObjectRef;
 
@@ -2302,11 +2431,12 @@ struct PackedFuncValueConverter<Map<T, U>> {
 template<typename T>
 struct PackedFuncValueConverter<Optional<T>> {
     static Optional<T> From(const TVMArgValue& val) {
-        if (val.type_code() == kTVMNullptr) return Optional<T>(nullptr);
+        if (val.type_code() == static_cast<int>(TVMArgTypeCode::kTVMNullptr))
+            return Optional<T>(nullptr);
         return PackedFuncValueConverter<T>::From(val);
     }
     static Optional<T> From(const TVMRetValue& val) {
-        if (val.type_code() == kTVMNullptr) return Optional<T>(nullptr);
+        if (val.type_code() == static_cast<int>(TVMArgTypeCode::kTVMNullptr)) return Optional<T>(nullptr);
         return PackedFuncValueConverter<T>::From(val);
     }
 };
@@ -2349,10 +2479,12 @@ struct PackedFuncValueConverter<Variant<VariantTypes...>> {
 
     template<typename VarFirst, typename... VarRest, typename PODSubclass>
     static Optional<VType> TryValueConverter(const PODSubclass& val) {
-        try {
-            return VType(PackedFuncValueConverter<VarFirst>::From(val));
-        } catch (const Error&) {
-        }
+        return VType(PackedFuncValueConverter<VarFirst>::From(val));
+        // try {
+        //     return VType(PackedFuncValueConverter<VarFirst>::From(val));
+        // }
+        // catch (const Error&) {
+        // }
 
         if constexpr (sizeof...(VarRest)) {
             return TryValueConverter<VarRest...>(val);
