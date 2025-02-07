@@ -635,7 +635,7 @@ protected:
  * \tparam ObjectType The object type
  * \return The corresponding RefType
  */
-template <typename BaseType, typename ObjectType>
+template<typename BaseType, typename ObjectType>
 ObjectPtr<BaseType> GetObjectPtr(ObjectType* ptr);
 
 
@@ -676,32 +676,32 @@ bool Object::IsInstance() const {
         // if the target type is a final type
         // then we only need to check the equivalence.
         return self->type_index_ == TargetType::RuntimeTypeIndex();
-    } else {
-        // if target type is a non-leaf type
-        // Check if type index falls into the range of reserved slots.
-        uint32_t begin = TargetType::RuntimeTypeIndex();
-
-        if (TargetType::_type_child_slots != 0) {
-            uint32_t end = begin + TargetType::_type_child_slots;
-            if (self->type_index_ >= begin && self->type_index_ < end) {
-                return true;
-            }
-        } else {
-            if (self->type_index_ == begin) {
-                return true;
-            }
-        }
-
-        if (!TargetType::_type_child_slots_can_overflow) {
-            return false;
-        }
-
-        if (self->type_index_ < TargetType::RuntimeTypeIndex()) {
-            return false;
-        }
-
-        return self->DerivedFrom(TargetType::RuntimeTypeIndex());
     }
+
+    // if target type is a non-leaf type
+    // Check if type index falls into the range of reserved slots.
+    uint32_t begin = TargetType::RuntimeTypeIndex();
+
+    if (TargetType::_type_child_slots != 0) {
+        uint32_t end = begin + TargetType::_type_child_slots;
+        if (self->type_index_ >= begin && self->type_index_ < end) {
+            return true;
+        }
+    } else {
+        if (self->type_index_ == begin) {
+            return true;
+        }
+    }
+
+    if (!TargetType::_type_child_slots_can_overflow) {
+        return false;
+    }
+
+    if (self->type_index_ < TargetType::RuntimeTypeIndex()) {
+        return false;
+    }
+
+    return self->DerivedFrom(TargetType::RuntimeTypeIndex());
 }
 
 template<typename RefType,
@@ -718,7 +718,7 @@ template<typename BaseType,
          typename ObjType>
 ObjectPtr<BaseType> GetObjectPtr(ObjType* ptr) {
     static_assert(std::is_base_of_v<BaseType, ObjType>,
-                "Can only cast to the ref of same container type");
+                  "Can only cast to the ref of same container type");
     return ObjectPtr<BaseType>(static_cast<Object*>(ptr));
 }
 
