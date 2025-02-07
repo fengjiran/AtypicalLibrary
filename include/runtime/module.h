@@ -9,8 +9,6 @@
 #include "runtime/object.h"
 #include "runtime/string.h"
 
-#include <memory>
-#include <mutex>
 #include <string>
 #include <unordered_map>
 #include <vector>

@@ -9,6 +9,7 @@
 #include "runtime/boxed_primitive.h"
 #include "runtime/c_runtime_api.h"
 #include "runtime/data_type.h"
+#include "runtime/func_args.h"
 #include "runtime/map.h"
 #include "runtime/module.h"
 #include "runtime/ndarray.h"
@@ -16,7 +17,6 @@
 #include "runtime/optional.h"
 #include "runtime/string.h"
 #include "runtime/variant.h"
-#include "runtime/func_args.h"
 
 #include <functional>
 #include <utility>
@@ -395,15 +395,15 @@ public:
  * \param type_code The input type code.
  * \return The corresponding string repr.
  */
-// inline const char* ArgTypeCode2Str(int type_code);
+inline const char* ArgTypeCode2Str(int type_code);
 
 inline std::ostream& operator<<(std::ostream& os, DLDevice dev);// NOLINT(*)
 
-// #define TVM_LOG_INCORRECT_TYPE_CODE(CODE, T) \
-//     "expected " << ArgTypeCode2Str(T) << " but got " << ArgTypeCode2Str(CODE)
-//
-// // macro to check type code.
-// #define TVM_CHECK_TYPE_CODE(CODE, T) CHECK_EQ(CODE, T) << TVM_LOG_INCORRECT_TYPE_CODE(CODE, T)
+#define TVM_LOG_INCORRECT_TYPE_CODE(CODE, T) \
+    "expected " << ArgTypeCode2Str(T) << " but got " << ArgTypeCode2Str(CODE)
+
+// macro to check type code.
+#define TVM_CHECK_TYPE_CODE(CODE, T) CHECK_EQ(CODE, T) << TVM_LOG_INCORRECT_TYPE_CODE(CODE, T)
 
 /*!
  * \brief Type traits for runtime type check during FFI conversion.
@@ -579,126 +579,126 @@ struct ObjectTypeChecker<Variant<FirstVariant, RemainingVariants...>> {
  *  handle conversion to POD values.
  */
 
-// class TVMPODValue_ {
-// public:
-//     operator void*() const {
-//         if (type_code_ == static_cast<int>(TVMArgTypeCode::kTVMNullptr)) {
-//             return nullptr;
-//         }
-//
-//         if (type_code_ == static_cast<int>(TVMArgTypeCode::kTVMDLTensorHandle)) {
-//             return value_.v_handle;
-//         }
-//
-//         TVM_CHECK_TYPE_CODE(type_code_, static_cast<int>(TVMArgTypeCode::kTVMOpaqueHandle));
-//         return value_.v_handle;
-//     }
-//
-//     operator DLTensor*() const {
-//         if (type_code_ == static_cast<int>(TVMArgTypeCode::kTVMDLTensorHandle) ||
-//             type_code_ == static_cast<int>(TVMArgTypeCode::kTVMNDArrayHandle)) {
-//             return static_cast<DLTensor*>(value_.v_handle);
-//         }
-//
-//         if (type_code_ == static_cast<int>(TVMArgTypeCode::kTVMNullptr)) {
-//             return nullptr;
-//         }
-//
-//         LOG(FATAL) << "Expected "
-//                    << "DLTensor* or NDArray but got " << ArgTypeCode2Str(type_code_);
-//         return nullptr;
-//     }
-//
-//     operator NDArray() const {
-//         if (type_code_ == static_cast<int>(TVMArgTypeCode::kTVMNullptr)) {
-//             return NDArray(ObjectPtr<Object>(nullptr));
-//         }
-//
-//         TVM_CHECK_TYPE_CODE(type_code_, static_cast<int>(TVMArgTypeCode::kTVMNDArrayHandle));
-//         return NDArray(NDArray::FFIDataFromHandle(static_cast<TVMArrayHandle>(value_.v_handle)));
-//     }
-//
-//     operator Module() const {
-//         if (type_code_ == static_cast<int>(TVMArgTypeCode::kTVMNullptr)) {
-//             return Module(ObjectPtr<Object>(nullptr));
-//         }
-//         TVM_CHECK_TYPE_CODE(type_code_, static_cast<int>(TVMArgTypeCode::kTVMModuleHandle));
-//         return Module(ObjectPtr<Object>(static_cast<Object*>(value_.v_handle)));
-//     }
-//
-//     operator PackedFunc() const {
-//         if (type_code_ == static_cast<int>(TVMArgTypeCode::kTVMNullptr)) {
-//             return PackedFunc(ObjectPtr<Object>(nullptr));
-//         }
-//
-//         TVM_CHECK_TYPE_CODE(type_code_, static_cast<int>(TVMArgTypeCode::kTVMPackedFuncHandle));
-//         return PackedFunc(ObjectPtr<Object>(static_cast<Object*>(value_.v_handle)));
-//     }
-//
-//     operator Device() const {
-//         TVM_CHECK_TYPE_CODE(type_code_, static_cast<int>(TVMArgTypeCode::kDLDevice));
-//         return value_.v_device;
-//     }
-//
-//     NODISCARD int type_code() const {
-//         return type_code_;
-//     }
-//     /*!
-//    * \brief return handle as specific pointer type.
-//    * \tparam T the data type.
-//    * \return The pointer type.
-//    */
-//     template<typename T>
-//     T* ptr() const {
-//         return static_cast<T*>(value_.v_handle);
-//     }
-//
-//     NODISCARD std::optional<bool> TryAsBool() const {
-//         // Helper function to reduce duplication in the variable integer
-//         // conversions.  This is publicly exposed, as it can be useful in
-//         // specializations of PackedFuncValueConverter.
-//         if (type_code_ == static_cast<int>(TVMArgTypeCode::kTVMArgBool)) {
-//             return static_cast<bool>(value_.v_int64);
-//         }
-//
-//         return std::nullopt;
-//     }
-//
-//     NODISCARD std::optional<int64_t> TryAsInt() const {
-//         // Helper function to reduce duplication in the variable integer
-//         // conversions.  This is publicly exposed, as it can be useful in
-//         // specializations of PackedFuncValueConverter.
-//         if (type_code_ == static_cast<int>(DLDataTypeCode::kDLInt)) {
-//             return value_.v_int64;
-//         }
-//
-//         return std::nullopt;
-//     }
-//
-//     NODISCARD std::optional<double> TryAsFloat() const {
-//         // Helper function to reduce duplication in the variable integer
-//         // conversions.  This is publicly exposed, as it can be useful in
-//         // specializations of PackedFuncValueConverter.
-//         if (type_code_ == static_cast<int>(DLDataTypeCode::kDLFloat)) {
-//             return value_.v_float64;
-//         }
-//         return std::nullopt;
-//     }
-//
-// protected:
-//     friend class TVMArgsSetter;
-//     friend class TVMRetValue;
-//     friend class TVMMovableArgValue_;
-//
-//     TVMPODValue_() : type_code_(static_cast<int>(TVMArgTypeCode::kTVMNullptr)) {}
-//
-//     TVMPODValue_(TVMValue value, int type_code) : value_(value), type_code_(type_code) {}
-//
-//     /*! \brief The value */
-//     TVMValue value_{};
-//     /*! \brief the type code */
-//     int type_code_;
-// };
+class TVMPODValue_ {
+public:
+    operator void*() const {
+        if (type_code_ == static_cast<int>(TVMArgTypeCode::kTVMNullptr)) {
+            return nullptr;
+        }
+
+        if (type_code_ == static_cast<int>(TVMArgTypeCode::kTVMDLTensorHandle)) {
+            return value_.v_handle;
+        }
+
+        TVM_CHECK_TYPE_CODE(type_code_, static_cast<int>(TVMArgTypeCode::kTVMOpaqueHandle));
+        return value_.v_handle;
+    }
+
+    operator DLTensor*() const {
+        if (type_code_ == static_cast<int>(TVMArgTypeCode::kTVMDLTensorHandle) ||
+            type_code_ == static_cast<int>(TVMArgTypeCode::kTVMNDArrayHandle)) {
+            return static_cast<DLTensor*>(value_.v_handle);
+        }
+
+        if (type_code_ == static_cast<int>(TVMArgTypeCode::kTVMNullptr)) {
+            return nullptr;
+        }
+
+        LOG(FATAL) << "Expected "
+                   << "DLTensor* or NDArray but got " << ArgTypeCode2Str(type_code_);
+        return nullptr;
+    }
+
+    operator NDArray() const {
+        if (type_code_ == static_cast<int>(TVMArgTypeCode::kTVMNullptr)) {
+            return NDArray(ObjectPtr<Object>(nullptr));
+        }
+
+        TVM_CHECK_TYPE_CODE(type_code_, static_cast<int>(TVMArgTypeCode::kTVMNDArrayHandle));
+        return NDArray(NDArray::FFIDataFromHandle(static_cast<TVMArrayHandle>(value_.v_handle)));
+    }
+
+    operator Module() const {
+        if (type_code_ == static_cast<int>(TVMArgTypeCode::kTVMNullptr)) {
+            return Module(ObjectPtr<Object>(nullptr));
+        }
+        TVM_CHECK_TYPE_CODE(type_code_, static_cast<int>(TVMArgTypeCode::kTVMModuleHandle));
+        return Module(ObjectPtr<Object>(static_cast<Object*>(value_.v_handle)));
+    }
+
+    operator PackedFunc() const {
+        if (type_code_ == static_cast<int>(TVMArgTypeCode::kTVMNullptr)) {
+            return PackedFunc(ObjectPtr<Object>(nullptr));
+        }
+
+        TVM_CHECK_TYPE_CODE(type_code_, static_cast<int>(TVMArgTypeCode::kTVMPackedFuncHandle));
+        return PackedFunc(ObjectPtr<Object>(static_cast<Object*>(value_.v_handle)));
+    }
+
+    operator Device() const {
+        TVM_CHECK_TYPE_CODE(type_code_, static_cast<int>(TVMArgTypeCode::kDLDevice));
+        return value_.v_device;
+    }
+
+    NODISCARD int type_code() const {
+        return type_code_;
+    }
+    /*!
+   * \brief return handle as specific pointer type.
+   * \tparam T the data type.
+   * \return The pointer type.
+   */
+    template<typename T>
+    NODISCARD T* ptr() const {
+        return static_cast<T*>(value_.v_handle);
+    }
+
+    NODISCARD std::optional<bool> TryAsBool() const {
+        // Helper function to reduce duplication in the variable integer
+        // conversions.  This is publicly exposed, as it can be useful in
+        // specializations of PackedFuncValueConverter.
+        if (type_code_ == static_cast<int>(TVMArgTypeCode::kTVMArgBool)) {
+            return static_cast<bool>(value_.v_int64);
+        }
+
+        return std::nullopt;
+    }
+
+    NODISCARD std::optional<int64_t> TryAsInt() const {
+        // Helper function to reduce duplication in the variable integer
+        // conversions.  This is publicly exposed, as it can be useful in
+        // specializations of PackedFuncValueConverter.
+        if (type_code_ == static_cast<int>(DLDataTypeCode::kDLInt)) {
+            return value_.v_int64;
+        }
+
+        return std::nullopt;
+    }
+
+    NODISCARD std::optional<double> TryAsFloat() const {
+        // Helper function to reduce duplication in the variable integer
+        // conversions.  This is publicly exposed, as it can be useful in
+        // specializations of PackedFuncValueConverter.
+        if (type_code_ == static_cast<int>(DLDataTypeCode::kDLFloat)) {
+            return value_.v_float64;
+        }
+        return std::nullopt;
+    }
+
+protected:
+    friend class TVMArgsSetter;
+    friend class TVMRetValue;
+    friend class TVMMovableArgValue_;
+
+    TVMPODValue_() : type_code_(static_cast<int>(TVMArgTypeCode::kTVMNullptr)) {}
+
+    TVMPODValue_(TVMValue value, int type_code) : value_(value), type_code_(type_code) {}
+
+    /*! \brief The value */
+    TVMValue value_{};
+    /*! \brief the type code */
+    int type_code_;
+};
 
 /*! \brief A utility class that adds methods useful for each POD type
  *
@@ -1374,45 +1374,45 @@ TVM_ALWAYS_INLINE void PackedFunc::CallPacked(TVMArgs args, TVMRetValue* rv) con
 }
 
 // internal namespace
-// inline const char* ArgTypeCode2Str(int type_code) {
-//     switch (type_code) {
-//         case static_cast<int>(DLDataTypeCode::kDLInt):
-//             return "int";
-//         case static_cast<int>(TVMArgTypeCode::kTVMArgBool):
-//             return "bool";
-//         case static_cast<int>(DLDataTypeCode::kDLUInt):
-//             return "uint";
-//         case static_cast<int>(DLDataTypeCode::kDLFloat):
-//             return "float";
-//         case static_cast<int>(TVMArgTypeCode::kTVMStr):
-//             return "str";
-//         case static_cast<int>(TVMArgTypeCode::kTVMBytes):
-//             return "bytes";
-//         case static_cast<int>(TVMArgTypeCode::kTVMOpaqueHandle):
-//             return "handle";
-//         case static_cast<int>(TVMArgTypeCode::kTVMNullptr):
-//             return "NULL";
-//         case static_cast<int>(TVMArgTypeCode::kTVMDLTensorHandle):
-//             return "ArrayHandle";
-//         case static_cast<int>(TVMArgTypeCode::kTVMDataType):
-//             return "DLDataType";
-//         case static_cast<int>(TVMArgTypeCode::kDLDevice):
-//             return "DLDevice";
-//         case static_cast<int>(TVMArgTypeCode::kTVMPackedFuncHandle):
-//             return "FunctionHandle";
-//         case static_cast<int>(TVMArgTypeCode::kTVMModuleHandle):
-//             return "ModuleHandle";
-//         case static_cast<int>(TVMArgTypeCode::kTVMNDArrayHandle):
-//             return "NDArrayContainer";
-//         case static_cast<int>(TVMArgTypeCode::kTVMObjectHandle):
-//             return "Object";
-//         case static_cast<int>(TVMArgTypeCode::kTVMObjectRValueRefArg):
-//             return "ObjectRValueRefArg";
-//         default:
-//             LOG(FATAL) << "unknown type_code=" << type_code;
-//     }
-//     throw;
-// }
+inline const char* ArgTypeCode2Str(int type_code) {
+    switch (type_code) {
+        case static_cast<int>(DLDataTypeCode::kDLInt):
+            return "int";
+        case static_cast<int>(TVMArgTypeCode::kTVMArgBool):
+            return "bool";
+        case static_cast<int>(DLDataTypeCode::kDLUInt):
+            return "uint";
+        case static_cast<int>(DLDataTypeCode::kDLFloat):
+            return "float";
+        case static_cast<int>(TVMArgTypeCode::kTVMStr):
+            return "str";
+        case static_cast<int>(TVMArgTypeCode::kTVMBytes):
+            return "bytes";
+        case static_cast<int>(TVMArgTypeCode::kTVMOpaqueHandle):
+            return "handle";
+        case static_cast<int>(TVMArgTypeCode::kTVMNullptr):
+            return "NULL";
+        case static_cast<int>(TVMArgTypeCode::kTVMDLTensorHandle):
+            return "ArrayHandle";
+        case static_cast<int>(TVMArgTypeCode::kTVMDataType):
+            return "DLDataType";
+        case static_cast<int>(TVMArgTypeCode::kDLDevice):
+            return "DLDevice";
+        case static_cast<int>(TVMArgTypeCode::kTVMPackedFuncHandle):
+            return "FunctionHandle";
+        case static_cast<int>(TVMArgTypeCode::kTVMModuleHandle):
+            return "ModuleHandle";
+        case static_cast<int>(TVMArgTypeCode::kTVMNDArrayHandle):
+            return "NDArrayContainer";
+        case static_cast<int>(TVMArgTypeCode::kTVMObjectHandle):
+            return "Object";
+        case static_cast<int>(TVMArgTypeCode::kTVMObjectRValueRefArg):
+            return "ObjectRValueRefArg";
+        default:
+            LOG(FATAL) << "unknown type_code=" << type_code;
+    }
+    throw;
+}
 
 /*!
  * \brief The name of DLDeviceType.
@@ -2165,18 +2165,18 @@ template<typename TObjectRef, typename>
 bool TVMPODValue_CRTP_<Derived>::IsObjectRef() const {
     using ContainerType = typename TObjectRef::ContainerType;
     // NOTE: the following code can be optimized by constant folding.
-    if (std::is_base_of<NDArray::ContainerType, ContainerType>::value) {
+    if constexpr (std::is_base_of_v<NDArray::ContainerType, ContainerType>) {
         return type_code_ == static_cast<int>(TVMArgTypeCode::kTVMNDArrayHandle) &&
                TVMArrayHandleToObjectHandle(static_cast<TVMArrayHandle>(value_.v_handle))
                        ->IsInstance<ContainerType>();
     }
 
-    if (std::is_base_of<Module::ContainerType, ContainerType>::value) {
+    if constexpr (std::is_base_of_v<Module::ContainerType, ContainerType>) {
         return type_code_ == static_cast<int>(TVMArgTypeCode::kTVMModuleHandle) &&
                static_cast<Object*>(value_.v_handle)->IsInstance<ContainerType>();
     }
 
-    if (std::is_base_of<PackedFunc::ContainerType, ContainerType>::value) {
+    if constexpr (std::is_base_of_v<PackedFunc::ContainerType, ContainerType>) {
         return type_code_ == static_cast<int>(TVMArgTypeCode::kTVMPackedFuncHandle) &&
                static_cast<Object*>(value_.v_handle)->IsInstance<ContainerType>();
     }
@@ -2186,11 +2186,11 @@ bool TVMPODValue_CRTP_<Derived>::IsObjectRef() const {
         return ObjectTypeChecker<TObjectRef>::Check(*static_cast<Object**>(value_.v_handle));
     }
 
-    return (std::is_base_of<ContainerType, NDArray::ContainerType>::value &&
+    return (std::is_base_of_v<ContainerType, NDArray::ContainerType> &&
             type_code_ == static_cast<int>(TVMArgTypeCode::kTVMNDArrayHandle)) ||
-           (std::is_base_of<ContainerType, Module::ContainerType>::value &&
+           (std::is_base_of_v<ContainerType, Module::ContainerType> &&
             type_code_ == static_cast<int>(TVMArgTypeCode::kTVMModuleHandle)) ||
-           (std::is_base_of<ContainerType, PackedFunc::ContainerType>::value &&
+           (std::is_base_of_v<ContainerType, PackedFunc::ContainerType> &&
             type_code_ == static_cast<int>(TVMArgTypeCode::kTVMPackedFuncHandle)) ||
            (type_code_ == static_cast<int>(TVMArgTypeCode::kTVMObjectHandle) &&
             ObjectTypeChecker<TObjectRef>::Check(static_cast<Object*>(value_.v_handle)));
