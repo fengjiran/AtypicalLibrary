@@ -127,15 +127,6 @@ public:
     NDArray CreateView(ShapeTuple shape, DLDataType dtype, uint64_t relative_byte_offset = 0);
 
     /*!
-   * \brief Copy the data to another device.
-   * \param dev The target device.
-   * \param mem_scope The memory scope of the target array.
-   * \return The array under another device.
-   * \note The copy always triggers a TVMSynchronize.
-   */
-    // NDArray CopyTo(const Device& dev, Optional<String> mem_scope = NullOpt) const;
-
-    /*!
    * \brief Create a reference view of NDArray that
    *  represents as DLManagedTensor.
    * \return A DLManagedTensor
