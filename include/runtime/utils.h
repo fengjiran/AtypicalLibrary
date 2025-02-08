@@ -5,7 +5,11 @@
 #ifndef UTILS_H
 #define UTILS_H
 
+#if defined(__APPLE__)
+#include <machine/endian.h>
+#else
 #include <endian.h>
+#endif
 
 #ifdef __has_cpp_attribute
 #if __has_cpp_attribute(nodiscard)

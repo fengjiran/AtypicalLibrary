@@ -10,7 +10,9 @@
 #include "runtime/c_runtime_api.h"
 #include "runtime/data_type.h"
 #include "runtime/object.h"
+#include "runtime/optional.h"
 #include "runtime/shape_tuple.h"
+#include "runtime/string.h"
 
 // nested namespace
 namespace litetvm::runtime {
@@ -85,6 +87,15 @@ public:
     inline void CopyTo(const NDArray& other) const;
 
     /*!
+   * \brief Copy the data to another device.
+   * \param dev The target device.
+   * \param mem_scope The memory scope of the target array.
+   * \return The array under another device.
+   * \note The copy always triggers a TVMSynchronize.
+   */
+    NDArray CopyTo(const Device& dev, Optional<String> mem_scope = NullOpt) const;
+
+    /*!
    * \brief Copy data content into another array.
    * \param data The source bytes to be copied from.
    * \param nbytes The size of the data buffer.
@@ -92,6 +103,28 @@ public:
    * \note The copy always triggers a TVMSynchronize.
    */
     void CopyToBytes(void* data, size_t nbytes) const;
+
+    /*!
+   * \brief Create a NDArray that shares the data memory with the current one.
+   *
+   * \param shape The shape of the new array.
+   *
+   * \param dtype The data type of the new array.
+   *
+   * \param relative_byte_offset The offset of the output NDArray,
+   *     relative to the current byte offset.
+   *
+   *     By default, the offset of the view is the same as the offset
+   *     of the current array.
+   *
+   * \note The new array must not allow access of addresses which
+   *       would be out of bounds in the current array.  If the new
+   *       array is larger than the current array, or if the
+   *       `relative_byte_offset` would place the end of the new array
+   *       outside the bounds of the current array, this function will
+   *       raise an exception.
+   */
+    NDArray CreateView(ShapeTuple shape, DLDataType dtype, uint64_t relative_byte_offset = 0);
 
     /*!
    * \brief Copy the data to another device.
@@ -107,7 +140,73 @@ public:
    *  represents as DLManagedTensor.
    * \return A DLManagedTensor
    */
-  NODISCARD DLManagedTensor* ToDLPack() const;
+    NODISCARD DLManagedTensor* ToDLPack() const;
+
+    /*!
+   * \brief Create an empty NDArray.
+   * \param shape The shape of the new array.
+   * \param dtype The data type of the new array.
+   * \param dev The device of the array.
+   * \param mem_scope The memory scope of the array.
+   * \return The created Array
+   */
+    static NDArray Empty(ShapeTuple shape, DLDataType dtype, Device dev,
+                         Optional<String> mem_scope = NullOpt);
+
+    /*!
+   * \brief Create a NDArray backed by an external DLTensor without memory copying.
+   *
+   * If DLTensor is not contiguous or has bad aligned data, It fails.
+   * This allows us to create a NDArray using the memory
+   * allocated by an external source. Responsibility for memory
+   * retaining lies with the external source.
+   * \param dl_tensor The DLTensor for NDArray base.
+   * \return The created NDArray view.
+   */
+    static NDArray FromExternalDLTensor(const DLTensor& dl_tensor);
+
+    /*!
+   * \brief Create new NDArray, data is copied from DLTensor.
+   *
+   * \param dl_tensor The DLTensor to copy from.
+   * \param dev device location of the created NDArray.
+   * \return The created NDArray view.
+   */
+    static NDArray NewFromDLTensor(DLTensor* dl_tensor, const Device& dev);
+
+    /*!
+     * \brief Create a NDArray backed by a dlpack tensor.
+     *
+     * This allows us to create a NDArray using the memory
+     * allocated by an external deep learning framework
+     * that is DLPack compatible.
+     *
+     * The memory is retained until the NDArray went out of scope.
+     * \param tensor The DLPack tensor to copy from.
+     * \return The created NDArray view.
+     */
+    static NDArray FromDLPack(DLManagedTensor* tensor);
+
+    /*!
+   * \brief Function to copy data from one array to another.
+   * \param from The source array.
+   * \param to The target array.
+   * \param stream The stream used in copy.
+   */
+    static void CopyFromTo(const DLTensor* from, DLTensor* to,
+                           TVMStreamHandle stream = nullptr);
+
+    /*!
+   * \brief Check conditions for construction NDArray over DLTensor without copying.
+   * There are three conditions to check:
+   * 1. Destination device is the same as DLTensor device
+   * 2. Destination device id is the same as DLTensor device id
+   * 3. Memory in DLTensor is aligned as expected for NDArray
+   * \param tensor the DLTensor.
+   * \param dev destination device.
+   * \return true if all conditions are satisfied.
+   */
+    static bool AbilityOfZeroCopyForDLTensor(DLTensor* tensor, const Device& dev);
 
 protected:
     /*!
@@ -141,8 +240,12 @@ protected:
    */
     inline static TVMArrayHandle FFIGetHandle(const ObjectRef& nd);
 
+private:
+    static bool IsAligned(const DLTensor& tensor);
+
+protected:
     friend class TVMPODValue_;
-    template <typename Derived>
+    template<typename Derived>
     friend class TVMPODValue_CRTP_;
     friend class TVMRetValue;
     friend class TVMArgsSetter;
@@ -279,6 +382,28 @@ static bool IsContiguous(const DLTensor& arr) {
 
 inline bool NDArray::IsContiguous() const {
     return runtime::IsContiguous(get_mutable()->dl_tensor);
+}
+
+inline void NDArray::CopyFrom(const DLTensor* other) {
+    CHECK(data_ != nullptr);
+    CopyFromTo(other, &(get_mutable()->dl_tensor));
+}
+
+inline void NDArray::CopyFrom(const NDArray& other) {
+    CHECK(data_ != nullptr);
+    CHECK(other.data_ != nullptr);
+    CopyFromTo(&(other.get_mutable()->dl_tensor), &(get_mutable()->dl_tensor));
+}
+
+inline void NDArray::CopyTo(DLTensor* other) const {
+    CHECK(data_ != nullptr);
+    CopyFromTo(&(get_mutable()->dl_tensor), other);
+}
+
+inline void NDArray::CopyTo(const NDArray& other) const {
+    CHECK(data_ != nullptr);
+    CHECK(other.data_ != nullptr);
+    CopyFromTo(&(get_mutable()->dl_tensor), &(other.get_mutable()->dl_tensor));
 }
 
 inline const DLTensor* NDArray::operator->() const {

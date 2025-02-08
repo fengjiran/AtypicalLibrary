@@ -436,7 +436,7 @@ inline const char* DLDataTypeCode2Str(DLDataTypeCode type_code);
  * \param s The string to be converted.
  * \return The corresponding tvm type.
  */
-inline DLDataType String2DLDataType(std::string s);
+inline DLDataType String2DLDataType(const std::string& s);
 
 /*!
  * \brief convert a TVM type to string.
@@ -506,10 +506,10 @@ inline std::string DLDataType2String(DLDataType t) {
     return os.str();
 }
 
-inline DLDataType String2DLDataType(std::string s) {
+inline DLDataType String2DLDataType(const std::string& s) {
     DLDataType t;
     // handle void type
-    if (s.length() == 0 || s == "void") {
+    if (s.empty() || s == "void") {
         t = DataType::Void();
         return t;
     }

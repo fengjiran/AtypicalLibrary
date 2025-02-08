@@ -461,6 +461,7 @@ private:
 
     template<typename>
     friend class ObjectPtr;
+    friend class TVMArgsSetter;
 
     template<typename>
     friend class BaseAllocator;
@@ -622,6 +623,7 @@ protected:
     // friend classes and functions
     friend struct ObjectPtrHash;
     friend class TVMRetValue;
+    friend class TVMArgsSetter;
 
     template<typename SubRef, typename BaseRef>
     friend SubRef Downcast(BaseRef ref);
@@ -709,7 +711,8 @@ template<typename RefType,
          typename = std::enable_if_t<std::is_base_of_v<typename RefType::ContainerType, ObjType>>>
 RefType GetRef(const ObjType* ptr) {
     if (!RefType::_type_is_nullable) {
-        CHECK(ptr != nullptr);
+        // CHECK(ptr != nullptr);
+        CHECK_NOTNULL(ptr);
     }
     return RefType(ObjectPtr<Object>(const_cast<Object*>(static_cast<const Object*>(ptr))));
 }

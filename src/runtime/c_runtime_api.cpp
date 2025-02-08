@@ -5,28 +5,29 @@
 #include "runtime/c_runtime_api.h"
 #include "runtime/device_api.h"
 #include "runtime/packed_func.h"
+#include "runtime/registry.h"
 
 #include <array>
 
 namespace litetvm::runtime {
 
-// std::string GetCustomTypeName(uint8_t type_code) {
-//     auto f = runtime::Registry::Get("runtime._datatype_get_type_name");
-//     CHECK(f) << "Function runtime._datatype_get_type_name not found";
-//     return (*f)(type_code).operator std::string();
-// }
+std::string GetCustomTypeName(uint8_t type_code) {
+    auto f = Registry::Get("runtime._datatype_get_type_name");
+    CHECK(f) << "Function runtime._datatype_get_type_name not found";
+    return (*f)(type_code).operator std::string();
+}
+
+uint8_t GetCustomTypeCode(const std::string& type_name) {
+    auto f = Registry::Get("runtime._datatype_get_type_code");
+    CHECK(f) << "Function runtime._datatype_get_type_code not found";
+    return (*f)(type_name).operator int();
+}
 //
-// uint8_t GetCustomTypeCode(const std::string& type_name) {
-//     auto f = runtime::Registry::Get("runtime._datatype_get_type_code");
-//     CHECK(f) << "Function runtime._datatype_get_type_code not found";
-//     return (*f)(type_name).operator int();
-// }
-//
-// bool GetCustomTypeRegistered(uint8_t type_code) {
-//     auto f = runtime::Registry::Get("runtime._datatype_get_type_registered");
-//     CHECK(f) << "Function runtime._datatype_get_type_registered not found";
-//     return (*f)(type_code).operator bool();
-// }
+bool GetCustomTypeRegistered(uint8_t type_code) {
+    auto f = runtime::Registry::Get("runtime._datatype_get_type_registered");
+    CHECK(f) << "Function runtime._datatype_get_type_registered not found";
+    return (*f)(type_code).operator bool();
+}
 
 uint8_t ParseCustomDatatype(const std::string& s, const char** scan) {
     CHECK(s.substr(0, 6) == "custom") << "Not a valid custom datatype string";
@@ -112,6 +113,10 @@ private:
 
 DeviceAPI* DeviceAPI::Get(Device dev, bool allow_missing) {
     return DeviceAPIManager::Get(static_cast<int>(dev.device_type), allow_missing);
+}
+
+void* DeviceAPI::AllocWorkspace(Device dev, size_t size, DLDataType type_hint) {
+    return AllocDataSpace(dev, size, kTempAllocaAlignment, type_hint);
 }
 
 static size_t GetDataAlignment(const DLDataType dtype) {

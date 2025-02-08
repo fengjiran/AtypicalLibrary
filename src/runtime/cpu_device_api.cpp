@@ -4,6 +4,8 @@
 
 #include "runtime/device_api.h"
 #include "runtime/workspace_pool.h"
+#include "runtime/thread_local.h"
+#include "runtime/registry.h"
 
 #ifdef __ANDROID__
 #include <android/api-level.h>
@@ -118,17 +120,17 @@ struct CPUWorkspacePool : WorkspacePool {
     CPUWorkspacePool() : WorkspacePool(DLDeviceType::kDLCPU, CPUDeviceAPI::Global()) {}
 };
 
-// void* CPUDeviceAPI::AllocWorkspace(Device dev, size_t size, DLDataType type_hint) {
-//     return dmlc::ThreadLocalStore<CPUWorkspacePool>::Get()->AllocWorkspace(dev, size);
-// }
-//
-// void CPUDeviceAPI::FreeWorkspace(Device dev, void* data) {
-//     dmlc::ThreadLocalStore<CPUWorkspacePool>::Get()->FreeWorkspace(dev, data);
-// }
+void* CPUDeviceAPI::AllocWorkspace(Device dev, size_t size, DLDataType type_hint) {
+    return ThreadLocalStore<CPUWorkspacePool>::Get()->AllocWorkspace(dev, size);
+}
 
-// TVM_REGISTER_GLOBAL("device_api.cpu").set_body([](TVMArgs args, TVMRetValue* rv) {
-//   DeviceAPI* ptr = CPUDeviceAPI::Global();
-//   *rv = static_cast<void*>(ptr);
-// });
+void CPUDeviceAPI::FreeWorkspace(Device dev, void* data) {
+    ThreadLocalStore<CPUWorkspacePool>::Get()->FreeWorkspace(dev, data);
+}
+
+TVM_REGISTER_GLOBAL("device_api.cpu").set_body([](TVMArgs args, TVMRetValue* rv) {
+  DeviceAPI* ptr = CPUDeviceAPI::Global();
+  *rv = static_cast<void*>(ptr);
+});
 
 }// namespace litetvm::runtime

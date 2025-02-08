@@ -370,10 +370,12 @@ public:
      */
     TVMArgs(const TVMValue* values, const int* type_codes, int num_args)
         : values(values), type_codes(type_codes), num_args(num_args) {}
+
     /*! \return size of the arguments */
     NODISCARD int size() const {
         return num_args;
     }
+
     /*!
      * \brief Get i-th argument
      * \param i the index.
@@ -640,18 +642,19 @@ public:
      * \param type_code The type code.
      */
     TVMArgValue(TVMValue value, int type_code) : TVMPODValue_CRTP_(value, type_code) {}
+
     // reuse converter from parent
-    using TVMPODValue_CRTP_::operator double;
-    using TVMPODValue_CRTP_::operator int64_t;
-    using TVMPODValue_CRTP_::operator uint64_t;
-    using TVMPODValue_CRTP_::operator int;
-    using TVMPODValue_CRTP_::operator bool;
     using TVMPODValue_::operator void*;
     using TVMPODValue_::operator DLTensor*;
     using TVMPODValue_::operator NDArray;
     using TVMPODValue_::operator Device;
     using TVMPODValue_::operator Module;
     using TVMPODValue_::operator PackedFunc;
+    using TVMPODValue_CRTP_::operator double;
+    using TVMPODValue_CRTP_::operator int64_t;
+    using TVMPODValue_CRTP_::operator uint64_t;
+    using TVMPODValue_CRTP_::operator int;
+    using TVMPODValue_CRTP_::operator bool;
     using TVMPODValue_CRTP_::AsObjectRef;
     using TVMPODValue_CRTP_::IsObjectRef;
 
@@ -662,12 +665,12 @@ public:
         }
 
         if (type_code_ == static_cast<int>(TVMArgTypeCode::kTVMBytes)) {
-            TVMByteArray* arr = static_cast<TVMByteArray*>(value_.v_handle);
-            return std::string(arr->data, arr->size);
+            auto* arr = static_cast<TVMByteArray*>(value_.v_handle);
+            return {arr->data, arr->size};
         }
 
         if (type_code_ == static_cast<int>(TVMArgTypeCode::kTVMStr)) {
-            return std::string(value_.v_str);
+            return {value_.v_str};
         }
 
         return AsObjectRef<String>().operator std::string();
@@ -682,8 +685,10 @@ public:
         return value_;
     }
 
-    template<typename T, typename = typename std::enable_if<std::is_class<T>::value>::type>
-    inline operator T() const;
+    template<typename T,
+    typename = std::enable_if_t<std::is_class_v<T>>>
+    operator T() const;
+
     inline operator DLDataType() const;
     inline operator DataType() const;
 };
@@ -702,18 +707,20 @@ public:
 class TVMMovableArgValue_ : public TVMPODValue_CRTP_<TVMMovableArgValue_> {
 public:
     TVMMovableArgValue_(TVMValue value, int type_code) : TVMPODValue_CRTP_(value, type_code) {}
+
     // reuse converter from parent
-    using TVMPODValue_CRTP_::operator double;
-    using TVMPODValue_CRTP_::operator int64_t;
-    using TVMPODValue_CRTP_::operator uint64_t;
-    using TVMPODValue_CRTP_::operator int;
-    using TVMPODValue_CRTP_::operator bool;
     using TVMPODValue_::operator void*;
     using TVMPODValue_::operator DLTensor*;
     using TVMPODValue_::operator NDArray;
     using TVMPODValue_::operator Device;
     using TVMPODValue_::operator Module;
     using TVMPODValue_::operator PackedFunc;
+    using TVMPODValue_CRTP_::operator double;
+    using TVMPODValue_CRTP_::operator int64_t;
+    using TVMPODValue_CRTP_::operator uint64_t;
+    using TVMPODValue_CRTP_::operator int;
+    using TVMPODValue_CRTP_::operator bool;
+
     // reuse conversion rule from ArgValue.
     operator std::string() const { return AsArgValue().operator std::string(); }
 
@@ -2384,6 +2391,7 @@ inline TVMArgValue::operator DLDataType() const {
     if (String::CanConvertFrom(*this)) {
         return String2DLDataType(PackedFuncValueConverter<String>::From(*this).operator std::string());
     }
+
     // None type
     if (type_code_ == static_cast<int>(TVMArgTypeCode::kTVMNullptr)) {
         DLDataType t;

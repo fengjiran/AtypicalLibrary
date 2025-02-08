@@ -45,7 +45,7 @@ struct ObjectTypeChecker {
     /*!
      * \brief Check if an object matches the template type.
      * \param ptr The object to check the type of.
-     * \return Whether or not the template type matches the objects type.
+     * \return Whether the template type matches the objects type.
      */
     static bool Check(const Object* ptr) {
         using ContainerType = typename T::ContainerType;
@@ -66,6 +66,7 @@ struct ObjectTypeChecker<Array<T>> {
         if (ptr == nullptr) {
             return NullOpt;
         }
+
         if (!ptr->IsInstance<ArrayNode>()) {
             return String(ptr->GetTypeKey());
         }
@@ -84,6 +85,7 @@ struct ObjectTypeChecker<Array<T>> {
         }
         return NullOpt;
     }
+
     static bool Check(const Object* ptr) {
         if (ptr == nullptr) return true;
         if (!ptr->IsInstance<ArrayNode>()) return false;
@@ -97,7 +99,10 @@ struct ObjectTypeChecker<Array<T>> {
         }
         return true;
     }
-    static std::string TypeName() { return "Array[" + ObjectTypeChecker<T>::TypeName() + "]"; }
+
+    static std::string TypeName() {
+        return "Array[" + ObjectTypeChecker<T>::TypeName() + "]";
+    }
 };
 
 template<typename K, typename V>
@@ -116,10 +121,12 @@ struct ObjectTypeChecker<Map<K, V>> {
             if constexpr (!std::is_same_v<K, ObjectRef>) {
                 key_type = ObjectTypeChecker<K>::CheckAndGetMismatch(kv.first.get());
             }
+
             Optional<String> value_type = NullOpt;
             if constexpr (!std::is_same_v<V, ObjectRef>) {
                 value_type = ObjectTypeChecker<K>::CheckAndGetMismatch(kv.first.get());
             }
+
             if (key_type.defined() || value_type.defined()) {
                 std::string key_name =
                         key_type.defined() ? std::string(key_type.value()) : ObjectTypeChecker<K>::TypeName();
@@ -130,6 +137,7 @@ struct ObjectTypeChecker<Map<K, V>> {
         }
         return NullOpt;
     }
+
     static bool Check(const Object* ptr) {
         if (ptr == nullptr) return true;
         if (!ptr->IsInstance<MapNode>()) return false;
@@ -143,12 +151,14 @@ struct ObjectTypeChecker<Map<K, V>> {
             if constexpr (!std::is_same_v<K, ObjectRef>) {
                 if (!ObjectTypeChecker<K>::Check(kv.first.get())) return false;
             }
+
             if constexpr (!std::is_same_v<V, ObjectRef>) {
                 if (!ObjectTypeChecker<V>::Check(kv.second.get())) return false;
             }
         }
         return true;
     }
+
     static std::string TypeName() {
         return "Map[" + ObjectTypeChecker<K>::TypeName() + ", " + ObjectTypeChecker<V>::TypeName() +
                ']';
@@ -175,10 +185,12 @@ struct ObjectTypeChecker<Variant<FirstVariant, RemainingVariants...>> {
 
         return ObjectTypeChecker<Variant<RemainingVariants...>>::CheckAndGetMismatch(ptr);
     }
+
     static bool Check(const Object* ptr) {
         return ObjectTypeChecker<FirstVariant>::Check(ptr) ||
                ObjectTypeChecker<Variant<RemainingVariants...>>::Check(ptr);
     }
+
     static std::string TypeName() { return "Variant[" + VariantNames() + "]"; }
     static std::string VariantNames() {
         return ObjectTypeChecker<FirstVariant>::TypeName() + ", " +
