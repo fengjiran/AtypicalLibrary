@@ -39,7 +39,7 @@ public:
     explicit NDArray(ObjectPtr<Object> data) : ObjectRef(std::move(data)) {}
 
     /*! \brief reset the content of NDArray to be nullptr */
-    inline void reset();
+    // inline void reset();
 
     /*!
    * \return the reference counter
@@ -124,7 +124,7 @@ public:
    *       outside the bounds of the current array, this function will
    *       raise an exception.
    */
-    NDArray CreateView(ShapeTuple shape, DLDataType dtype, uint64_t relative_byte_offset = 0);
+    NDArray CreateView(ShapeTuple shape, DLDataType dtype, uint64_t relative_byte_offset = 0) const;
 
     /*!
    * \brief Create a reference view of NDArray that

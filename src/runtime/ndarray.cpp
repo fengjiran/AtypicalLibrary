@@ -137,8 +137,7 @@ struct NDArray::Internal {
 
     // Container to DLManagedTensor
     static DLManagedTensor* ToDLPack(TVMArrayHandle handle) {
-        auto* from =
-                static_cast<Container*>(reinterpret_cast<ContainerBase*>(handle));
+        auto* from = static_cast<Container*>(reinterpret_cast<ContainerBase*>(handle));
         return ToDLPack(from);
     }
 
@@ -160,7 +159,7 @@ struct NDArray::Internal {
 };
 
 
-NDArray NDArray::CreateView(ShapeTuple shape, DLDataType dtype, uint64_t relative_byte_offset) {
+NDArray NDArray::CreateView(ShapeTuple shape, DLDataType dtype, uint64_t relative_byte_offset) const {
     CHECK(data_ != nullptr);
 
     const DLTensor& orig = get_mutable()->dl_tensor;
@@ -264,7 +263,7 @@ NDArray NDArray::Empty(ShapeTuple shape, DLDataType dtype, Device dev, Optional<
 NDArray NDArray::FromExternalDLTensor(const DLTensor& dl_tensor) {
     CHECK(::litetvm::runtime::IsContiguous(dl_tensor)) << "External DLTensor must be contiguous.";
     CHECK(IsAligned(dl_tensor)) << "Data in DLTensor is not aligned as required by NDArray";
-    NDArray::Container* data = new NDArray::Container();
+    auto* data = new Container();
 
     data->SetDeleter(Internal::SelfDeleter);
     data->dl_tensor = dl_tensor;
