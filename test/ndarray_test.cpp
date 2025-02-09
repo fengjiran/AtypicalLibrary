@@ -9,6 +9,7 @@ using namespace litetvm::runtime;
 TEST(NDArrayTest, Empty) {
     auto array = NDArray::Empty({5, 10}, DataType::Float(32), {DLDeviceType::kDLCPU});
     CHECK_EQ(array.use_count(), 1);
+    CHECK(array.IsContiguous());
 
     std::cout << array.Shape() << std::endl;
 }

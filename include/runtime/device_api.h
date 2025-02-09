@@ -87,7 +87,7 @@ public:
    * \param mem_scope the memory scope if any
    * \return the memory size.
    */
-    virtual size_t GetDataSize(const DLTensor& arr, Optional<String> mem_scope = NullOpt);
+    virtual size_t GetDataSize(const DLTensor& arr, const Optional<String>& mem_scope = NullOpt);
 
     /*!
    * \brief Query the device for specified properties.
@@ -119,7 +119,7 @@ public:
    * \return The allocated device pointer.
    */
     virtual void* AllocDataSpace(Device dev, int ndim, const int64_t* shape, DLDataType dtype,
-                                 Optional<String> mem_scope = NullOpt);
+                                 const Optional<String>& mem_scope = NullOpt);
 
     /*!
    * \brief Free a data space on device.

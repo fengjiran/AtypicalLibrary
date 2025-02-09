@@ -3,9 +3,11 @@
 //
 
 #include "runtime/device_api.h"
-#include "runtime/workspace_pool.h"
-#include "runtime/thread_local.h"
 #include "runtime/registry.h"
+#include "runtime/thread_local.h"
+#include "runtime/workspace_pool.h"
+
+#include <iostream>
 
 #ifdef __ANDROID__
 #include <android/api-level.h>
@@ -29,8 +31,9 @@ namespace litetvm::runtime {
 
 class CPUDeviceAPI final : public DeviceAPI {
 public:
-    void SetDevice(Device dev) final {}
-    void GetAttr(Device dev, DeviceAttrKind kind, TVMRetValue* rv) final {
+    void SetDevice(Device dev) override {}
+
+    void GetAttr(Device dev, DeviceAttrKind kind, TVMRetValue* rv) override {
         if (kind == DeviceAttrKind::kExist) {
             *rv = 1;
         }
@@ -70,7 +73,8 @@ public:
                 break;
         }
     }
-    void* AllocDataSpace(Device dev, size_t nbytes, size_t alignment, DLDataType type_hint) final {
+
+    void* AllocDataSpace(Device dev, size_t nbytes, size_t alignment, DLDataType type_hint) override {
         void* ptr;
 #if _MSC_VER
         ptr = _aligned_malloc(nbytes, alignment);
@@ -83,35 +87,39 @@ public:
         int ret = posix_memalign(&ptr, alignment, nbytes);
         if (ret != 0) throw std::bad_alloc();
 #endif
+        std::cout << "allocate " << nbytes << " bytes memory, alignment = " << alignment << std::endl;
         return ptr;
     }
 
-    void FreeDataSpace(Device dev, void* ptr) final {
+    void FreeDataSpace(Device dev, void* ptr) override {
 #if _MSC_VER
         _aligned_free(ptr);
 #else
         free(ptr);
 #endif
+        std::cout << "free memory.\n";
     }
 
-    void StreamSync(Device dev, TVMStreamHandle stream) final {}
+    void StreamSync(Device dev, TVMStreamHandle stream) override{}
 
-    void* AllocWorkspace(Device dev, size_t size, DLDataType type_hint) final;
-    void FreeWorkspace(Device dev, void* data) final;
+    void* AllocWorkspace(Device dev, size_t size, DLDataType type_hint) override;
 
-    bool SupportsDevicePointerArithmeticsOnHost() final { return true; }
+    void FreeWorkspace(Device dev, void* data) override;
+
+    bool SupportsDevicePointerArithmeticsOnHost() override { return true; }
 
     static CPUDeviceAPI* Global() {
-        // NOTE: explicitly use new to avoid exit-time destruction of global state
+        // NOTE: explicitly use new to avoid exit-time destruction of global state,
         // Global state will be recycled by OS as the process exits.
-        static auto* inst = new CPUDeviceAPI();
-        return inst;
+        // static auto* inst = new CPUDeviceAPI();
+        static CPUDeviceAPI inst;
+        return &inst;
     }
 
 protected:
     void CopyDataFromTo(const void* from, size_t from_offset, void* to, size_t to_offset, size_t size,
                         Device dev_from, Device dev_to, DLDataType type_hint,
-                        TVMStreamHandle stream) final {
+                        TVMStreamHandle stream) override {
         memcpy(static_cast<char*>(to) + to_offset, static_cast<const char*>(from) + from_offset, size);
     }
 };
@@ -129,8 +137,8 @@ void CPUDeviceAPI::FreeWorkspace(Device dev, void* data) {
 }
 
 TVM_REGISTER_GLOBAL("device_api.cpu").set_body([](TVMArgs args, TVMRetValue* rv) {
-  DeviceAPI* ptr = CPUDeviceAPI::Global();
-  *rv = static_cast<void*>(ptr);
+    DeviceAPI* ptr = CPUDeviceAPI::Global();
+    *rv = ptr;
 });
 
 }// namespace litetvm::runtime

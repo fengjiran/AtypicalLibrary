@@ -254,7 +254,7 @@ void NDArray::CopyFromTo(const DLTensor* from, DLTensor* to, TVMStreamHandle str
 
 NDArray NDArray::Empty(const ShapeTuple& shape, DLDataType dtype, Device dev, const Optional<String>& mem_scope) {
     NDArray ret = Internal::Create(shape, dtype, dev);
-    ret.get_mutable()->dl_tensor.data = DeviceAPI::Get(ret->device)->AllocDataSpace(ret->device, shape.size(), shape.data(), ret->dtype, mem_scope);
+    ret.get_mutable()->dl_tensor.data = DeviceAPI::Get(ret->device)->AllocDataSpace(ret->device, static_cast<int>(shape.size()), shape.data(), ret->dtype, mem_scope);
     return ret;
 }
 

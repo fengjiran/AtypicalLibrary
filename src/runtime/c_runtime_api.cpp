@@ -67,8 +67,7 @@ public:
     }
 
     static DeviceAPI* Get(int dev_type, bool allow_missing = false) {
-        // return Global()->GetAPI(dev_type, allow_missing);
-        return Global().GetAPI(dev_type, allow_missing);
+        return Global()->GetAPI(dev_type, allow_missing);
     }
 
 private:
@@ -88,17 +87,21 @@ private:
     // }
 
     // Global static variable.
-    static DeviceAPIManager& Global() {
+    static DeviceAPIManager* Global() {
         static DeviceAPIManager inst;
-        return inst;
+        return &inst;
     }
 
     // Get or initialize API.
     DeviceAPI* GetAPI(int type, bool allow_missing) {
         if (type < kRPCSessMask) {
-            if (api_[type] != nullptr) return api_[type];
+            if (api_[type] != nullptr)
+                return api_[type];
+
             std::lock_guard<std::mutex> lock(mutex_);
-            if (api_[type] != nullptr) return api_[type];
+            if (api_[type] != nullptr)
+                return api_[type];
+
             api_[type] = GetAPI(DLDeviceType2Str(type), allow_missing);
             return api_[type];
         }
@@ -110,7 +113,7 @@ private:
         return rpc_api_;
     }
 
-    DeviceAPI* GetAPI(const std::string& name, bool allow_missing) {
+    static DeviceAPI* GetAPI(const std::string& name, bool allow_missing) {
         std::string factory = "device_api." + name;
         auto* f = Registry::Get(factory);
         if (f == nullptr) {
@@ -136,7 +139,7 @@ static size_t GetDataAlignment(const DLDataType dtype) {
     return align;
 }
 
-size_t DeviceAPI::GetDataSize(const DLTensor& arr, Optional<String> mem_scope) {
+size_t DeviceAPI::GetDataSize(const DLTensor& arr, const Optional<String>& mem_scope) {
     if (!mem_scope.defined() || mem_scope.value().empty() || mem_scope.value() == "global") {
         size_t size = 1;
         for (tvm_index_t i = 0; i < arr.ndim; ++i) {
@@ -151,8 +154,8 @@ size_t DeviceAPI::GetDataSize(const DLTensor& arr, Optional<String> mem_scope) {
 }
 
 void* DeviceAPI::AllocDataSpace(Device dev, int ndim, const int64_t* shape, DLDataType dtype,
-                                Optional<String> mem_scope) {
-    if (!mem_scope.defined() || mem_scope.value() == "" || mem_scope.value() == "global") {
+                                const Optional<String>& mem_scope) {
+    if (!mem_scope.defined() || mem_scope.value().empty() || mem_scope.value() == "global") {
         // by default, we can always redirect to the flat memory allocations
         DLTensor temp;
         temp.data = nullptr;
