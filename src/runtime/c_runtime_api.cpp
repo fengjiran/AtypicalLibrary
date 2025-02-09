@@ -60,10 +60,15 @@ uint8_t ParseCustomDatatype(const std::string& s, const char** scan) {
 class DeviceAPIManager {
 public:
     static const int kMaxDeviceAPI = static_cast<int>(TVMDeviceExtType::TVMDeviceExtType_End);
+
     // Get API
-    static DeviceAPI* Get(const Device& dev) { return Get(static_cast<int>(dev.device_type)); }
+    static DeviceAPI* Get(const Device& dev) {
+        return Get(static_cast<int>(dev.device_type));
+    }
+
     static DeviceAPI* Get(int dev_type, bool allow_missing = false) {
-        return Global()->GetAPI(dev_type, allow_missing);
+        // return Global()->GetAPI(dev_type, allow_missing);
+        return Global().GetAPI(dev_type, allow_missing);
     }
 
 private:
@@ -77,8 +82,14 @@ private:
     }
 
     // Global static variable.
-    static DeviceAPIManager* Global() {
-        static auto* inst = new DeviceAPIManager();
+    // static DeviceAPIManager* Global() {
+    //     static auto* inst = new DeviceAPIManager();
+    //     return inst;
+    // }
+
+    // Global static variable.
+    static DeviceAPIManager& Global() {
+        static DeviceAPIManager inst;
         return inst;
     }
 
@@ -99,7 +110,7 @@ private:
         return rpc_api_;
     }
 
-    DeviceAPI* GetAPI(const std::string name, bool allow_missing) {
+    DeviceAPI* GetAPI(const std::string& name, bool allow_missing) {
         std::string factory = "device_api." + name;
         auto* f = Registry::Get(factory);
         if (f == nullptr) {

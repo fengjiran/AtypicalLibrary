@@ -62,7 +62,7 @@ public:
         }
         dtype_.lanes = is_scalable ? static_cast<uint16_t>(-lanes) : static_cast<uint16_t>(lanes);
 
-        if (code == static_cast<int>(TypeCode::kFloat)) {
+        if (code == static_cast<int>(TypeCode::kBFloat)) {
             CHECK_EQ(bits, 16);
         }
 

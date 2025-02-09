@@ -53,7 +53,7 @@ void ArrayCopyToBytes(const DLTensor* handle, void* data, size_t nbytes) {
     CHECK(IsContiguous(*handle)) << "ArrayCopyToBytes only support contiguous array for now";
 
     DLTensor to;
-    to.data = const_cast<void*>(data);
+    to.data = data;
     to.device = Device{DLDeviceType::kDLCPU, 0};
     to.ndim = handle->ndim;
     to.dtype = handle->dtype;
@@ -252,11 +252,9 @@ void NDArray::CopyFromTo(const DLTensor* from, DLTensor* to, TVMStreamHandle str
 }
 
 
-NDArray NDArray::Empty(ShapeTuple shape, DLDataType dtype, Device dev, Optional<String> mem_scope) {
+NDArray NDArray::Empty(const ShapeTuple& shape, DLDataType dtype, Device dev, const Optional<String>& mem_scope) {
     NDArray ret = Internal::Create(shape, dtype, dev);
-    ret.get_mutable()->dl_tensor.data =
-            DeviceAPI::Get(ret->device)
-                    ->AllocDataSpace(ret->device, shape.size(), shape.data(), ret->dtype, mem_scope);
+    ret.get_mutable()->dl_tensor.data = DeviceAPI::Get(ret->device)->AllocDataSpace(ret->device, shape.size(), shape.data(), ret->dtype, mem_scope);
     return ret;
 }
 

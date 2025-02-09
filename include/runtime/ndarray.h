@@ -93,7 +93,7 @@ public:
    * \return The array under another device.
    * \note The copy always triggers a TVMSynchronize.
    */
-    NDArray CopyTo(const Device& dev, Optional<String> mem_scope = NullOpt) const;
+    NODISCARD NDArray CopyTo(const Device& dev, Optional<String> mem_scope = NullOpt) const;
 
     /*!
    * \brief Copy data content into another array.
@@ -124,7 +124,7 @@ public:
    *       outside the bounds of the current array, this function will
    *       raise an exception.
    */
-    NDArray CreateView(ShapeTuple shape, DLDataType dtype, uint64_t relative_byte_offset = 0) const;
+    NODISCARD NDArray CreateView(ShapeTuple shape, DLDataType dtype, uint64_t relative_byte_offset = 0) const;
 
     /*!
    * \brief Create a reference view of NDArray that
@@ -141,8 +141,8 @@ public:
    * \param mem_scope The memory scope of the array.
    * \return The created Array
    */
-    static NDArray Empty(ShapeTuple shape, DLDataType dtype, Device dev,
-                         Optional<String> mem_scope = NullOpt);
+    static NDArray Empty(const ShapeTuple& shape, DLDataType dtype, Device dev,
+                         const Optional<String>& mem_scope = NullOpt);
 
     /*!
    * \brief Create a NDArray backed by an external DLTensor without memory copying.
