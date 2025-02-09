@@ -112,17 +112,19 @@ public:
    * \param f The body of the function.
    */
     Registry& set_body(PackedFunc f);// NOLINT(*)
+
     /*!
    * \brief set the body of the function to be f
    * \param f The body of the function.
    */
     template<typename TCallable,
-             typename = typename std::enable_if_t<
-                     std::is_convertible<TCallable, std::function<void(TVMArgs, TVMRetValue*)>>::value &&
-                     !std::is_base_of<PackedFunc, TCallable>::value>>
+             typename = std::enable_if_t<
+                     std::is_convertible_v<TCallable, std::function<void(TVMArgs, TVMRetValue*)>> &&
+                     !std::is_base_of_v<PackedFunc, TCallable>>>
     Registry& set_body(TCallable f) {// NOLINT(*)
         return set_body(PackedFunc(f));
     }
+
     /*!
    * \brief set the body of the function to the given function.
    *        Note that this will ignore default arg values and always require all arguments to be
@@ -151,6 +153,7 @@ public:
         using FType = typename detail::function_signature<FLambda>::FType;
         return set_body(TypedPackedFunc<FType>(std::move(f), name_).packed());
     }
+
     /*!
    * \brief set the body of the function to be the passed method pointer.
    *        Note that this will ignore default arg values and always require all arguments to be
@@ -244,7 +247,7 @@ public:
    * \tparam Args the argument types of the function (inferred).
    */
     template<typename TObjectRef, typename TNode, typename R, typename... Args,
-             typename = typename std::enable_if<std::is_base_of<ObjectRef, TObjectRef>::value>::type>
+             typename = std::enable_if_t<std::is_base_of_v<ObjectRef, TObjectRef>>>
     Registry& set_body_method(R (TNode::*f)(Args...)) {
         auto fwrap = [f](TObjectRef ref, Args... params) {
             TNode* target = ref.operator->();
@@ -286,7 +289,7 @@ public:
    * \tparam Args the argument types of the function (inferred).
    */
     template<typename TObjectRef, typename TNode, typename R, typename... Args,
-             typename = typename std::enable_if<std::is_base_of<ObjectRef, TObjectRef>::value>::type>
+             typename = std::enable_if_t<std::is_base_of_v<ObjectRef, TObjectRef>>>
     Registry& set_body_method(R (TNode::*f)(Args...) const) {
         auto fwrap = [f](TObjectRef ref, Args... params) {
             const TNode* target = ref.operator->();
@@ -323,14 +326,33 @@ public:
     static std::vector<String> ListNames();
 
     // Internal class.
-    struct Manager;
+    class Manager;
 
 protected:
     /*! \brief name of the function */
     String name_;
     /*! \brief internal packed function */
     PackedFunc func_;
-    friend struct Manager;
+    friend class Manager;
+};
+
+class RegistryManager {
+public:
+    static RegistryManager& Global() {
+        static RegistryManager inst;
+        return inst;
+    }
+
+private:
+    RegistryManager() = default;
+    // map storing the functions.
+    // We deliberately used raw pointer.
+    // This is because PackedFunc can contain callbacks into the host language (Python) and the
+    // resource can become invalid because of indeterministic order of destruction and forking.
+    // The resources will only be recycled during program exit.
+    std::unordered_map<String, Registry*> fmap;
+    // mutex
+    std::mutex mutex;
 };
 
 #define TVM_FUNC_REG_VAR_DEF static TVM_ATTRIBUTE_UNUSED ::litetvm::runtime::Registry& __mk_##TVM

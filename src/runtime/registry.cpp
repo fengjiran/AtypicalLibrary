@@ -8,11 +8,13 @@
 #include <glog/logging.h>
 #include <mutex>
 #include <unordered_map>
+#include <utility>
 
 namespace litetvm {
 namespace runtime {
 
-struct Registry::Manager {
+class Registry::Manager {
+public:
     // map storing the functions.
     // We deliberately used raw pointer.
     // This is because PackedFunc can contain callbacks into the host language (Python) and the
@@ -22,19 +24,20 @@ struct Registry::Manager {
     // mutex
     std::mutex mutex;
 
-    Manager() {}
+    Manager() = default;
 
     static Manager* Global() {
         // We deliberately leak the Manager instance, to avoid leak sanitizers
         // complaining about the entries in Manager::fmap being leaked at program
         // exit.
-        static auto* inst = new Manager();
-        return inst;
+        // static auto* inst = new Manager();
+        static Manager inst;
+        return &inst;
     }
 };
 
 Registry& Registry::set_body(PackedFunc f) {// NOLINT(*)
-    func_ = f;
+    func_ = std::move(f);
     return *this;
 }
 
@@ -45,7 +48,7 @@ Registry& Registry::Register(const String& name, bool can_override) {// NOLINT(*
         CHECK(can_override) << "Global PackedFunc " << name << " is already registered";
     }
 
-    Registry* r = new Registry();
+    auto* r = new Registry();
     r->name_ = name;
     m->fmap[name] = r;
     return *r;
