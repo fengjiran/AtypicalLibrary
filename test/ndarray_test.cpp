@@ -14,5 +14,10 @@ TEST(NDArrayTest, Empty) {
 
     auto* t = array.ToDLPack();
     CHECK_EQ(array.use_count(), 2);
+    std::vector<int64_t> strides {10, 1};
+    t->dl_tensor.strides = strides.data();
+    CHECK(IsContiguous(t->dl_tensor));
+    std::cout << GetDataSize(t->dl_tensor) << std::endl;
+
     t->deleter(t);
 }

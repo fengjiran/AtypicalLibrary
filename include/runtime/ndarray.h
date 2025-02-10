@@ -60,22 +60,22 @@ public:
     NODISCARD runtime::DataType DataType() const;
 
     /*!
+   * \brief Function to copy data from one array to another.
+   * \param from The source array.
+   * \param to The target array.
+   * \param stream The stream used in copy.
+   */
+    static void CopyFromTo(const DLTensor* from, DLTensor* to,
+                           TVMStreamHandle stream = nullptr);
+
+    /*!
    * \brief Copy data content from another array.
    * \param other The source array to be copied from.
    * \note The copy may happen asynchronously if it involves a GPU context.
    *       TVMSynchronize is necessary.
    */
-    inline void CopyFrom(const DLTensor* other);
-    inline void CopyFrom(const NDArray& other);
-
-    /*!
-   * \brief Copy data content from a byte buffer.
-   * \param data The source bytes to be copied from.
-   * \param nbytes The size of the buffer in bytes
-   *        Must be equal to the size of the NDArray.
-   * \note The copy always triggers a TVMSynchronize.
-   */
-    void CopyFromBytes(const void* data, size_t nbytes);
+    inline void CopyFrom(const DLTensor* other) const;
+    inline void CopyFrom(const NDArray& other) const;
 
     /*!
    * \brief Copy data content into another array.
@@ -93,7 +93,16 @@ public:
    * \return The array under another device.
    * \note The copy always triggers a TVMSynchronize.
    */
-    NODISCARD NDArray CopyTo(const Device& dev, Optional<String> mem_scope = NullOpt) const;
+    NODISCARD NDArray CopyTo(const Device& dev, const Optional<String>& mem_scope = NullOpt) const;
+
+    /*!
+   * \brief Copy data content from a byte buffer.
+   * \param data The source bytes to be copied from.
+   * \param nbytes The size of the buffer in bytes
+   *        Must be equal to the size of the NDArray.
+   * \note The copy always triggers a TVMSynchronize.
+   */
+    void CopyFromBytes(const void* data, size_t nbytes);
 
     /*!
    * \brief Copy data content into another array.
@@ -177,15 +186,6 @@ public:
      * \return The created NDArray view.
      */
     static NDArray FromDLPack(DLManagedTensor* tensor);
-
-    /*!
-   * \brief Function to copy data from one array to another.
-   * \param from The source array.
-   * \param to The target array.
-   * \param stream The stream used in copy.
-   */
-    static void CopyFromTo(const DLTensor* from, DLTensor* to,
-                           TVMStreamHandle stream = nullptr);
 
     /*!
    * \brief Check conditions for construction NDArray over DLTensor without copying.
@@ -375,26 +375,26 @@ inline bool NDArray::IsContiguous() const {
     return runtime::IsContiguous(get_mutable()->dl_tensor);
 }
 
-inline void NDArray::CopyFrom(const DLTensor* other) {
+inline void NDArray::CopyFrom(const DLTensor* other) const {
     CHECK(data_ != nullptr);
-    CopyFromTo(other, &(get_mutable()->dl_tensor));
+    CopyFromTo(other, &get_mutable()->dl_tensor);
 }
 
-inline void NDArray::CopyFrom(const NDArray& other) {
+inline void NDArray::CopyFrom(const NDArray& other) const {
     CHECK(data_ != nullptr);
     CHECK(other.data_ != nullptr);
-    CopyFromTo(&(other.get_mutable()->dl_tensor), &(get_mutable()->dl_tensor));
+    CopyFromTo(&other.get_mutable()->dl_tensor, &get_mutable()->dl_tensor);
 }
 
 inline void NDArray::CopyTo(DLTensor* other) const {
     CHECK(data_ != nullptr);
-    CopyFromTo(&(get_mutable()->dl_tensor), other);
+    CopyFromTo(&get_mutable()->dl_tensor, other);
 }
 
 inline void NDArray::CopyTo(const NDArray& other) const {
     CHECK(data_ != nullptr);
     CHECK(other.data_ != nullptr);
-    CopyFromTo(&(get_mutable()->dl_tensor), &(other.get_mutable()->dl_tensor));
+    CopyFromTo(&get_mutable()->dl_tensor, &other.get_mutable()->dl_tensor);
 }
 
 inline const DLTensor* NDArray::operator->() const {

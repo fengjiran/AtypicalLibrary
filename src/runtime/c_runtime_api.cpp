@@ -113,7 +113,10 @@ void DeviceAPI::CopyDataFromTo(DLTensor* from, DLTensor* to, TVMStreamHandle str
 
     CHECK(IsContiguous(*from) && IsContiguous(*to))
             << "CopyDataFromTo only support contiguous array for now";
-    CopyDataFromTo(from->data, from->byte_offset, to->data, to->byte_offset, nbytes, from->device,
+
+    CopyDataFromTo(from->data, from->byte_offset,
+                   to->data, to->byte_offset,
+                   nbytes, from->device,
                    to->device, from->dtype, stream);
 }
 

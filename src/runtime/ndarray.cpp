@@ -160,6 +160,42 @@ struct NDArray::Internal {
 };
 
 
+void NDArray::CopyFromTo(const DLTensor* from, DLTensor* to, TVMStreamHandle stream) {
+    size_t from_size = GetDataSize(*from);
+    size_t to_size = GetDataSize(*to);
+    CHECK_EQ(from_size, to_size) << "TVMArrayCopyFromTo: The size in bytes must exactly match.";
+
+    CHECK(from->device.device_type == to->device.device_type ||
+          from->device.device_type == DLDeviceType::kDLCPU ||
+          to->device.device_type == DLDeviceType::kDLCPU ||
+          from->device.device_type == DLDeviceType::kDLCUDAHost ||
+          to->device.device_type == DLDeviceType::kDLCUDAHost ||
+          from->device.device_type == DLDeviceType::kDLROCMHost ||
+          to->device.device_type == DLDeviceType::kDLROCMHost)
+            << "Can not copy across different device types directly. From device type: "
+            << static_cast<int>(from->device.device_type) << " to device type: "
+            << static_cast<int>(to->device.device_type);
+
+    // Use the device that is *not* a cpu device to get the correct device
+    // api manager.
+    Device dev = from->device.device_type != DLDeviceType::kDLCPU ? from->device : to->device;
+    auto* device_api = DeviceAPIManager::Get(dev);
+    device_api->CopyDataFromTo(const_cast<DLTensor*>(from), to, stream);
+    // DeviceAPI::Get(dev)->CopyDataFromTo(const_cast<DLTensor*>(from), to, stream);
+}
+
+NDArray NDArray::CopyTo(const Device& dev, const Optional<String>& mem_scope) const {
+    CHECK(data_ != nullptr);
+    const DLTensor* dptr = operator->();
+    NDArray ret = Empty(ShapeTuple(dptr->shape, dptr->shape + dptr->ndim),
+                        dptr->dtype,
+                        dev, mem_scope);
+    this->CopyTo(ret);
+    Device copy_gpu_dev = dptr->device.device_type != DLDeviceType::kDLCPU ? dptr->device : dev;
+    DeviceAPI::Get(copy_gpu_dev)->StreamSync(copy_gpu_dev, nullptr);
+    return ret;
+}
+
 NDArray NDArray::CreateView(ShapeTuple shape, DLDataType dtype, uint64_t relative_byte_offset) const {
     CHECK(data_ != nullptr);
 
@@ -222,44 +258,14 @@ void NDArray::CopyFromBytes(const void* data, size_t nbytes) {
     ArrayCopyFromBytes(&get_mutable()->dl_tensor, data, nbytes);
 }
 
-NDArray NDArray::CopyTo(const Device& dev, Optional<String> mem_scope) const {
-    CHECK(data_ != nullptr);
-    const DLTensor* dptr = operator->();
-    NDArray ret =
-            Empty(ShapeTuple(dptr->shape, dptr->shape + dptr->ndim), dptr->dtype, dev, mem_scope);
-    this->CopyTo(ret);
-    Device copy_gpu_dev = dptr->device.device_type != DLDeviceType::kDLCPU ? dptr->device : dev;
-    DeviceAPI::Get(copy_gpu_dev)->StreamSync(copy_gpu_dev, nullptr);
-    return ret;
-}
-
-void NDArray::CopyFromTo(const DLTensor* from, DLTensor* to, TVMStreamHandle stream) {
-    size_t from_size = GetDataSize(*from);
-    size_t to_size = GetDataSize(*to);
-    CHECK_EQ(from_size, to_size) << "TVMArrayCopyFromTo: The size in bytes must exactly match.";
-
-    CHECK(from->device.device_type == to->device.device_type || from->device.device_type == DLDeviceType::kDLCPU ||
-          to->device.device_type == DLDeviceType::kDLCPU || from->device.device_type == DLDeviceType::kDLCUDAHost ||
-          to->device.device_type == DLDeviceType::kDLCUDAHost || from->device.device_type == DLDeviceType::kDLROCMHost ||
-          to->device.device_type == DLDeviceType::kDLROCMHost)
-            << "Can not copy across different device types directly. From device type: "
-            << static_cast<int>(from->device.device_type) << " to device type: " << static_cast<int>(to->device.device_type);
-
-    // Use the device that is *not* a cpu device to get the correct device
-    // api manager.
-    Device dev = from->device.device_type != DLDeviceType::kDLCPU ? from->device : to->device;
-
-    DeviceAPI::Get(dev)->CopyDataFromTo(const_cast<DLTensor*>(from), to, stream);
-}
-
-
 NDArray NDArray::Empty(const ShapeTuple& shape, DLDataType dtype, Device dev, const Optional<String>& mem_scope) {
     NDArray ret = Internal::Create(shape, dtype, dev);
     auto* device_api = DeviceAPIManager::Get(ret->device);
     ret.get_mutable()->dl_tensor.data = device_api->AllocDataSpace(ret->device,
                                                                    static_cast<int>(shape.size()),
                                                                    shape.data(),
-                                                                   ret->dtype, mem_scope);
+                                                                   ret->dtype,
+                                                                   mem_scope);
     return ret;
 }
 
