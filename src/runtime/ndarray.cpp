@@ -5,6 +5,8 @@
 #include "runtime/ndarray.h"
 #include "runtime/device_api.h"
 
+#include <iostream>
+
 static void TVMNDArrayDLPackDeleter(DLManagedTensor* tensor);
 
 namespace litetvm::runtime {
@@ -74,15 +76,15 @@ struct NDArray::Internal {
         if (ptr->manager_ctx != nullptr) {
             static_cast<Container*>(ptr->manager_ctx)->DecRef();
         } else if (ptr->dl_tensor.data != nullptr) {
-            DeviceAPI::Get(ptr->dl_tensor.device)
-                    ->FreeDataSpace(ptr->dl_tensor.device, ptr->dl_tensor.data);
+            auto* device_api = DeviceAPIManager::Get(ptr->dl_tensor.device);
+            device_api->FreeDataSpace(ptr->dl_tensor.device, ptr->dl_tensor.data);
         }
         delete ptr;
     }
 
     // Deleter for NDArray converted from DLPack
     // This is used from data which is passed from external DLPack(DLManagedTensor)
-    // that are not allocated inside of TVM.
+    // that are not allocated inside TVM.
     // This enables us to create NDArray from memory allocated by other
     // frameworks that are DLPack compatible
     static void DLPackDeleter(Object* p) {
@@ -117,9 +119,7 @@ struct NDArray::Internal {
         data->shape_ = std::move(shape);
         data->dl_tensor.shape = const_cast<ShapeTuple::index_type*>(data->shape_.data());
         data->dl_tensor.ndim = static_cast<int>(data->shape_.size());
-        // setup dtype
         data->dl_tensor.dtype = dtype;
-        // setup device
         data->dl_tensor.device = dev;
         return ret;
     }
@@ -147,12 +147,13 @@ struct NDArray::Internal {
         ret->dl_tensor = from->dl_tensor;
         ret->manager_ctx = from;
         from->IncRef();
-        ret->deleter = TVMNDArrayDLPackDeleter;
+        ret->deleter = NDArrayDLPackDeleter;
         return ret;
     }
 
     // Delete dlpack object.
     static void NDArrayDLPackDeleter(DLManagedTensor* tensor) {
+        std::cout << "delete DLManagedTensor" << std::endl;
         static_cast<Container*>(tensor->manager_ctx)->DecRef();
         delete tensor;
     }
@@ -254,7 +255,11 @@ void NDArray::CopyFromTo(const DLTensor* from, DLTensor* to, TVMStreamHandle str
 
 NDArray NDArray::Empty(const ShapeTuple& shape, DLDataType dtype, Device dev, const Optional<String>& mem_scope) {
     NDArray ret = Internal::Create(shape, dtype, dev);
-    ret.get_mutable()->dl_tensor.data = DeviceAPI::Get(ret->device)->AllocDataSpace(ret->device, static_cast<int>(shape.size()), shape.data(), ret->dtype, mem_scope);
+    auto* device_api = DeviceAPIManager::Get(ret->device);
+    ret.get_mutable()->dl_tensor.data = device_api->AllocDataSpace(ret->device,
+                                                                   static_cast<int>(shape.size()),
+                                                                   shape.data(),
+                                                                   ret->dtype, mem_scope);
     return ret;
 }
 

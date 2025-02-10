@@ -5,8 +5,8 @@
 #ifndef C_RUNTIME_API_H
 #define C_RUNTIME_API_H
 
-#include <cstdint>
 #include <cstddef>
+#include <cstdint>
 
 using tvm_index_t = int64_t;
 
@@ -186,18 +186,22 @@ struct DLTensor {
  *  is no longer needed.
  */
 struct DLManagedTensor {
+    using FDeleter = void (*)(DLManagedTensor*);
+
     /*! \brief DLTensor which is being memory managed */
     DLTensor dl_tensor;
+
     /*! \brief the context of the original host framework of DLManagedTensor in
    *   which DLManagedTensor is used in the framework. It can also be NULL.
    */
     void* manager_ctx;
+
     /*! \brief Destructor signature void (*)(void*) - this should be called
    *   to destruct manager_ctx which holds the DLManagedTensor. It can be NULL
    *   if there is no way for the caller to provide a reasonable destructor.
    *   The destructors deletes the argument self as well.
    */
-    void (*deleter)(DLManagedTensor* self);
+    FDeleter deleter;
 };
 
 
@@ -253,7 +257,7 @@ using TVMModuleHandle = void*;
 /*! \brief Handle to packed function handle. */
 using TVMFunctionHandle = void*;
 /*! \brief Handle to hold return value. */
-using TVMRetValueHandle = void* ;
+using TVMRetValueHandle = void*;
 /*!
  * \brief The stream that is specific to device
  * can be NULL, which indicates the default one.
