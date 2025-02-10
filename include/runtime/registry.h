@@ -8,8 +8,8 @@
 #include "runtime/packed_func.h"
 #include "runtime/string.h"
 
-#include <type_traits>
-#include <utility>
+// #include <type_traits>
+// #include <utility>
 #include <vector>
 
 namespace litetvm::runtime {
@@ -326,14 +326,14 @@ public:
     static std::vector<String> ListNames();
 
     // Internal class.
-    class Manager;
+    // class Manager;
 
 protected:
     /*! \brief name of the function */
     String name_;
     /*! \brief internal packed function */
     PackedFunc func_;
-    friend class Manager;
+    // friend class Manager;
 };
 
 class RegistryManager {
@@ -343,8 +343,16 @@ public:
         return inst;
     }
 
-private:
-    RegistryManager() = default;
+  std::vector<String> ListNames() {
+      std::lock_guard<std::mutex> lock(mutex);
+      std::vector<String> keys;
+      keys.reserve(fmap.size());
+      for (const auto& kv : fmap) {
+        keys.push_back(kv.first);
+      }
+      return keys;
+    }
+
     // map storing the functions.
     // We deliberately used raw pointer.
     // This is because PackedFunc can contain callbacks into the host language (Python) and the
@@ -353,6 +361,9 @@ private:
     std::unordered_map<String, Registry*> fmap;
     // mutex
     std::mutex mutex;
+
+private:
+    RegistryManager() = default;
 };
 
 #define TVM_FUNC_REG_VAR_DEF static TVM_ATTRIBUTE_UNUSED ::litetvm::runtime::Registry& __mk_##TVM

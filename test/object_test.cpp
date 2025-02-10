@@ -5,6 +5,7 @@
 #include <gtest/gtest.h>
 
 #include "runtime/packed_func.h"
+#include "runtime/registry.h"
 #include "runtime/shape_tuple.h"
 #include "runtime/type_context.h"
 
@@ -31,5 +32,11 @@ TEST(ObjectTest, object) {
     CHECK_EQ(t1.use_count(), 2);
 
     TypeContext::Global().Dump(0);
+}
 
+TEST(ObjectTest, ListAllPackedFunc) {
+    std::cout << "List all registered packed functions:" << std::endl;
+    for (const auto& name: RegistryManager::Global().ListNames()) {
+        std::cout << name << std::endl;
+    }
 }
