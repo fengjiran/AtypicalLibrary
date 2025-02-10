@@ -299,6 +299,14 @@ public:
         return set_body(TypedPackedFunc<R(TObjectRef, Args...)>(fwrap, name_));
     }
 
+    NODISCARD PackedFunc& get_body() {
+        return func_;
+    }
+
+    void set_name(const String& name) {
+        name_ = name;
+    }
+
     /*!
    * \brief Register a function with given name
    * \param name The name of the function.
@@ -343,14 +351,65 @@ public:
         return inst;
     }
 
-  std::vector<String> ListNames() {
-      std::lock_guard<std::mutex> lock(mutex);
-      std::vector<String> keys;
-      keys.reserve(fmap.size());
-      for (const auto& kv : fmap) {
-        keys.push_back(kv.first);
-      }
-      return keys;
+    /*!
+   * \brief Register a function with given name
+   * \param name The name of the function.
+   * \param can_override Whether allow override existing function.
+   * \return Reference to the registry.
+   */
+    Registry& Register(const String& name, bool can_override = false) {
+        std::lock_guard lock(mutex);
+        if (fmap.find(name) != fmap.end()) {
+            CHECK(can_override) << "Global PackedFunc " << name << " is already registered";
+        }
+        auto* r = new Registry();
+        r->set_name(name);
+        fmap[name] = r;
+        return *r;
+    }
+
+    /*!
+  * \brief Erase global function from registry, if exist.
+  * \param name The name of the function.
+  * \return Whether function exist.
+  */
+    bool Remove(const String& name) {
+        std::lock_guard lock(mutex);
+        auto it = fmap.find(name);
+        if (it == fmap.end()) {
+            return false;
+        }
+        fmap.erase(it);
+        return true;
+    }
+
+    /*!
+   * \brief Get the global function by name.
+   * \param name The name of the function.
+   * \return pointer to the registered function,
+   *   nullptr if it does not exist.
+   */
+    const PackedFunc* Get(const String& name) {
+        std::lock_guard lock(mutex);
+        auto it = fmap.find(name);
+        if (it == fmap.end()) {
+            return nullptr;
+        }
+        return &it->second->get_body();
+    }
+
+    /*!
+   * \brief Get the names of currently registered global function.
+   * \return The names
+   */
+    std::vector<String> ListNames() {
+        std::lock_guard lock(mutex);
+        std::vector<String> keys;
+        keys.reserve(fmap.size());
+        for (const auto& kv: fmap) {
+            keys.push_back(kv.first);
+        }
+        return keys;
     }
 
     // map storing the functions.
@@ -377,7 +436,11 @@ private:
  * \endcode
  */
 #define TVM_REGISTER_GLOBAL(OpName) \
-    TVM_STR_CONCAT(TVM_FUNC_REG_VAR_DEF, __COUNTER__) = ::litetvm::runtime::Registry::Register(OpName)
+    TVM_STR_CONCAT(TVM_FUNC_REG_VAR_DEF, __COUNTER__) = ::litetvm::runtime::RegistryManager::Global().Register(OpName)
+
+// #define TVM_REGISTER_GLOBAL(OpName) \
+//     TVM_STR_CONCAT(TVM_FUNC_REG_VAR_DEF, __COUNTER__) = ::litetvm::runtime::Registry::Register(OpName)
+
 
 #define TVM_STRINGIZE_DETAIL(x) #x
 #define TVM_STRINGIZE(x) TVM_STRINGIZE_DETAIL(x)
