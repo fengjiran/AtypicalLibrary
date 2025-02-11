@@ -44,9 +44,15 @@ void ArrayCopyFromBytes(DLTensor* handle, const void* data, size_t nbytes) {
     from.shape = handle->shape;
     from.strides = nullptr;
     from.byte_offset = 0;
-    DeviceAPI::Get(handle->device)->CopyDataFromTo(&from, handle, nullptr);
+
+    auto* device_api = DeviceAPIManager::Get(handle->device);
+    device_api->CopyDataFromTo(&from, handle, nullptr);
     // Synchronize in case data become unavailable later.
-    DeviceAPI::Get(handle->device)->StreamSync(handle->device, nullptr);
+    device_api->StreamSync(handle->device, nullptr);
+
+    // DeviceAPI::Get(handle->device)->CopyDataFromTo(&from, handle, nullptr);
+    // // Synchronize in case data become unavailable later.
+    // DeviceAPI::Get(handle->device)->StreamSync(handle->device, nullptr);
 }
 
 void ArrayCopyToBytes(const DLTensor* handle, void* data, size_t nbytes) {
@@ -63,9 +69,14 @@ void ArrayCopyToBytes(const DLTensor* handle, void* data, size_t nbytes) {
     to.strides = nullptr;
     to.byte_offset = 0;
 
-    DeviceAPI::Get(handle->device)->CopyDataFromTo(const_cast<DLTensor*>(handle), &to, nullptr);
+    auto* device_api = DeviceAPIManager::Get(handle->device);
+    device_api->CopyDataFromTo(const_cast<DLTensor*>(handle), &to, nullptr);
     // Synchronize in case data become unavailable later.
-    DeviceAPI::Get(handle->device)->StreamSync(handle->device, nullptr);
+    device_api->StreamSync(handle->device, nullptr);
+
+    // DeviceAPI::Get(handle->device)->CopyDataFromTo(const_cast<DLTensor*>(handle), &to, nullptr);
+    // // Synchronize in case data become unavailable later.
+    // DeviceAPI::Get(handle->device)->StreamSync(handle->device, nullptr);
 }
 
 
@@ -201,26 +212,27 @@ NDArray NDArray::CreateView(ShapeTuple shape, DLDataType dtype, uint64_t relativ
     CHECK(data_ != nullptr);
 
     const DLTensor& orig = get_mutable()->dl_tensor;
-    CHECK(IsContiguous()) << [&orig]() {
+    auto msg = [&orig] {
         std::stringstream ss;
         ss << "Can only create view for compact tensor, but found strides ";
-
         ss << "[";
-        for (int i = 0; i < orig.ndim; i++) {
-            if (i) ss << ", ";
-            ss << orig.strides[i];
+        int n = orig.ndim;
+        for (int i = 0; i < orig.ndim; ++i) {
+            ss << orig.strides[i] << (--n ? ", " : "");
         }
         ss << "]";
 
         ss << ", for shape ";
         ss << "[";
-        for (int i = 0; i < orig.ndim; i++) {
-            if (i) ss << ", ";
-            ss << orig.shape[i];
+        n = orig.ndim;
+        for (int i = 0; i < orig.ndim; ++i) {
+            ss << orig.shape[i] << (--n ? ", " : "");
         }
         ss << "]";
         return ss.str();
-    }();
+    };
+
+    CHECK(IsContiguous()) << msg();
 
     const auto& curr_dl_tensor = get_mutable()->dl_tensor;
 
@@ -242,8 +254,7 @@ NDArray NDArray::CreateView(ShapeTuple shape, DLDataType dtype, uint64_t relativ
     get_mutable()->IncRef();
     ret.get_mutable()->manager_ctx = get_mutable();
     ret.get_mutable()->dl_tensor.data = get_mutable()->dl_tensor.data;
-    ret.get_mutable()->dl_tensor.byte_offset =
-            get_mutable()->dl_tensor.byte_offset + relative_byte_offset;
+    ret.get_mutable()->dl_tensor.byte_offset = get_mutable()->dl_tensor.byte_offset + relative_byte_offset;
     return ret;
 }
 

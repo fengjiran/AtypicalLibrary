@@ -11,6 +11,7 @@
 #include <glog/logging.h>
 #include <optional>
 #include <string>
+#include <functional>
 
 /*!
  * \brief Whether or not use atomic reference counter.
