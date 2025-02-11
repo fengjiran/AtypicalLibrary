@@ -12,19 +12,19 @@
 namespace litetvm::runtime {
 
 std::string GetCustomTypeName(uint8_t type_code) {
-    auto f = Registry::Get("runtime._datatype_get_type_name");
+    auto f = RegistryManager::Global().Get("runtime._datatype_get_type_name");
     CHECK(f) << "Function runtime._datatype_get_type_name not found";
     return (*f)(type_code).operator std::string();
 }
 
 uint8_t GetCustomTypeCode(const std::string& type_name) {
-    auto f = Registry::Get("runtime._datatype_get_type_code");
+    auto f = RegistryManager::Global().Get("runtime._datatype_get_type_code");
     CHECK(f) << "Function runtime._datatype_get_type_code not found";
     return (*f)(type_name).operator int();
 }
 //
 bool GetCustomTypeRegistered(uint8_t type_code) {
-    auto f = runtime::Registry::Get("runtime._datatype_get_type_registered");
+    auto f = runtime::RegistryManager::Global().Get("runtime._datatype_get_type_registered");
     CHECK(f) << "Function runtime._datatype_get_type_registered not found";
     return (*f)(type_code).operator bool();
 }

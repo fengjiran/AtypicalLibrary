@@ -361,7 +361,7 @@ private:
 
     static DeviceAPI* GetAPI(const std::string& name, bool allow_missing) {
         std::string factory = "device_api." + name;
-        auto* f = Registry::Get(factory);
+        auto* f = RegistryManager::Global().Get(factory);
         if (f == nullptr) {
             CHECK(allow_missing) << "Device API " << name << " is not enabled.";
             return nullptr;

@@ -8,8 +8,6 @@
 #include "runtime/packed_func.h"
 #include "runtime/string.h"
 
-// #include <type_traits>
-// #include <utility>
 #include <vector>
 
 namespace litetvm::runtime {
@@ -111,7 +109,10 @@ public:
    * \brief set the body of the function to be f
    * \param f The body of the function.
    */
-    Registry& set_body(PackedFunc f);// NOLINT(*)
+    Registry& set_body(PackedFunc f) {
+        func_ = std::move(f);
+        return *this;
+    }
 
     /*!
    * \brief set the body of the function to be f
@@ -307,35 +308,6 @@ public:
         name_ = name;
     }
 
-    /*!
-   * \brief Register a function with given name
-   * \param name The name of the function.
-   * \param override Whether allow override existing function.
-   * \return Reference to the registry.
-   */
-    static Registry& Register(const String& name, bool override = false);// NOLINT(*)
-    /*!
-   * \brief Erase global function from registry, if exist.
-   * \param name The name of the function.
-   * \return Whether function exist.
-   */
-    static bool Remove(const String& name);
-    /*!
-   * \brief Get the global function by name.
-   * \param name The name of the function.
-   * \return pointer to the registered function,
-   *   nullptr if it does not exist.
-   */
-    static const PackedFunc* Get(const String& name);// NOLINT(*)
-    /*!
-   * \brief Get the names of currently registered global function.
-   * \return The names
-   */
-    static std::vector<String> ListNames();
-
-    // Internal class.
-    // class Manager;
-
 protected:
     /*! \brief name of the function */
     String name_;
@@ -357,31 +329,14 @@ public:
    * \param can_override Whether allow override existing function.
    * \return Reference to the registry.
    */
-    Registry& Register(const String& name, bool can_override = false) {
-        std::lock_guard lock(mutex);
-        if (fmap.find(name) != fmap.end()) {
-            CHECK(can_override) << "Global PackedFunc " << name << " is already registered";
-        }
-        auto* r = new Registry();
-        r->set_name(name);
-        fmap[name] = r;
-        return *r;
-    }
+    Registry& Register(const String& name, bool can_override = false);
 
     /*!
   * \brief Erase global function from registry, if exist.
   * \param name The name of the function.
   * \return Whether function exist.
   */
-    bool Remove(const String& name) {
-        std::lock_guard lock(mutex);
-        auto it = fmap.find(name);
-        if (it == fmap.end()) {
-            return false;
-        }
-        fmap.erase(it);
-        return true;
-    }
+    bool Remove(const String& name);
 
     /*!
    * \brief Get the global function by name.
@@ -389,28 +344,16 @@ public:
    * \return pointer to the registered function,
    *   nullptr if it does not exist.
    */
-    const PackedFunc* Get(const String& name) {
-        std::lock_guard lock(mutex);
-        auto it = fmap.find(name);
-        if (it == fmap.end()) {
-            return nullptr;
-        }
-        return &it->second->get_body();
-    }
+    const PackedFunc* Get(const String& name);
 
     /*!
    * \brief Get the names of currently registered global function.
    * \return The names
    */
-    std::vector<String> ListNames() {
-        std::lock_guard lock(mutex);
-        std::vector<String> keys;
-        keys.reserve(fmap.size());
-        for (const auto& kv: fmap) {
-            keys.push_back(kv.first);
-        }
-        return keys;
-    }
+    std::vector<String> ListNames();
+
+private:
+    RegistryManager() = default;
 
     // map storing the functions.
     // We deliberately used raw pointer.
@@ -420,9 +363,6 @@ public:
     std::unordered_map<String, Registry*> fmap;
     // mutex
     std::mutex mutex;
-
-private:
-    RegistryManager() = default;
 };
 
 #define TVM_FUNC_REG_VAR_DEF static TVM_ATTRIBUTE_UNUSED ::litetvm::runtime::Registry& __mk_##TVM

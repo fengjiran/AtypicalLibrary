@@ -14,7 +14,7 @@ void ModuleNode::Import(Module other) {
     if (!std::strcmp(this->type_key(), "rpc")) {
         static const PackedFunc* fimport_ = nullptr;
         if (fimport_ == nullptr) {
-            fimport_ = Registry::Get("rpc.ImportRemoteModule");
+            fimport_ = RegistryManager::Global().Get("rpc.ImportRemoteModule");
             CHECK(fimport_ != nullptr);
         }
         (*fimport_)(GetRef<Module>(this), other);
@@ -61,7 +61,7 @@ PackedFunc ModuleNode::GetFunction(const String& name, bool query_imports) {
 //     }
 //     std::string load_f_name = "runtime.module.loadfile_" + fmt;
 //     VLOG(1) << "Loading module from '" << file_name << "' of format '" << fmt << "'";
-//     const PackedFunc* f = Registry::Get(load_f_name);
+//     const PackedFunc* f = RegistryManager::Global().Get(load_f_name);
 //     CHECK(f != nullptr) << "Loader for `." << format << "` files is not registered,"
 //                          << " resolved to (" << load_f_name << ") in the global registry."
 //                          << "Ensure that you have loaded the correct runtime code, and"

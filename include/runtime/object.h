@@ -5,7 +5,6 @@
 #ifndef ATYPICALLIBRARY_OBJECT_H
 #define ATYPICALLIBRARY_OBJECT_H
 
-// #include "runtime/base.h"
 #include "runtime/utils.h"
 
 #include <cstdint>
@@ -79,10 +78,10 @@ enum class TypeIndex {
 class Object {
 public:
     /*!
-   * \brief Object deleter
+   * \brief Object deleter function
    * \param self pointer to the Object.
    */
-    using FDeleter = void (*)(Object* self);
+    using FDeleter = std::function<void(Object*)>;
 
     // default construct.
     Object() = default;
@@ -220,8 +219,8 @@ protected:
     void DecRef() {
         if (ref_counter_.fetch_sub(1, std::memory_order_release) == 1) {
             std::atomic_thread_fence(std::memory_order_acquire);
-            if (this->deleter_ != nullptr) {
-                (*this->deleter_)(this);
+            if (this->deleter_) {
+                (this->deleter_)(this);
             }
         }
     }
@@ -230,8 +229,8 @@ protected:
 
     void DecRef() {
         if (--ref_counter_ == 0) {
-            if (this->deleter_ != nullptr) {
-                (*this->deleter_)(this);
+            if (this->deleter_) {
+                (this->deleter_)(this);
             }
         }
     }
@@ -250,7 +249,7 @@ protected:
    * If the deleter is nullptr, no deletion will be performed.
    * The creator of the object must always set the deleter field properly.
    */
-    FDeleter deleter_ = nullptr;
+    FDeleter deleter_;
 
     // Invariant checks.
     static_assert(sizeof(int32_t) == sizeof(RefCounterType) &&

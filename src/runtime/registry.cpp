@@ -8,116 +8,48 @@
 #include <glog/logging.h>
 #include <mutex>
 #include <unordered_map>
-#include <utility>
 
 namespace litetvm {
 namespace runtime {
 
-// class Registry::Manager {
-// public:
-//     // map storing the functions.
-//     // We deliberately used raw pointer.
-//     // This is because PackedFunc can contain callbacks into the host language (Python) and the
-//     // resource can become invalid because of indeterministic order of destruction and forking.
-//     // The resources will only be recycled during program exit.
-//     std::unordered_map<String, Registry*> fmap;
-//     // mutex
-//     std::mutex mutex;
-//
-//     Manager() = default;
-//
-//     static Manager* Global() {
-//         // We deliberately leak the Manager instance, to avoid leak sanitizers
-//         // complaining about the entries in Manager::fmap being leaked at program
-//         // exit.
-//         // static auto* inst = new Manager();
-//         static Manager inst;
-//         return &inst;
-//     }
-// };
-
-Registry& Registry::set_body(PackedFunc f) {// NOLINT(*)
-    func_ = std::move(f);
-    return *this;
-}
-
-// Registry& Registry::Register(const String& name, bool can_override) {// NOLINT(*)
-//     Manager* m = Manager::Global();
-//     std::lock_guard<std::mutex> lock(m->mutex);
-//     if (m->fmap.count(name)) {
-//         CHECK(can_override) << "Global PackedFunc " << name << " is already registered";
-//     }
-//
-//     auto* r = new Registry();
-//     r->name_ = name;
-//     m->fmap[name] = r;
-//     return *r;
-// }
-
-Registry& Registry::Register(const String& name, bool can_override) {// NOLINT(*)
-    auto& m = RegistryManager::Global();
-    std::lock_guard<std::mutex> lock(m.mutex);
-    if (m.fmap.find(name) != m.fmap.end()) {
+Registry& RegistryManager::Register(const String& name, bool can_override) {
+    std::lock_guard lock(mutex);
+    if (fmap.find(name) != fmap.end()) {
         CHECK(can_override) << "Global PackedFunc " << name << " is already registered";
     }
-
     auto* r = new Registry();
-    r->name_ = name;
-    m.fmap[name] = r;
+    r->set_name(name);
+    fmap[name] = r;
     return *r;
 }
 
-// bool Registry::Remove(const String& name) {
-//     Manager* m = Manager::Global();
-//     std::lock_guard<std::mutex> lock(m->mutex);
-//     auto it = m->fmap.find(name);
-//     if (it == m->fmap.end()) return false;
-//     m->fmap.erase(it);
-//     return true;
-// }
-
-bool Registry::Remove(const String& name) {
-    auto& m = RegistryManager::Global();
-    std::lock_guard<std::mutex> lock(m.mutex);
-    auto it = m.fmap.find(name);
-    if (it == m.fmap.end())
+bool RegistryManager::Remove(const String& name) {
+    std::lock_guard lock(mutex);
+    auto it = fmap.find(name);
+    if (it == fmap.end()) {
         return false;
-    m.fmap.erase(it);
+    }
+    fmap.erase(it);
     return true;
 }
 
-// const PackedFunc* Registry::Get(const String& name) {
-//     Manager* m = Manager::Global();
-//     std::lock_guard<std::mutex> lock(m->mutex);
-//     auto it = m->fmap.find(name);
-//     if (it == m->fmap.end()) return nullptr;
-//     return &(it->second->func_);
-// }
-
-const PackedFunc* Registry::Get(const String& name) {
-    auto& m = RegistryManager::Global();
-    std::lock_guard<std::mutex> lock(m.mutex);
-    auto it = m.fmap.find(name);
-    if (it == m.fmap.end()) {
+const PackedFunc* RegistryManager::Get(const String& name) {
+    std::lock_guard lock(mutex);
+    auto it = fmap.find(name);
+    if (it == fmap.end()) {
         return nullptr;
     }
-    return &it->second->func_;
+    return &it->second->get_body();
 }
 
-// std::vector<String> Registry::ListNames() {
-//     Manager* m = Manager::Global();
-//     std::lock_guard<std::mutex> lock(m->mutex);
-//     std::vector<String> keys;
-//     keys.reserve(m->fmap.size());
-//     for (const auto& kv: m->fmap) {
-//         keys.push_back(kv.first);
-//     }
-//     return keys;
-// }
-
-std::vector<String> Registry::ListNames() {
-    return RegistryManager::Global().ListNames();
-
+std::vector<String> RegistryManager::ListNames() {
+    std::lock_guard lock(mutex);
+    std::vector<String> keys;
+    keys.reserve(fmap.size());
+    for (const auto& kv: fmap) {
+        keys.push_back(kv.first);
+    }
+    return keys;
 }
 
 /*!
@@ -310,15 +242,14 @@ int TVMFuncRegisterGlobal(const char* name, TVMFunctionHandle f, int override) {
     using litetvm::runtime::GetRef;
     using litetvm::runtime::PackedFunc;
     using litetvm::runtime::PackedFuncObj;
-    litetvm::runtime::Registry::Register(name, override != 0)
-            .set_body(GetRef<PackedFunc>(static_cast<PackedFuncObj*>(f)));
+    litetvm::runtime::RegistryManager::Global().Register(name, override != 0).set_body(GetRef<PackedFunc>(static_cast<PackedFuncObj*>(f)));
     return 0;
     // API_END();
 }
 
 int TVMFuncGetGlobal(const char* name, TVMFunctionHandle* out) {
     // API_BEGIN();
-    const litetvm::runtime::PackedFunc* fp = litetvm::runtime::Registry::Get(name);
+    const litetvm::runtime::PackedFunc* fp = litetvm::runtime::RegistryManager::Global().Get(name);
     if (fp != nullptr) {
         litetvm::runtime::TVMRetValue ret;
         ret = *fp;
@@ -336,7 +267,7 @@ int TVMFuncGetGlobal(const char* name, TVMFunctionHandle* out) {
 int TVMFuncListGlobalNames(int* out_size, const char*** out_array) {
     // API_BEGIN();
     TVMFuncThreadLocalEntry* ret = TVMFuncThreadLocalStore::Get();
-    ret->ret_vec_str = litetvm::runtime::Registry::ListNames();
+    ret->ret_vec_str = litetvm::runtime::RegistryManager::Global().ListNames();
     ret->ret_vec_charp.clear();
     for (size_t i = 0; i < ret->ret_vec_str.size(); ++i) {
         ret->ret_vec_charp.push_back(ret->ret_vec_str[i].c_str());
@@ -349,7 +280,7 @@ int TVMFuncListGlobalNames(int* out_size, const char*** out_array) {
 
 int TVMFuncRemoveGlobal(const char* name) {
     // API_BEGIN();
-    litetvm::runtime::Registry::Remove(name);
+    litetvm::runtime::RegistryManager::Global().Remove(name);
     return 0;
     // API_END();
 }
