@@ -245,7 +245,7 @@ NDArray NDArray::CreateView(ShapeTuple shape, DLDataType dtype, uint64_t relativ
             << "View with shape " << shape << " and datatype " << dtype << " would have a size of "
             << view_size << " bytes.  "
             << "This would occupy bytes " << relative_byte_offset << " <= i_byte < "
-            << (relative_byte_offset + view_size) << " within the backing array.  "
+            << relative_byte_offset + view_size << " within the backing array.  "
             << "However, the NDArray being viewed only contains " << curr_size << " bytes (shape = "
             << ShapeTuple(curr_dl_tensor.shape, curr_dl_tensor.shape + curr_dl_tensor.ndim)
             << ", dtype= " << curr_dl_tensor.dtype << ").";
