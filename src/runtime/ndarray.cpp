@@ -90,8 +90,8 @@ struct NDArray::Internal {
     static void DLPackDeleter(Object* p) {
         auto* ptr = static_cast<Container*>(p);
         auto* tensor = static_cast<DLManagedTensor*>(ptr->manager_ctx);
-        if (tensor->deleter != nullptr) {
-            (*tensor->deleter)(tensor);
+        if (tensor->deleter) {
+            (tensor->deleter)(tensor);
         }
         delete ptr;
     }
@@ -189,7 +189,8 @@ NDArray NDArray::CopyTo(const Device& dev, const Optional<String>& mem_scope) co
     const DLTensor* dptr = operator->();
     NDArray ret = Empty(ShapeTuple(dptr->shape, dptr->shape + dptr->ndim),
                         dptr->dtype,
-                        dev, mem_scope);
+                        dev,
+                        mem_scope);
     this->CopyTo(ret);
     Device copy_gpu_dev = dptr->device.device_type != DLDeviceType::kDLCPU ? dptr->device : dev;
     DeviceAPI::Get(copy_gpu_dev)->StreamSync(copy_gpu_dev, nullptr);
@@ -252,7 +253,7 @@ void NDArray::CopyToBytes(void* data, size_t nbytes) const {
     ArrayCopyToBytes(&get_mutable()->dl_tensor, data, nbytes);
 }
 
-void NDArray::CopyFromBytes(const void* data, size_t nbytes) {
+void NDArray::CopyFromBytes(const void* data, size_t nbytes) const {
     CHECK(data != nullptr);
     CHECK(data_ != nullptr);
     ArrayCopyFromBytes(&get_mutable()->dl_tensor, data, nbytes);

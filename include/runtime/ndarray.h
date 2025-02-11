@@ -102,7 +102,7 @@ public:
    *        Must be equal to the size of the NDArray.
    * \note The copy always triggers a TVMSynchronize.
    */
-    void CopyFromBytes(const void* data, size_t nbytes);
+    void CopyFromBytes(const void* data, size_t nbytes) const;
 
     /*!
    * \brief Copy data content into another array.
@@ -310,7 +310,7 @@ public:
    * \param deleter The deleter.
    */
     void SetDeleter(FDeleter deleter) {
-        deleter_ = deleter;
+        deleter_ = std::move(deleter);
     }
 
     // Expose DecRef and IncRef as public function

@@ -7,6 +7,7 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <functional>
 
 using tvm_index_t = int64_t;
 
@@ -186,7 +187,7 @@ struct DLTensor {
  *  is no longer needed.
  */
 struct DLManagedTensor {
-    using FDeleter = void (*)(DLManagedTensor*);
+    using FDeleter = std::function<void(DLManagedTensor*)>;
 
     /*! \brief DLTensor which is being memory managed */
     DLTensor dl_tensor;
