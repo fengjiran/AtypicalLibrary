@@ -12,6 +12,7 @@
 #include <optional>
 #include <string>
 #include <functional>
+#include <format>
 
 /*!
  * \brief Whether or not use atomic reference counter.

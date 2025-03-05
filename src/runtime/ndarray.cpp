@@ -208,7 +208,7 @@ NDArray NDArray::CopyTo(const Device& dev, const Optional<String>& mem_scope) co
     return ret;
 }
 
-NDArray NDArray::CreateView(ShapeTuple shape, DLDataType dtype, uint64_t relative_byte_offset) const {
+NDArray NDArray::CreateView(const ShapeTuple& shape, DLDataType dtype, uint64_t relative_byte_offset) const {
     CHECK(data_ != nullptr);
 
     const DLTensor& orig = get_mutable()->dl_tensor;
@@ -240,6 +240,15 @@ NDArray NDArray::CreateView(ShapeTuple shape, DLDataType dtype, uint64_t relativ
 
     size_t curr_size = GetDataSize(this->get_mutable()->dl_tensor);
     size_t view_size = GetDataSize(ret.get_mutable()->dl_tensor);
+    // CHECK_LE(relative_byte_offset + view_size, curr_size)
+    //         << std::format("ValueError: View with shape {0} and datatype {1} would have a size of {2} bytes. "
+    //                        "This would occupy bytes {3} <= i_byte < {4} within the backing array. "
+    //                        "However, the NDArray being viewed only contains {5} bytes (shape = {6}, "
+    //                        "dtype = {7}).",
+    //                        shape, dtype, view_size, relative_byte_offset, relative_byte_offset + view_size,
+    //                        curr_size, ShapeTuple(curr_dl_tensor.shape, curr_dl_tensor.shape + curr_dl_tensor.ndim),
+    //                        curr_dl_tensor.dtype);
+
     CHECK_LE(relative_byte_offset + view_size, curr_size)
             << "ValueError: "
             << "View with shape " << shape << " and datatype " << dtype << " would have a size of "

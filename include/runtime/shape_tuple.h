@@ -169,4 +169,27 @@ using IntTupleNode = ShapeTupleNode;
 
 }// namespace litetvm::runtime
 
+// namespace std {
+//
+// template<>
+// struct std::formatter<litetvm::runtime::ShapeTuple> {
+//     static auto parse(format_parse_context& ctx) {
+//         return ctx.begin();
+//     }
+//
+//     static auto format(const litetvm::runtime::ShapeTuple& shape, format_context& ctx) {
+//         std::string s;
+//         size_t n = shape.size();
+//         s += '[';
+//         for (size_t i = 0; i < n; ++i) {
+//             s += std::to_string(shape[i]) + (i != n - 1 ? ", " : "");
+//         }
+//         s += ']';
+//         return std::format_to(ctx.out(), s.c_str());
+//     }
+//
+// };
+//
+// }
+
 #endif//SHAPE_TUPLE_H

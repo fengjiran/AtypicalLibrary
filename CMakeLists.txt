@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.22)
 project(AtypicalLibrary)
 
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 20)
 
 # Set custom Alloc Alignment for device allocated memory ndarray points to
 set(USE_KALLOC_ALIGNMENT 64)

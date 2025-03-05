@@ -20,7 +20,7 @@ TEST(ObjectTest, object) {
     CHECK_EQ(t1.back(), t1[t1.size() - 1]);
     CHECK_EQ(t1.use_count(), 1);
 
-    std::cout << t1 << std::endl;
+    std::cout << std::format("{0}\n", t1) << std::endl;
 
     ShapeTuple t2;
     CHECK(t2.empty());
@@ -35,7 +35,7 @@ TEST(ObjectTest, object) {
 }
 
 TEST(ObjectTest, ListAllPackedFunc) {
-    std::cout << "List all registered packed functions:" << std::endl;
+    std::cout << std::format("List all registered packed functions:") << std::endl;
     for (const auto& name: RegistryManager::Global().ListNames()) {
         std::cout << name << std::endl;
     }
