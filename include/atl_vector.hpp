@@ -734,7 +734,7 @@ vector<T, Allocator>& vector<T, Allocator>::operator=(std::initializer_list<T> i
 }
 
 template<typename T, typename Allocator>
-vector<T, Allocator>& vector<T, Allocator>::operator=(const vector<T, Allocator>& rhs) {
+vector<T, Allocator>& vector<T, Allocator>::operator=(const vector& rhs) {
     if (this != std::addressof(rhs)) {
         _copy_assign_allocator(
                 rhs,
