@@ -3,6 +3,7 @@
 //
 #include "glog/logging.h"
 #include "gtest/gtest.h"
+#include "thread_pool.h"
 
 int main() {
     testing::InitGoogleTest();

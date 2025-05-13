@@ -48,11 +48,6 @@ public:
     static ATLAllocator select_on_container_copy_construction() {
         return {};
     }
-
-    // template<typename U>
-    // struct rebind {
-    //     using other = ATLAllocator<U>;
-    // };
 };
 
 template<typename T, typename U>
