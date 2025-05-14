@@ -222,6 +222,15 @@ TEST(ATLVectorTest, integral_constant) {
     static_assert(atp::has_propagate_on_container_copy_assignment<A>::value);
 }
 
+class StaticTest {
+public:
+    StaticTest() = default;
+    void operator()() const {
+        static int vtable;
+        std::cout << "local static var addr: " << &vtable << '\n';
+    }
+};
+
 TEST(ATLVectorTest, split_string) {
     std::vector<std::string> token;
     std::string s = "[(expr1,expr2)]";
@@ -255,5 +264,9 @@ TEST(ATLVectorTest, split_string) {
     for (const auto& x: token) {
         std::cout << x << " ";
     }
-    //    std::cout << "\n";
+    std::cout << '\n';
+
+    StaticTest f1, f2;
+    f1();
+    f2();
 }

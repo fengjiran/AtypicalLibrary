@@ -44,4 +44,7 @@ TEST(ATLAllocatorTest, general) {
     static_assert(atp::is_same_v<atp::conditional_t<false, int, float>, float>);
     // static_assert(atp::is_same_v<atp::rebind_pointer_t<int, float>, float>);
     static_assert(std::is_same_v<std::remove_extent_t<int[3][4]>, int[4]>);
+
+    atp::true_type a;
+    static_assert(static_cast<bool>(a));
 }
