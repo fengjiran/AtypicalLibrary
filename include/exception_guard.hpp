@@ -17,7 +17,7 @@ public:
     explicit _exception_guard_exceptions(Rollback rollback)
         : rollback_(std::move(rollback)), completed_(false) {}
 
-    _exception_guard_exceptions(_exception_guard_exceptions&& other) noexcept(std::is_nothrow_constructible<Rollback>::value)
+    _exception_guard_exceptions(_exception_guard_exceptions&& other) noexcept(std::is_nothrow_constructible_v<Rollback>)
         : rollback_(std::move(other.rollback_)), completed_(other.completed_) {
         other.completed_ = true;
     }
@@ -43,8 +43,7 @@ private:
 
 #if CPP_STD_VERSION >= 17
 template<typename... Tag>
-_exception_guard_exceptions(typename Tag::__allow_ctad...)
-        -> _exception_guard_exceptions<Tag...>;
+_exception_guard_exceptions(typename Tag::__allow_ctad...) -> _exception_guard_exceptions<Tag...>;
 #endif
 
 template<typename Rollback>

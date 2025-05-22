@@ -35,7 +35,6 @@ public:
     static_assert((std::is_same<typename allocator_type::value_type, value_type>::value),
                   "Allocator::value_type must be same type as value_type");
 
-public:
     /**
      * @brief Default constructor.
      *
