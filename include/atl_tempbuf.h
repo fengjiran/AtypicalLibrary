@@ -21,14 +21,15 @@ std::pair<T*, std::ptrdiff_t> get_temporary_buffer(std::ptrdiff_t len) noexcept 
     }
 
     while (len > 0) {
-        T* tmp = static_cast<T*>(::operator new(len * sizeof(T), std::nothrow));
-        if (tmp) {
-            return std::pair<T*, std::ptrdiff_t>(tmp, len);
+        if (T* tmp = static_cast<T*>(::operator new(len * sizeof(T), std::nothrow))) {
+            return std::make_pair(tmp, len);
+            // return std::pair<T*, std::ptrdiff_t>(tmp, len);
         }
         len = len == 1 ? 0 : (len + 1) / 2;
     }
 
-    return std::pair<T*, std::ptrdiff_t>(static_cast<T*>(nullptr), 0);
+    // return std::pair<T*, std::ptrdiff_t>(static_cast<T*>(nullptr), 0);
+    return std::make_pair(static_cast<T*>(nullptr), 0);
 }
 
 template<typename T>
