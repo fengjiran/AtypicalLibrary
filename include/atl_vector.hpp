@@ -41,7 +41,7 @@ public:
      * Constructs an empty container with a default-constructed allocator.
      */
     vector() noexcept(noexcept(allocator_type()))
-        : start(nullptr), cap(nullptr), firstFree(nullptr), alloc(allocator_type()) {}
+        : start(nullptr), cap(nullptr), first_free(nullptr), alloc(allocator_type()) {}
 
     /**
      * @brief Constructs an empty container with the given allocator.
@@ -49,7 +49,7 @@ public:
      * @param alloc_ The given allocator.
      */
     explicit vector(const allocator_type& alloc_) noexcept
-        : start(nullptr), cap(nullptr), firstFree(nullptr), alloc(alloc_) {}
+        : start(nullptr), cap(nullptr), first_free(nullptr), alloc(alloc_) {}
 
     /**
      * @brief Constructs the container with n default-inserted instances of T. No copies are made.
@@ -307,7 +307,7 @@ public:
      *
      * @return Iterator to the element following the last element.
      */
-    iterator end() noexcept { return _make_iter(firstFree); }
+    iterator end() noexcept { return _make_iter(first_free); }
 
     /**
      * @brief Returns an read-only iterator to the element following the last element of the vector.\n
@@ -315,7 +315,7 @@ public:
      *
      * @return Read-only iterator to the element following the last element.
      */
-    const_iterator end() const noexcept { return _make_iter(firstFree); }
+    const_iterator end() const noexcept { return _make_iter(first_free); }
 
     /**
      * @brief Returns an read-only iterator to the element following the last element of the vector.\n
@@ -362,7 +362,9 @@ public:
      *
      * @return Reverse iterator to the element following the last element.
      */
-    reverse_iterator rend() noexcept { return reverse_iterator(begin()); }
+    reverse_iterator rend() noexcept {
+        return reverse_iterator(begin());
+    }
 
     /**
      * @brief Returns a read-only reverse iterator to the element following the last element of the reversed vector.
@@ -371,7 +373,9 @@ public:
      *
      * @return Read-only reverse iterator to the element following the last element.
      */
-    const_reverse_iterator rend() const noexcept { return const_reverse_iterator(begin()); }
+    const_reverse_iterator rend() const noexcept {
+        return const_reverse_iterator(begin());
+    }
 
     /**
      * @brief Returns a read-only reverse iterator to the element following the last element of the reversed vector.
@@ -380,14 +384,18 @@ public:
      *
      * @return Read-only reverse iterator to the element following the last element.
      */
-    const_reverse_iterator crend() const noexcept { return rend(); }
+    const_reverse_iterator crend() const noexcept {
+        return rend();
+    }
 
     /**
      * @brief Checks if the container has no elements, i.e. whether begin() == end().
      *
      * @return true if the container is empty, false otherwise.
      */
-    bool empty() const noexcept { return firstFree == start; }
+    bool empty() const noexcept {
+        return first_free == start;
+    }
 
     /**
      * @brief Returns the number of elements in the container,
@@ -395,7 +403,7 @@ public:
      *
      * @return The number of elements in the container.
      */
-    size_type size() const noexcept { return static_cast<size_type>(firstFree - start); }
+    size_type size() const noexcept { return static_cast<size_type>(first_free - start); }
 
     /**
      * @brief Returns the maximum number of elements the container is able to hold due to system or
@@ -542,21 +550,21 @@ private:
 
     template<typename... Args>
     void _construct_one_at_end(Args&&... args) {
-        alloc_traits::construct(alloc, firstFree++, std::forward<Args>(args)...);
+        alloc_traits::construct(alloc, first_free++, std::forward<Args>(args)...);
     }
 
     void _destruct_at_end(pointer new_last) noexcept {
-        pointer p = firstFree;
+        pointer p = first_free;
         while (p != new_last) {
             alloc_traits::destroy(_alloc(), atp::to_address(--p));
         }
-        firstFree = new_last;
+        first_free = new_last;
     }
 
     void _reallocate();
     void _reallocate(size_type newCap);
     void _check_and_alloc() {
-        if (firstFree == cap) {
+        if (first_free == cap) {
             _reallocate();
         }
     }
@@ -585,7 +593,7 @@ private:
         if (_alloc() != c._alloc()) {
             _destroy_vector (*this)();
             start = nullptr;
-            firstFree = nullptr;
+            first_free = nullptr;
             cap = nullptr;
         }
         alloc = c._alloc();
@@ -598,11 +606,11 @@ private:
         alloc = std::move(rhs._alloc());
 
         start = rhs.start;
-        firstFree = rhs.firstFree;
+        first_free = rhs.first_free;
         cap = rhs.cap;
 
         rhs.start = nullptr;
-        rhs.firstFree = nullptr;
+        rhs.first_free = nullptr;
         rhs.cap = nullptr;
     }
 
@@ -613,7 +621,7 @@ private:
                 emplace_back(std::move(*iter));
             }
             rhs.start = nullptr;
-            rhs.firstFree = nullptr;
+            rhs.first_free = nullptr;
             rhs.cap = nullptr;
         } else {
             _move_assign(rhs, true_type());
@@ -657,12 +665,11 @@ private:
     allocator_type alloc;
     pointer start;
     pointer cap;
-    pointer firstFree;
+    pointer first_free;
 };
 
 template<typename T, typename Allocator>
-vector<T, Allocator>::vector(size_type n, const allocator_type& alloc_)
-    : alloc(alloc_) {
+vector<T, Allocator>::vector(size_type n, const allocator_type& alloc_) : alloc(alloc_) {
     _init_with_size(n);
 }
 
@@ -694,9 +701,9 @@ vector<T, Allocator>::vector(const vector<T, Allocator>& other, const type_ident
 
 template<typename T, typename Allocator>
 vector<T, Allocator>::vector(vector&& other) noexcept
-    : start(other.start), firstFree(other.firstFree), cap(other.cap), alloc(std::move(other.alloc)) {
+    : start(other.start), first_free(other.first_free), cap(other.cap), alloc(std::move(other.alloc)) {
     other.start = nullptr;
-    other.firstFree = nullptr;
+    other.first_free = nullptr;
     other.cap = nullptr;
 }
 
@@ -705,7 +712,7 @@ vector<T, Allocator>::vector(vector&& other, const type_identity_t<allocator_typ
     : alloc(alloc_) {
     if (other._alloc() == _alloc()) {
         start = other.start;
-        firstFree = other.firstFree;
+        first_free = other.first_free;
         cap = other.cap;
     } else {
         auto guard = _make_exception_guard(_destroy_vector(*this));
@@ -716,7 +723,7 @@ vector<T, Allocator>::vector(vector&& other, const type_identity_t<allocator_typ
     }
 
     other.start = nullptr;
-    other.firstFree = nullptr;
+    other.first_free = nullptr;
     other.cap = nullptr;
 }
 
@@ -836,14 +843,14 @@ template<typename T, typename Allocator>
 typename vector<T, Allocator>::reference
 vector<T, Allocator>::back() noexcept {
     CHECK(!empty()) << "back() called on an empty vector";
-    return *(firstFree - 1);
+    return *(first_free - 1);
 }
 
 template<typename T, typename Allocator>
 typename vector<T, Allocator>::const_reference
 vector<T, Allocator>::back() const noexcept {
     CHECK(!empty()) << "back() called on an empty vector";
-    return *(firstFree - 1);
+    return *(first_free - 1);
 }
 
 template<typename T, typename Allocator>
@@ -875,19 +882,19 @@ template<typename T, typename Allocator>
 template<typename... Args>
 void vector<T, Allocator>::emplace_back(Args&&... args) {
     _check_and_alloc();
-    alloc_traits::construct(alloc, firstFree++, std::forward<Args>(args)...);
+    alloc_traits::construct(alloc, first_free++, std::forward<Args>(args)...);
 }
 
 template<typename T, typename Allocator>
 void vector<T, Allocator>::push_back(value_type&& t) {
     _check_and_alloc();
-    alloc_traits::construct(alloc, firstFree++, std::move(t));
+    alloc_traits::construct(alloc, first_free++, std::move(t));
 }
 
 template<typename T, typename Allocator>
 void vector<T, Allocator>::push_back(const_reference t) {
     _check_and_alloc();
-    alloc_traits::construct(alloc, firstFree++, t);
+    alloc_traits::construct(alloc, first_free++, t);
 }
 
 template<typename T, typename Allocator>
@@ -898,7 +905,7 @@ void vector<T, Allocator>::resize(size_type n) {
         }
     } else {
         while (size() > n) {
-            alloc_traits::destroy(alloc, --firstFree);
+            alloc_traits::destroy(alloc, --first_free);
         }
     }
 }
@@ -929,7 +936,7 @@ void vector<T, Allocator>::_reallocate(size_type newCap) {
     }
     _destroy_vector (*this)();
     start = data;
-    firstFree = dst;
+    first_free = dst;
     cap = start + newCap;
 }
 
@@ -946,7 +953,7 @@ void vector<T, Allocator>::_reallocate() {
     }
     _destroy_vector (*this)();
     start = data;
-    firstFree = dst;
+    first_free = dst;
     cap = start + newCap;
 }
 
@@ -984,21 +991,21 @@ void vector<T, Allocator>::_init_with_range(InputIterator first, InputIterator l
 template<typename T, typename Allocator>
 void vector<T, Allocator>::_allocate_with_size(size_type n) {
     start = alloc_traits::allocate(alloc, n);
-    firstFree = start;
+    first_free = start;
     cap = start + n;
 }
 
 template<typename T, typename Allocator>
 void vector<T, Allocator>::_construct_at_end(size_type n) {
     for (size_type i = 0; i < n; ++i) {
-        alloc_traits::construct(alloc, firstFree++);
+        alloc_traits::construct(alloc, first_free++);
     }
 }
 
 template<typename T, typename Allocator>
 void vector<T, Allocator>::_construct_at_end(size_type n, const_reference value) {
     for (size_type i = 0; i < n; ++i) {
-        alloc_traits::construct(alloc, firstFree++, value);
+        alloc_traits::construct(alloc, first_free++, value);
     }
 }
 
@@ -1006,7 +1013,7 @@ template<typename T, typename Allocator>
 template<typename InputIterator,
          typename has_input_iterator_category<InputIterator, T>::type>
 void vector<T, Allocator>::_construct_at_end(InputIterator first, InputIterator last) {
-    firstFree = std::uninitialized_copy(first, last, firstFree);
+    first_free = std::uninitialized_copy(first, last, first_free);
 }
 
 template<typename T, typename Allocator>
@@ -1015,10 +1022,9 @@ void vector<T, Allocator>::swap(vector& other) noexcept {
             << "vector::swap: Either propagate_on_container_swap must be true"
             << " or the allocators must compare equal";
     std::swap(start, other.start);
-    std::swap(firstFree, other.firstFree);
+    std::swap(first_free, other.first_free);
     std::swap(cap, other.cap);
-    _swap_allocator(other,
-                    integral_constant<bool, alloc_traits::propagate_on_container_swap::value>());
+    _swap_allocator(other, integral_constant<bool, alloc_traits::propagate_on_container_swap::value>());
 }
 
 template<typename T, typename Allocator>
