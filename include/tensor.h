@@ -5,7 +5,7 @@
 #ifndef TENSOR_H
 #define TENSOR_H
 
-#include <cstdint>
+// #include <cstdint>
 #include <vector>
 
 inline int32_t atomic_inc_relaxed(int32_t* ptr) {
@@ -48,9 +48,21 @@ struct DLDataType {
     // Number of lanes per data element, for vector.
     int16_t lanes;
 };
+//
+// class TensorNode;
+//
+// inline size_t GetDataSize(const TensorNode& t) {
+//     size_t size = 1;
+//
+// }
 
 class TensorNode {
 public:
+    TensorNode() : data(nullptr), ndim(0), dtype({DLDataTypeCode::kFloat, 32, 1}),
+                   device(DeviceType::kCPU), ref_counter(0) {}
+
+    TensorNode(std::vector<int64_t> shape, DLDataType dtype, DeviceType device)
+        : shape(std::move(shape)) {}
 
 private:
     void inc_ref() {
@@ -59,14 +71,13 @@ private:
 
     void* data;
     int32_t ndim;
-    int64_t* shape;
-    int64_t* strides;
+    std::vector<int64_t> shape;
+    std::vector<int64_t> strides;
     DLDataType dtype;
     Device device;
 
     int32_t ref_counter;
 };
-
 
 
 #endif//TENSOR_H
