@@ -6,6 +6,20 @@
 #define TENSOR_H
 
 #include <cstdint>
+#include <vector>
+
+inline int32_t atomic_inc_relaxed(int32_t* ptr) {
+    return __atomic_fetch_add(ptr, 1, __ATOMIC_RELAXED);
+}
+
+inline int32_t atomic_dec_rel_acq(int32_t* ptr) {
+    return __atomic_fetch_sub(ptr, 1, __ATOMIC_ACQ_REL);
+}
+
+inline int32_t atomic_load_relaxed(const int32_t* ptr) {
+    auto raw_ptr = const_cast<int32_t*>(ptr);
+    return __atomic_load_n(raw_ptr, __ATOMIC_RELAXED);
+}
 
 enum class DeviceType : uint8_t {
     kCPU = 0,
@@ -20,7 +34,7 @@ enum class DLDataTypeCode : uint8_t {
 
 struct Device {
     DeviceType device_type;
-    int32_t device_id;
+    uint8_t device_id;
 };
 
 struct DLDataType {
@@ -35,13 +49,24 @@ struct DLDataType {
     int16_t lanes;
 };
 
-struct TensorInfo {
+class TensorNode {
+public:
+
+private:
+    void inc_ref() {
+        atomic_inc_relaxed(&ref_counter);
+    }
+
     void* data;
     int32_t ndim;
     int64_t* shape;
     int64_t* strides;
     DLDataType dtype;
     Device device;
+
+    int32_t ref_counter;
 };
+
+
 
 #endif//TENSOR_H

@@ -72,3 +72,4 @@ private:
     std::vector<int> next;
     const std::string& pat_;
 };
+
