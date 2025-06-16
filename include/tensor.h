@@ -6,6 +6,7 @@
 #define TENSOR_H
 
 #include <cstdint>
+#include <memory>
 #include <vector>
 
 #ifdef __has_cpp_attribute
@@ -27,6 +28,7 @@
         (void) (expr); \
     } while (false)
 
+namespace atp {
 
 inline int32_t atomic_inc_relaxed(int32_t* ptr) {
     return __atomic_fetch_add(ptr, 1, __ATOMIC_RELAXED);
@@ -69,49 +71,103 @@ struct DLDataType {
     int16_t lanes;
 };
 
-struct TensorInfo {
-    void* data;
-    int32_t ndim;
-    std::vector<int64_t> shape;
-    std::vector<int64_t> strides;
-    DLDataType dtype;
-    Device device;
-    int32_t ref_counter;
-};
-
-
-template<typename Allocator>
-class TensorNode {
+class Allocator {
 public:
-    TensorNode() : data(nullptr), ndim(0), dtype({DLDataTypeCode::kFloat, 32, 1}),
-                   device(DeviceType::kCPU), ref_counter(0) {}
+    explicit Allocator(DeviceType device) : device_(device) {}
 
-    TensorNode(Allocator alloc, std::vector<int64_t> shape, DLDataType dtype, DeviceType device)
-        : shape(std::move(shape)) {}
+    virtual ~Allocator() = default;
 
-    NODISCARD int32_t use_count() const {
-        return atomic_load_relaxed(&ref_counter);
+    NODISCARD DeviceType device() const {
+        return device_;
     }
 
-    NODISCARD bool unique() const {
-        return use_count() == 1;
-    }
+    NODISCARD virtual void* allocate(size_t n) const = 0;
+
+    virtual void deallocate(void* p) const = 0;
 
 private:
-    void inc_ref() {
-        atomic_inc_relaxed(&ref_counter);
+    DeviceType device_;
+};
+
+class CPUAllocator : public Allocator {
+public:
+    CPUAllocator() : Allocator(DeviceType::kCPU) {}
+
+    NODISCARD void* allocate(size_t n) const override {
+        return malloc(n);
     }
 
-    void* data;
-    int32_t ndim;
+    void deallocate(void* p) const override {
+        free(p);
+    }
+};
+
+class CUDAAllocator : public Allocator {
+public:
+    CUDAAllocator() : Allocator(DeviceType::kCUDA) {}
+    NODISCARD void* allocate(size_t n) const override {
+        void* p = nullptr;
+        // CHECK_CUDA(cudaMalloc(&p, n));
+        return p;
+    }
+
+    void deallocate(void* p) const override {
+        // CHECK_CUDA(cudaFree(p));
+    }
+};
+
+struct TensorInfo {
+    void* data{nullptr};
+    int32_t ndim{0};
     std::vector<int64_t> shape;
     std::vector<int64_t> strides;
     DLDataType dtype;
-    Device device;
-    Allocator alloc;
-
-    int32_t ref_counter;
+    DeviceType device_type;
 };
+
+inline size_t GetTensorSize(const TensorInfo& t) {
+    if (t.shape.empty()) {
+        return 0;
+    }
+
+    size_t numel = 1;
+    for (int i = 0; i < t.ndim; ++i) {
+        numel *= t.shape[i];
+    }
+
+    return (numel * t.dtype.bits * t.dtype.lanes + 7) / 8;
+}
+
+class Tensor {
+public:
+    Tensor() = default;
+
+    explicit Tensor(const std::vector<int64_t>& shape,
+                    DeviceType device_type = DeviceType::kCPU,
+                    DLDataType dtype = {DLDataTypeCode::kFloat, 32, 1});
+
+    Tensor(const Tensor&) = default;
+    Tensor(Tensor&&) = default;
+    Tensor& operator=(const Tensor&) = default;
+    Tensor& operator=(Tensor&&) = default;
+
+    NODISCARD int32_t use_count() const;
+
+    NODISCARD bool unique() const;
+
+    NODISCARD void* data() const;
+
+    NODISCARD std::vector<int64_t> shape() const;
+
+    NODISCARD DLDataType dtype() const;
+
+
+private:
+    class TensorNode;
+    std::shared_ptr<TensorNode> data_;
+};
+
+}// namespace atp
 
 
 #endif//TENSOR_H
