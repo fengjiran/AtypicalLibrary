@@ -54,6 +54,10 @@ public:
         return tensor_info_.ndim;
     }
 
+    NODISCARD int64_t element_size() const {
+        return (tensor_info_.dtype.bits * tensor_info_.dtype.lanes + 7) / 8;
+    }
+
     NODISCARD int64_t numel() const {
         if (tensor_info_.shape.empty()) {
             return 0;
@@ -107,6 +111,10 @@ Tensor Tensor::randn(const std::vector<int64_t>& shape) {
     return t;
 }
 
+bool Tensor::defined() const {
+    return data_ != nullptr;
+}
+
 
 int32_t Tensor::use_count() const {
     return static_cast<int32_t>(data_.use_count());
@@ -137,6 +145,10 @@ int32_t Tensor::ndim() const {
 
 int64_t Tensor::numel() const {
     return data_->numel();
+}
+
+int64_t Tensor::nbytes() const {
+    return data_->nbytes();
 }
 
 

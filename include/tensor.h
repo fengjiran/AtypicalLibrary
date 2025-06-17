@@ -275,6 +275,8 @@ public:
     // a normal distribution with mean 0 and variance 1
     static Tensor randn(const std::vector<int64_t>& shape);
 
+    NODISCARD bool defined() const;
+
     NODISCARD int32_t use_count() const;
 
     NODISCARD bool unique() const;
@@ -288,6 +290,8 @@ public:
     NODISCARD int32_t ndim() const;
 
     NODISCARD int64_t numel() const;
+
+    NODISCARD int64_t nbytes() const;
 
 
 private:

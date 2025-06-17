@@ -12,4 +12,17 @@ TEST(Tensor, base1) {
     auto t1 = t;
     EXPECT_TRUE(t.shape() == std::vector<int64_t>({3, 10}));
     EXPECT_EQ(t.use_count(), 2);
+    EXPECT_TRUE(t1.defined());
+}
+
+TEST(Tensor, random) {
+    std::vector<int64_t> shape({10, 3, 64, 64});
+    int64_t numel = 1;
+    for (int64_t x: shape) {
+        numel *= x;
+    }
+    auto t = Tensor::rand(shape);
+    EXPECT_EQ(t.numel(), numel);
+    EXPECT_EQ(t.nbytes(), numel * 4);
+    std::cout << static_cast<float*>(t.data())[0] << std::endl;
 }
