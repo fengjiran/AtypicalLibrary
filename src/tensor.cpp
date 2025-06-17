@@ -3,6 +3,8 @@
 //
 
 #include "tensor.h"
+#include <glog/logging.h>
+#include <random>
 
 namespace atp {
 
@@ -48,6 +50,27 @@ public:
         return tensor_info_.dtype;
     }
 
+    NODISCARD int32_t ndim() const {
+        return tensor_info_.ndim;
+    }
+
+    NODISCARD int64_t numel() const {
+        if (tensor_info_.shape.empty()) {
+            return 0;
+        }
+
+        int64_t numel = 1;
+        for (int64_t dim: tensor_info_.shape) {
+            numel *= dim;
+        }
+        return numel;
+    }
+
+    NODISCARD int64_t nbytes() const {
+        return GetTensorSize(tensor_info_);
+    }
+
+
 private:
     TensorInfo tensor_info_{};
     Allocator* alloc_{nullptr};
@@ -56,6 +79,34 @@ private:
 Tensor::Tensor(const std::vector<int64_t>& shape, DeviceType device_type, DLDataType dtype) {
     data_ = std::make_shared<TensorNode>(shape, device_type, dtype);
 }
+
+Tensor Tensor::rand(const std::vector<int64_t>& shape) {
+    Tensor t(shape);
+    CHECK(t.numel() > 0);
+
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::uniform_real_distribution<float> dist(0, 1);
+    for (int64_t i = 0; i < t.numel(); ++i) {
+        static_cast<float*>(t.data())[i] = dist(gen);
+    }
+
+    return t;
+}
+
+Tensor Tensor::randn(const std::vector<int64_t>& shape) {
+    Tensor t(shape);
+    CHECK(t.numel() > 0);
+
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::normal_distribution<float> dist(0, 1);
+    for (int64_t i = 0; i < t.numel(); ++i) {
+        static_cast<float*>(t.data())[i] = dist(gen);
+    }
+    return t;
+}
+
 
 int32_t Tensor::use_count() const {
     return static_cast<int32_t>(data_.use_count());
@@ -78,6 +129,14 @@ std::vector<int64_t> Tensor::shape() const {
 
 DLDataType Tensor::dtype() const {
     return data_->dtype();
+}
+
+int32_t Tensor::ndim() const {
+    return data_->ndim();
+}
+
+int64_t Tensor::numel() const {
+    return data_->numel();
 }
 
 
