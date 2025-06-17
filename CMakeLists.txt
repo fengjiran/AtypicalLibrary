@@ -13,6 +13,8 @@ endif(USE_KALLOC_ALIGNMENT)
 
 find_package(glog REQUIRED)
 
+set(FMT_PATH "3rdparty/fmt/include")
+
 file(GLOB_RECURSE SRC_FILES ${PROJECT_SOURCE_DIR}/src/*.cpp
         ${PROJECT_SOURCE_DIR}/src/*.cc
 )
@@ -21,11 +23,14 @@ add_library(${PROJECT_NAME} SHARED ${SRC_FILES})
 
 include_directories(
         ${PROJECT_SOURCE_DIR}/include
+        ${FMT_PATH}
 )
 
 target_link_libraries(${PROJECT_NAME}
         glog::glog
         pthread
+        fmt::fmt
 )
 
+add_subdirectory(3rdparty/fmt)
 add_subdirectory(test)

@@ -2,6 +2,7 @@
 // Created by 赵丹 on 25-6-17.
 //
 #include "tensor.h"
+#include "fmt/format.h"
 
 #include <gtest/gtest.h>
 
@@ -13,6 +14,8 @@ TEST(Tensor, base1) {
     EXPECT_TRUE(t.shape() == std::vector<int64_t>({3, 10}));
     EXPECT_EQ(t.use_count(), 2);
     EXPECT_TRUE(t1.defined());
+    fmt::print("hello world\n");
+    std::string s1 = fmt::format("The answer is {}.", 42);
 }
 
 TEST(Tensor, random) {
