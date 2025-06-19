@@ -139,6 +139,7 @@ struct DataType2CPPType;
 
 SCALAR_TYPES_TO_CPP_TYPES(DataTypeToCPPType_Specialization);
 
+
 inline std::string Type2Str(const DLDataType& dtype) {
     switch (dtype.code) {
         case DLDataTypeCode::kInt: {
