@@ -42,6 +42,10 @@ public:
         return tensor_info_.data;
     }
 
+    const void* const_data_ptr() const {
+        return tensor_info_.data;
+    }
+
     NODISCARD std::vector<int64_t> shape() const {
         return tensor_info_.shape;
     }
@@ -130,6 +134,14 @@ void* Tensor::data() const {
     }
     return nullptr;
 }
+
+const void* Tensor::const_data_ptr() const {
+    if (data_) {
+        return data_->const_data_ptr();
+    }
+    return nullptr;
+}
+
 
 std::vector<int64_t> Tensor::shape() const {
     return data_->shape();
