@@ -18,6 +18,7 @@ TEST(Tensor, scalar) {
     EXPECT_EQ(s1.toBool(), false);
     EXPECT_TRUE(s1.type() == DLDataTypeCode::kBool);
     EXPECT_TRUE(s1.isBool());
+    s1 = true;
 
     Scalar s2 = 10;
     EXPECT_EQ(s2.toInt(), 10);

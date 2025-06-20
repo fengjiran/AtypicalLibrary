@@ -382,9 +382,7 @@ public:
         else                                                   \
             throw std::runtime_error("Unsupported data type"); \
     }
-
     SCALAR_TYPES_NAME(ACCESSOR);
-
 #undef ACCESSOR
 
     template<typename T>
