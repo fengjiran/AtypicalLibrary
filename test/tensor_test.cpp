@@ -13,6 +13,21 @@ TEST(Tensor, format) {
     std::string s1 = fmt::format("The answer is {}.", 42);
 }
 
+TEST(Tensor, scalar) {
+    Scalar s1 = false;
+    EXPECT_EQ(s1.toBool(), false);
+    EXPECT_TRUE(s1.type() == DLDataTypeCode::kBool);
+    EXPECT_TRUE(s1.isBool());
+
+    Scalar s2 = 10;
+    EXPECT_EQ(s2.toInt(), 10);
+    EXPECT_TRUE(s2.isIntegral());
+
+    Scalar s3 = 1.0;
+    EXPECT_EQ(s3.toFloat(), 1.0);
+    EXPECT_TRUE(s3.isFloatingPoint());
+}
+
 TEST(Tensor, base1) {
     Tensor t({3, 10});
     auto t1 = t;

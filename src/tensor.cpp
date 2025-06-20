@@ -4,6 +4,7 @@
 
 #include "tensor.h"
 #include <glog/logging.h>
+#include <fmt/format.h>
 #include <random>
 
 namespace atp {
@@ -76,6 +77,11 @@ public:
 
     NODISCARD int64_t nbytes() const {
         return GetTensorSize(tensor_info_);
+    }
+
+    NODISCARD Scalar item() const {
+        CHECK(numel() == 1, fmt::format("a Tensor with {} elements can not converted to Scalar.", numel()));
+
     }
 
 

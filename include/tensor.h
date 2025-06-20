@@ -52,6 +52,7 @@ enum class DeviceType : uint8_t {
 enum class DLDataTypeCode : uint8_t {
     kInt = 0,
     kUInt = 1,
+    kBool,
     kFloat,
     kBfloat,
     kFloat8_e3m4,
@@ -112,6 +113,7 @@ struct DLDataType {
     f(DLDataTypeCode::kUInt, 16, 1, uint16_t);           \
     f(DLDataTypeCode::kUInt, 32, 1, uint32_t);           \
     f(DLDataTypeCode::kUInt, 64, 1, uint64_t);           \
+    f(DLDataTypeCode::kBool, 8, 1, bool);                \
     f(DLDataTypeCode::kFloat, 32, 1, float);             \
     f(DLDataTypeCode::kFloat, 64, 1, double);            \
     f(DLDataTypeCode::kBfloat, 16, 1, float);            \
@@ -126,6 +128,19 @@ struct DLDataType {
     f(DLDataTypeCode::kFloat6_e2m3fn, 6, 1, float);      \
     f(DLDataTypeCode::kFloat6_e3m2fn, 6, 1, float);      \
     f(DLDataTypeCode::kFloat4_e2m1fn, 4, 1, float)
+
+#define SCALAR_TYPES_NAME(f) \
+    f(bool, Bool);           \
+    f(uint8_t, Byte);        \
+    f(int8_t, Char);         \
+    f(uint16_t, UShort);     \
+    f(int16_t, Short);       \
+    f(uint32_t, UInt);       \
+    f(int, Int);             \
+    f(uint64_t, ULong);      \
+    f(int64_t, Long);        \
+    f(float, Float);         \
+    f(double, Double);
 
 
 template<DLDataTypeCode, int8_t, int16_t>
@@ -291,6 +306,107 @@ inline int64_t GetTensorSize(const TensorInfo& t) {
     return (numel * t.dtype.bits * t.dtype.lanes + 7) / 8;
 }
 
+class Scalar {
+public:
+    Scalar() : Scalar(static_cast<int64_t>(0)) {}
+
+    template<typename T,
+             std::enable_if_t<std::is_integral_v<T> && !std::is_same_v<T, bool>>* = nullptr>
+    Scalar(T val) {
+        v.i = static_cast<decltype(v.i)>(val);
+        dtype = DLDataTypeCode::kInt;
+    }
+
+    template<typename T,
+             std::enable_if_t<std::is_floating_point_v<T>>* = nullptr>
+    Scalar(T val) {
+        v.d = static_cast<decltype(v.d)>(val);
+        dtype = DLDataTypeCode::kFloat;
+    }
+
+    template<typename T,
+             std::enable_if_t<std::is_same_v<T, bool>>* = nullptr>
+    Scalar(T val) {
+        v.i = static_cast<decltype(v.i)>(val);
+        dtype = DLDataTypeCode::kBool;
+    }
+
+    Scalar(const Scalar& other) : v(other.v), dtype(other.dtype) {}
+
+    Scalar(Scalar&& other) noexcept : v(other.v), dtype(other.dtype) {
+        other.v.i = 0;
+        other.dtype = DLDataTypeCode::kInt;
+    }
+
+    Scalar& operator=(const Scalar& other) {
+        Scalar tmp(other);
+        swap(*this, tmp);
+        return *this;
+    }
+
+    Scalar& operator=(Scalar&& other) noexcept {
+        Scalar tmp(std::move(other));
+        swap(*this, tmp);
+        return *this;
+    }
+
+    bool isIntegral() const {
+        return dtype == DLDataTypeCode::kInt;
+    }
+
+    bool isFloatingPoint() const {
+        return dtype == DLDataTypeCode::kFloat;
+    }
+
+    bool isBool() const {
+        return dtype == DLDataTypeCode::kBool;
+    }
+
+    DLDataTypeCode type() const {
+        return dtype;
+    }
+
+    friend void swap(Scalar& a, Scalar& b) noexcept {
+        std::swap(a.v, b.v);
+        std::swap(a.dtype, b.dtype);
+    }
+
+#define ACCESSOR(type, name)                                   \
+    type to##name() const {                                    \
+        if (dtype == DLDataTypeCode::kInt)                     \
+            return static_cast<type>(v.i);                     \
+        else if (dtype == DLDataTypeCode::kBool)               \
+            return static_cast<type>(v.i);                     \
+        else if (dtype == DLDataTypeCode::kFloat)              \
+            return static_cast<type>(v.d);                     \
+        else                                                   \
+            throw std::runtime_error("Unsupported data type"); \
+    }
+
+    SCALAR_TYPES_NAME(ACCESSOR);
+
+#undef ACCESSOR
+
+    template<typename T>
+    T to() const = delete;
+
+private:
+    union val {
+        int64_t i;
+        double d{};
+    } v;
+
+    DLDataTypeCode dtype;
+};
+
+#define DEFINE_TO(T, name)           \
+    template<>                       \
+    inline T Scalar::to<T>() const { \
+        return to##name();           \
+    }
+SCALAR_TYPES_NAME(DEFINE_TO);
+#undef DEFINE_TO
+
 class Tensor {
 public:
     Tensor() = default;
@@ -332,6 +448,8 @@ public:
     NODISCARD int64_t numel() const;
 
     NODISCARD int64_t nbytes() const;
+
+    NODISCARD Scalar item() const;
 
 
 private:
