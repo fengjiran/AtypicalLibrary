@@ -7,6 +7,7 @@
 
 #include <csignal>
 #include <cstdint>
+#include <glog/logging.h>
 #include <memory>
 #include <vector>
 
@@ -116,18 +117,18 @@ struct DLDataType {
     f(DLDataTypeCode::kBool, 8, 1, bool);                \
     f(DLDataTypeCode::kFloat, 32, 1, float);             \
     f(DLDataTypeCode::kFloat, 64, 1, double);            \
-    f(DLDataTypeCode::kBfloat, 16, 1, float);            \
-    f(DLDataTypeCode::kFloat8_e3m4, 8, 1, float);        \
-    f(DLDataTypeCode::kFloat8_e4m3, 8, 1, float);        \
-    f(DLDataTypeCode::kFloat8_e4m3b11fnuz, 8, 1, float); \
-    f(DLDataTypeCode::kFloat8_e4m3fn, 8, 1, float);      \
-    f(DLDataTypeCode::kFloat8_e4m3fnuz, 8, 1, float);    \
-    f(DLDataTypeCode::kFloat8_e5m2, 8, 1, float);        \
-    f(DLDataTypeCode::kFloat8_e5m2fnuz, 8, 1, float);    \
-    f(DLDataTypeCode::kFloat8_e8m0fnu, 8, 1, float);     \
-    f(DLDataTypeCode::kFloat6_e2m3fn, 6, 1, float);      \
-    f(DLDataTypeCode::kFloat6_e3m2fn, 6, 1, float);      \
-    f(DLDataTypeCode::kFloat4_e2m1fn, 4, 1, float)
+    // f(DLDataTypeCode::kBfloat, 16, 1, float);            \
+    // f(DLDataTypeCode::kFloat8_e3m4, 8, 1, float);        \
+    // f(DLDataTypeCode::kFloat8_e4m3, 8, 1, float);        \
+    // f(DLDataTypeCode::kFloat8_e4m3b11fnuz, 8, 1, float); \
+    // f(DLDataTypeCode::kFloat8_e4m3fn, 8, 1, float);      \
+    // f(DLDataTypeCode::kFloat8_e4m3fnuz, 8, 1, float);    \
+    // f(DLDataTypeCode::kFloat8_e5m2, 8, 1, float);        \
+    // f(DLDataTypeCode::kFloat8_e5m2fnuz, 8, 1, float);    \
+    // f(DLDataTypeCode::kFloat8_e8m0fnu, 8, 1, float);     \
+    // f(DLDataTypeCode::kFloat6_e2m3fn, 6, 1, float);      \
+    // f(DLDataTypeCode::kFloat6_e3m2fn, 6, 1, float);      \
+    // f(DLDataTypeCode::kFloat4_e2m1fn, 4, 1, float)
 
 #define SCALAR_TYPES_NAME(f) \
     f(bool, Bool);           \
@@ -350,19 +351,19 @@ public:
         return *this;
     }
 
-    bool isIntegral() const {
+    NODISCARD bool isIntegral() const {
         return dtype == DLDataTypeCode::kInt;
     }
 
-    bool isFloatingPoint() const {
+    NODISCARD bool isFloatingPoint() const {
         return dtype == DLDataTypeCode::kFloat;
     }
 
-    bool isBool() const {
+    NODISCARD bool isBool() const {
         return dtype == DLDataTypeCode::kBool;
     }
 
-    DLDataTypeCode type() const {
+    NODISCARD DLDataTypeCode type() const {
         return dtype;
     }
 
@@ -371,16 +372,14 @@ public:
         std::swap(a.dtype, b.dtype);
     }
 
-#define ACCESSOR(type, name)                                   \
-    type to##name() const {                                    \
-        if (dtype == DLDataTypeCode::kInt)                     \
-            return static_cast<type>(v.i);                     \
-        else if (dtype == DLDataTypeCode::kBool)               \
-            return static_cast<type>(v.i);                     \
-        else if (dtype == DLDataTypeCode::kFloat)              \
-            return static_cast<type>(v.d);                     \
-        else                                                   \
-            throw std::runtime_error("Unsupported data type"); \
+#define ACCESSOR(type, name)                                                 \
+    type to##name() const {                                                  \
+        if (dtype == DLDataTypeCode::kInt || dtype == DLDataTypeCode::kBool) \
+            return static_cast<type>(v.i);                                   \
+        else if (dtype == DLDataTypeCode::kFloat)                            \
+            return static_cast<type>(v.d);                                   \
+        else                                                                 \
+            throw std::runtime_error("Unsupported data type");               \
     }
     SCALAR_TYPES_NAME(ACCESSOR);
 #undef ACCESSOR
@@ -435,7 +434,7 @@ public:
 
     NODISCARD void* data() const;
 
-    const void* const_data_ptr() const;
+    // NODISCARD const void* const_data_ptr() const;
 
     NODISCARD std::vector<int64_t> shape() const;
 
@@ -449,11 +448,29 @@ public:
 
     NODISCARD Scalar item() const;
 
+    template<typename T>
+    const T* const_data_ptr() const = delete;
+
 
 private:
     class TensorNode;
     std::shared_ptr<TensorNode> data_;
 };
+
+#define CONST_DATA_PTR(type_code, type_bits, type_lanes, cpp_type)                                                                   \
+    template<>                                                                                                                       \
+    inline const cpp_type* Tensor::const_data_ptr() const {                                                                          \
+        CHECK(dtype().code == (type_code) && dtype().bits == (type_bits) && dtype().lanes == (type_lanes)) << "data type mismatch."; \
+        return static_cast<const cpp_type*>(data());                                                                                 \
+    }
+SCALAR_TYPES_TO_CPP_TYPES(CONST_DATA_PTR);
+#undef CONST_DATA_PTR
+
+// template<>
+// inline const int8_t* Tensor::const_data_ptr() const {
+//     CHECK(dtype().code == DLDataTypeCode::kInt && dtype().bits == 8 && dtype().lanes == 1) << "data type mismatch.";
+//     return static_cast<const int8_t*>(data());
+// }
 
 std::ostream& operator<<(std::ostream& os, const Tensor& t);
 

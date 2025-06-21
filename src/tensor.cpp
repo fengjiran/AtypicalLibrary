@@ -43,9 +43,9 @@ public:
         return tensor_info_.data;
     }
 
-    const void* const_data_ptr() const {
-        return tensor_info_.data;
-    }
+    // NODISCARD const void* const_data_ptr() const {
+    //     return tensor_info_.data;
+    // }
 
     NODISCARD std::vector<int64_t> shape() const {
         return tensor_info_.shape;
@@ -80,7 +80,7 @@ public:
     }
 
     NODISCARD Scalar item() const {
-        CHECK(numel() == 1, fmt::format("a Tensor with {} elements can not converted to Scalar.", numel()));
+        CHECK(numel() == 1) << fmt::format("a Tensor with {} elements can not converted to Scalar.", numel());
 
     }
 
@@ -141,12 +141,12 @@ void* Tensor::data() const {
     return nullptr;
 }
 
-const void* Tensor::const_data_ptr() const {
-    if (data_) {
-        return data_->const_data_ptr();
-    }
-    return nullptr;
-}
+// const void* Tensor::const_data_ptr() const {
+//     if (data_) {
+//         return data_->const_data_ptr();
+//     }
+//     return nullptr;
+// }
 
 
 std::vector<int64_t> Tensor::shape() const {

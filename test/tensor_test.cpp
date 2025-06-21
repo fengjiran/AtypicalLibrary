@@ -11,6 +11,9 @@ using namespace atp;
 TEST(Tensor, format) {
     fmt::print("hello world\n");
     std::string s1 = fmt::format("The answer is {}.", 42);
+    double a = 10.1;
+    auto* p = reinterpret_cast<float*>(&a);
+    std::cout << "p = " << *p << std::endl;
 }
 
 TEST(Tensor, scalar) {
