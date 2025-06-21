@@ -105,18 +105,18 @@ struct DLDataType {
 };
 
 // TODO: bfloat, float8, float6 and float4 type need to be defined.
-#define SCALAR_TYPES_TO_CPP_TYPES(f)                     \
-    f(DLDataTypeCode::kInt, 8, 1, int8_t);               \
-    f(DLDataTypeCode::kInt, 16, 1, int16_t);             \
-    f(DLDataTypeCode::kInt, 32, 1, int32_t);             \
-    f(DLDataTypeCode::kInt, 64, 1, int64_t);             \
-    f(DLDataTypeCode::kUInt, 8, 1, uint8_t);             \
-    f(DLDataTypeCode::kUInt, 16, 1, uint16_t);           \
-    f(DLDataTypeCode::kUInt, 32, 1, uint32_t);           \
-    f(DLDataTypeCode::kUInt, 64, 1, uint64_t);           \
-    f(DLDataTypeCode::kBool, 8, 1, bool);                \
-    f(DLDataTypeCode::kFloat, 32, 1, float);             \
-    f(DLDataTypeCode::kFloat, 64, 1, double);            \
+#define SCALAR_TYPES_TO_CPP_TYPES(f)           \
+    f(DLDataTypeCode::kInt, 8, 1, int8_t);     \
+    f(DLDataTypeCode::kInt, 16, 1, int16_t);   \
+    f(DLDataTypeCode::kInt, 32, 1, int32_t);   \
+    f(DLDataTypeCode::kInt, 64, 1, int64_t);   \
+    f(DLDataTypeCode::kUInt, 8, 1, uint8_t);   \
+    f(DLDataTypeCode::kUInt, 16, 1, uint16_t); \
+    f(DLDataTypeCode::kUInt, 32, 1, uint32_t); \
+    f(DLDataTypeCode::kUInt, 64, 1, uint64_t); \
+    f(DLDataTypeCode::kBool, 8, 1, bool);      \
+    f(DLDataTypeCode::kFloat, 32, 1, float);   \
+    f(DLDataTypeCode::kFloat, 64, 1, double);  \
     // f(DLDataTypeCode::kBfloat, 16, 1, float);            \
     // f(DLDataTypeCode::kFloat8_e3m4, 8, 1, float);        \
     // f(DLDataTypeCode::kFloat8_e4m3, 8, 1, float);        \
@@ -449,7 +449,7 @@ public:
     NODISCARD Scalar item() const;
 
     template<typename T>
-    const T* const_data_ptr() const = delete;
+    const T* const_data_ptr() const;
 
 
 private:

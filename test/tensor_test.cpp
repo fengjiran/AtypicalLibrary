@@ -50,4 +50,6 @@ TEST(Tensor, random) {
     EXPECT_EQ(t.numel(), numel);
     EXPECT_EQ(t.nbytes(), numel * 4);
     std::cout << static_cast<float*>(t.data())[0] << std::endl;
+    const float* p = t.const_data_ptr<float>();
+    std::cout << p[0] << std::endl;
 }
