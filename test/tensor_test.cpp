@@ -11,9 +11,6 @@ using namespace atp;
 TEST(Tensor, format) {
     fmt::print("hello world\n");
     std::string s1 = fmt::format("The answer is {}.", 42);
-    double a = 10.1;
-    auto* p = reinterpret_cast<float*>(&a);
-    std::cout << "p = " << *p << std::endl;
 }
 
 TEST(Tensor, scalar) {
@@ -49,7 +46,7 @@ TEST(Tensor, random) {
     auto t = Tensor::rand(shape);
     EXPECT_EQ(t.numel(), numel);
     EXPECT_EQ(t.nbytes(), numel * 4);
-    std::cout << static_cast<float*>(t.data())[0] << std::endl;
-    const float* p = t.const_data_ptr<float>();
+    std::cout << static_cast<double*>(t.data())[0] << std::endl;
+    auto* p = t.const_data_ptr<float>();
     std::cout << p[0] << std::endl;
 }

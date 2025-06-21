@@ -39,7 +39,7 @@ static PrintFormat print_format(const Tensor& t) {
     }
 
     bool int_mod = true;
-    auto data = t.const_data_ptr();
+    // auto data = t.const_data_ptr();
     for (int64_t i = 0; i < size; ++i) {
         // auto z =
     }

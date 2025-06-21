@@ -25,6 +25,13 @@
 #endif
 #endif
 
+#if defined(__clang__)
+#define __ubsan_ignore_pointer_overflow__ __attribute__((no_sanitize("pointer-overflow")))
+#else
+#define __ubsan_ignore_pointer_overflow__
+#endif
+
+
 #define UNUSED(expr)   \
     do {               \
         (void) (expr); \
@@ -451,26 +458,33 @@ public:
     template<typename T>
     const T* const_data_ptr() const;
 
-
 private:
     class TensorNode;
     std::shared_ptr<TensorNode> data_;
+
+    template<typename T>
+    const T* data_ptr_impl() const {
+        return data_ptr_impl_impl<const T>(
+                [this] {
+                    return static_cast<const T*>(data());
+                });
+    }
+
+    template<typename T, typename Func>
+    const T* data_ptr_impl_impl(const Func& get_data) const {
+        CHECK(data() != nullptr);
+        return get_data();
+    }
 };
 
-#define CONST_DATA_PTR(type_code, type_bits, type_lanes, cpp_type)                                                                   \
-    template<>                                                                                                                       \
-    inline const cpp_type* Tensor::const_data_ptr() const {                                                                          \
-        CHECK(dtype().code == (type_code) && dtype().bits == (type_bits) && dtype().lanes == (type_lanes)) << "data type mismatch."; \
-        return static_cast<const cpp_type*>(data());                                                                                 \
+#define CONST_DATA_PTR(type_code, type_bits, type_lanes, cpp_type)    \
+    template<>                                                        \
+    inline const cpp_type* Tensor::const_data_ptr<cpp_type>() const { \
+                                                                      \
+        return data_ptr_impl<cpp_type>();                             \
     }
 SCALAR_TYPES_TO_CPP_TYPES(CONST_DATA_PTR);
 #undef CONST_DATA_PTR
-
-// template<>
-// inline const int8_t* Tensor::const_data_ptr() const {
-//     CHECK(dtype().code == DLDataTypeCode::kInt && dtype().bits == 8 && dtype().lanes == 1) << "data type mismatch.";
-//     return static_cast<const int8_t*>(data());
-// }
 
 std::ostream& operator<<(std::ostream& os, const Tensor& t);
 
