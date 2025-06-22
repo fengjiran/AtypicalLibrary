@@ -35,12 +35,10 @@ void check_type(const Tensor& t, DLDataTypeCode type_code, int8_t type_bits, int
     }
 
 SCALAR_TYPES_TO_CPP_TYPES(DEFINE_DATA_PTR);
-
 #undef DEFINE_DATA_PTR
 
-Tensor::Tensor(const std::vector<int64_t>& shape, DeviceType device_type, DLDataType dtype) {
-    data_ = std::make_shared<TensorImpl>(shape, device_type, dtype);
-}
+Tensor::Tensor(const std::vector<int64_t>& shape, int64_t byte_offset, DeviceType device_type, DLDataType dtype)
+    : data_(std::make_shared<TensorImpl>(shape, device_type, dtype)), byte_offset_(byte_offset) {}
 
 bool Tensor::defined() const {
     return data_ != nullptr;
@@ -53,13 +51,6 @@ int32_t Tensor::use_count() const {
 bool Tensor::unique() const {
     return data_.use_count() == 1;
 }
-
-// void* Tensor::data() const {
-//     if (data_) {
-//         return data_->data();
-//     }
-//     return nullptr;
-// }
 
 void* Tensor::data_ptr() const {
     if (data_) {
@@ -125,7 +116,7 @@ Tensor Tensor::randn(const std::vector<int64_t>& shape) {
 }
 
 Tensor Tensor::randint(int64_t low, int64_t high, const std::vector<int64_t>& shape) {
-    Tensor t(shape, DeviceType::kCPU, {DLDataTypeCode::kInt, 64, 1});
+    Tensor t(shape, 0, DeviceType::kCPU, {DLDataTypeCode::kInt, 64, 1});
     CHECK(t.numel() > 0);
     std::random_device rd;
     std::mt19937 gen(rd());
@@ -136,6 +127,5 @@ Tensor Tensor::randint(int64_t low, int64_t high, const std::vector<int64_t>& sh
     }
     return t;
 }
-
 
 }// namespace atp

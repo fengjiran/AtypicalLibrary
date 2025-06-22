@@ -47,7 +47,7 @@ TEST(Tensor, random) {
     // auto t = Tensor::randint(0, 10, shape);
     EXPECT_EQ(t.numel(), numel);
     std::cout << t.const_data_ptr<float>()[0] << std::endl;
-    std::cout << static_cast<float*>(t.data())[0] << std::endl;
+    std::cout << static_cast<const float*>(t.const_data_ptr())[0] << std::endl;
     // std::cout << static_cast<double*>(t.data())[0] << std::endl;
     // auto* p = t.const_data_ptr<int>();
     // std::cout << p[0] << std::endl;
