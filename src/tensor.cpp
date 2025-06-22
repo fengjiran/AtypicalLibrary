@@ -142,6 +142,19 @@ Tensor Tensor::randn(const std::vector<int64_t>& shape) {
     return t;
 }
 
+Tensor Tensor::randint(int64_t low, int64_t high, const std::vector<int64_t>& shape) {
+    Tensor t(shape, DeviceType::kCPU, {DLDataTypeCode::kInt, 64, 1});
+    CHECK(t.numel() > 0);
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::uniform_int_distribution<int64_t> dist(low, high);
+    for (int64_t i = 0; i < t.numel(); ++i) {
+        static_cast<int64_t*>(t.data())[i] = dist(gen);
+    }
+    return t;
+}
+
+
 bool Tensor::defined() const {
     return data_ != nullptr;
 }

@@ -433,6 +433,8 @@ public:
     // a normal distribution with mean 0 and variance 1
     static Tensor randn(const std::vector<int64_t>& shape);
 
+    static Tensor randint(int64_t low, int64_t high, const std::vector<int64_t>& shape);
+
     NODISCARD bool defined() const;
 
     NODISCARD int32_t use_count() const;
@@ -463,7 +465,7 @@ private:
     std::shared_ptr<TensorNode> data_;
 
     template<typename T>
-    const T* data_ptr_impl() const {
+    NODISCARD const T* data_ptr_impl() const {
         return data_ptr_impl_impl<const T>(
                 [this] {
                     return static_cast<const T*>(data());
@@ -471,17 +473,17 @@ private:
     }
 
     template<typename T, typename Func>
-    const T* data_ptr_impl_impl(const Func& get_data) const {
+    __ubsan_ignore_pointer_overflow__ const T* data_ptr_impl_impl(const Func& get_data) const {
         CHECK(data() != nullptr);
         return get_data();
     }
 };
 
-#define CONST_DATA_PTR(type_code, type_bits, type_lanes, cpp_type)    \
-    template<>                                                        \
-    inline const cpp_type* Tensor::const_data_ptr<cpp_type>() const { \
-                                                                      \
-        return data_ptr_impl<cpp_type>();                             \
+#define CONST_DATA_PTR(type_code, type_bits, type_lanes, cpp_type)              \
+    template<>                                                                  \
+    NODISCARD inline const cpp_type* Tensor::const_data_ptr<cpp_type>() const { \
+                                                                                \
+        return data_ptr_impl<cpp_type>();                                       \
     }
 SCALAR_TYPES_TO_CPP_TYPES(CONST_DATA_PTR);
 #undef CONST_DATA_PTR
