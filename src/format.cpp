@@ -31,18 +31,18 @@ struct PrintFormat {
         : scale(s), width(w), type(t) {}
 };
 
-static PrintFormat print_format(const Tensor& t) {
-    using data_type = DataType2CPPType<DLDataTypeCode::kFloat, 32, 1>::type;
-    auto size = t.numel();
-    if (size == 0) {
-        return {1.0, 0};
-    }
-
-    bool int_mod = true;
-    // auto data = t.const_data_ptr();
-    for (int64_t i = 0; i < size; ++i) {
-        // auto z =
-    }
-}
+// static PrintFormat print_format(const Tensor& t) {
+//     // using data_type = DataType2CPPType<DLDataTypeCode::kFloat, 32, 1>::type;
+//     auto size = t.numel();
+//     if (size == 0) {
+//         return {1.0, 0};
+//     }
+//
+//     bool int_mod = true;
+//     // auto data = t.const_data_ptr();
+//     for (int64_t i = 0; i < size; ++i) {
+//         // auto z =
+//     }
+// }
 
 }// namespace atp
