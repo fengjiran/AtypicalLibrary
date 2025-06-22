@@ -279,7 +279,7 @@ SCALAR_TYPES_NAME(DEFINE_TO);
 
 class TensorImpl {
 public:
-    TensorImpl() = default;
+    TensorImpl() = delete;
 
     TensorImpl(std::vector<int64_t> shape, DeviceType device_type, DLDataType dtype);
 
@@ -298,6 +298,10 @@ public:
     NODISCARD int64_t numel() const;
 
     NODISCARD int64_t nbytes() const;
+
+    NODISCARD void* data_ptr() const;
+
+    NODISCARD const void* const_data_ptr() const;
 
     // NODISCARD Scalar item() const;
 
@@ -321,6 +325,13 @@ public:
 private:
     TensorInfo tensor_info_{};
     Allocator* alloc_{nullptr};
+
+    template<typename Void, typename Func>
+    Void* data_impl(const Func& get_data) const {
+        auto* data = get_data();
+        static_assert(sizeof(*data) == 1, "get_data must return a byte-addressed pointer.");
+        return data;
+    }
 
     template<typename T, typename Func>
     __ubsan_ignore_pointer_overflow__ T* data_ptr_impl_impl(const Func& get_data) const {

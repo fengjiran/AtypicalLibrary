@@ -36,6 +36,21 @@ void* TensorImpl::data() const {
     return tensor_info_.data;
 }
 
+void* TensorImpl::data_ptr() const {
+    auto get_data = [this] {
+        return static_cast<char*>(tensor_info_.data);
+    };
+    return data_impl<void>(get_data);
+}
+
+const void* TensorImpl::const_data_ptr() const {
+    auto get_data = [this] {
+        return static_cast<const char*>(tensor_info_.data);
+    };
+    return data_impl<const void>(get_data);
+}
+
+
 std::vector<int64_t> TensorImpl::shape() const {
     return tensor_info_.shape;
 }

@@ -165,6 +165,8 @@ public:
 
     NODISCARD void* data() const;
 
+    const void* const_data_ptr() const;
+
     // NODISCARD const void* const_data_ptr() const;
 
     NODISCARD std::vector<int64_t> shape() const;
@@ -180,7 +182,7 @@ public:
     NODISCARD Scalar item() const;
 
     template<typename T>
-    T* data_ptr() const = delete;
+    T* data_ptr() const;
 
     template<typename T,
              std::enable_if_t<!std::is_const_v<T>>* = nullptr>
