@@ -163,11 +163,11 @@ public:
 
     NODISCARD bool unique() const;
 
-    NODISCARD void* data() const;
+    // NODISCARD void* data() const;
 
-    const void* const_data_ptr() const;
+    NODISCARD void* data_ptr() const;
 
-    // NODISCARD const void* const_data_ptr() const;
+    NODISCARD const void* const_data_ptr() const;
 
     NODISCARD std::vector<int64_t> shape() const;
 
@@ -194,6 +194,7 @@ public:
 
 private:
     std::shared_ptr<TensorImpl> data_;
+    int64_t byte_offset_{0};
 };
 
 std::ostream& operator<<(std::ostream& os, const Tensor& t);
