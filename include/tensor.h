@@ -473,7 +473,7 @@ private:
     }
 
     template<typename T, typename Func>
-    __ubsan_ignore_pointer_overflow__ const T* data_ptr_impl_impl(const Func& get_data) const {
+    NODISCARD __ubsan_ignore_pointer_overflow__ const T* data_ptr_impl_impl(const Func& get_data) const {
         CHECK(data() != nullptr);
         return get_data();
     }
