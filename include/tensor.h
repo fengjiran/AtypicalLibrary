@@ -52,10 +52,6 @@ public:
 
     NODISCARD bool unique() const;
 
-    NODISCARD void* data_ptr() const;
-
-    NODISCARD const void* const_data_ptr() const;
-
     NODISCARD std::vector<int64_t> shape() const;
 
     NODISCARD DLDataType dtype() const;
@@ -67,6 +63,10 @@ public:
     NODISCARD int64_t nbytes() const;
 
     NODISCARD Scalar item() const;
+
+    NODISCARD void* data_ptr() const;
+
+    NODISCARD const void* const_data_ptr() const;
 
     template<typename T>
     T* data_ptr() const;

@@ -32,10 +32,6 @@ TensorImpl::~TensorImpl() {
     delete alloc_;
 }
 
-// void* TensorImpl::data() const {
-//     return tensor_info_.data;
-// }
-
 void* TensorImpl::data_ptr() const {
     auto get_data = [this] {
         return static_cast<char*>(tensor_info_.data);

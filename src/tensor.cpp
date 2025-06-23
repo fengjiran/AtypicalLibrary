@@ -54,14 +54,14 @@ bool Tensor::unique() const {
 
 void* Tensor::data_ptr() const {
     if (data_) {
-        return data_->data_ptr();
+        return static_cast<char*>(data_->data_ptr()) + byte_offset_;
     }
     return nullptr;
 }
 
 const void* Tensor::const_data_ptr() const {
     if (data_) {
-        return data_->const_data_ptr();
+        return static_cast<const char*>(data_->const_data_ptr()) + byte_offset_;
     }
     return nullptr;
 }
