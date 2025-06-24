@@ -16,51 +16,6 @@
 
 namespace atp {
 
-class Allocator {
-public:
-    explicit Allocator(DeviceType device) : device_(device) {}
-
-    virtual ~Allocator() = default;
-
-    NODISCARD DeviceType device() const {
-        return device_;
-    }
-
-    NODISCARD virtual void* allocate(int64_t n) const = 0;
-
-    virtual void deallocate(void* p) const = 0;
-
-private:
-    DeviceType device_;
-};
-
-class CPUAllocator : public Allocator {
-public:
-    CPUAllocator() : Allocator(DeviceType::kCPU) {}
-
-    NODISCARD void* allocate(int64_t n) const override {
-        return malloc(n);
-    }
-
-    void deallocate(void* p) const override {
-        free(p);
-    }
-};
-
-class CUDAAllocator : public Allocator {
-public:
-    CUDAAllocator() : Allocator(DeviceType::kCUDA) {}
-    NODISCARD void* allocate(int64_t n) const override {
-        void* p = nullptr;
-        // CHECK_CUDA(cudaMalloc(&p, n));
-        return p;
-    }
-
-    void deallocate(void* p) const override {
-        // CHECK_CUDA(cudaFree(p));
-    }
-};
-
 struct TensorInfo {
     void* data{nullptr};
     int32_t ndim{0};
