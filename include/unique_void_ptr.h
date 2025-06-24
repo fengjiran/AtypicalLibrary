@@ -70,15 +70,15 @@ public:
         ctx_ = nullptr;
     }
 
-    void* get() const {
+    NODISCARD void* get() const {
         return data_;
     }
 
-    deleter_type get_deleter() const {
+    NODISCARD deleter_type get_deleter() const {
         return ctx_.get_deleter();
     }
 
-    void* get_context() const {
+    NODISCARD void* get_context() const {
         return ctx_.get();
     }
 

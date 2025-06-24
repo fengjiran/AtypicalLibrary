@@ -15,7 +15,7 @@ TEST(Tensor, format) {
 
 TEST(Tensor, unique_void_ptr) {
     struct Context {
-        Context(void* ptr) : data(ptr) {}
+        explicit Context(void* ptr) : data(ptr) {}
         void delete_ptr() const {
             std::cout << "call free.\n";
             free(data);
