@@ -5,6 +5,8 @@
 #ifndef TENSOR_IMPL_H
 #define TENSOR_IMPL_H
 
+#include "unique_void_ptr.h"
+
 #include <csignal>
 #include <cstdint>
 #include <fmt/format.h>
