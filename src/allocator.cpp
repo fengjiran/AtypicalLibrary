@@ -3,6 +3,7 @@
 //
 
 #include "allocator.h"
+#include "alignment.h"
 
 #include <cstring>
 
@@ -33,6 +34,18 @@ void memset_junk(void* data, size_t num) {
     if (remaining_bytes > 0) {
         memcpy(data_i64 + int64_count, &kJunkPattern64, remaining_bytes);
     }
+}
+
+bool is_thp_alloc_enabled() {
+    static bool value = [&] {
+        auto env = check_env("THP_MEM_ALLOC_ENABLE");
+        return env.has_value() ? env.value() : 0;
+    }();
+    return value;
+}
+
+bool is_thp_alloc(size_t nbytes) {
+    return is_thp_alloc_enabled() && nbytes >= gAlloc_threshold_thp;
 }
 
 }// namespace

@@ -11,9 +11,8 @@ using namespace atp;
 TEST(Tensor, format) {
     fmt::print("hello world\n");
     std::string s1 = fmt::format("The answer is {}.", 42);
-    auto envar = std::getenv("PATH");
-    // EXPECT_TRUE(envar == nullptr);
-    std::cout << envar << std::endl;
+    set_env("THP", "1", false);
+    std::cout << get_env("THP").value() << std::endl;
 }
 
 TEST(Tensor, unique_void_ptr) {

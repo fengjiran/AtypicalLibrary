@@ -7,6 +7,7 @@
 
 #include "tensor_utils.h"
 #include "unique_void_ptr.h"
+#include "env.h"
 
 namespace atp {
 
