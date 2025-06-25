@@ -20,9 +20,7 @@ static std::shared_mutex& get_env_mutex() {
 void set_env(const char* name, const char* value, bool overwrite) {
     std::lock_guard lock(get_env_mutex());
     auto err = setenv(name, value, overwrite);
-    // auto s = fmt::format("setenv failed for environment {}, the error is: {}.", 23, 32);
     CHECK(err == 0);
-            // << fmt::format("setenv failed for environment {}, the error is: {}.", name, err);
 }
 
 std::optional<std::string> get_env(const char* name) noexcept {
@@ -51,5 +49,7 @@ std::optional<bool> check_env(const char* name) {
     }
     return std::nullopt;
 }
+
+static auto& env = RegisterEnvs::Global().SetEnv("THP_MEM_ALLOC_ENABLE", "1", false);
 
 }// namespace atp

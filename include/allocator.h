@@ -101,13 +101,17 @@ inline bool operator!=(std::nullptr_t, const DataPtr& dp) noexcept {
     return dp;
 }
 
+void* alloc_cpu(size_t nbytes);
+
+void free_cpu(void* data);
+
 
 class Allocator {
 public:
     Allocator() = default;
     virtual ~Allocator() = default;
 
-    NODISCARD virtual void* allocate(int64_t n) const = 0;
+    NODISCARD virtual void* allocate(size_t n) const = 0;
 
     virtual void deallocate(void* p) const = 0;
 
@@ -117,19 +121,21 @@ class CPUAllocator : public Allocator {
 public:
     CPUAllocator() = default;
 
-    NODISCARD void* allocate(int64_t n) const override {
-        return malloc(n);
+    NODISCARD void* allocate(size_t n) const override {
+        // return malloc(n);
+        return alloc_cpu(n);
     }
 
     void deallocate(void* p) const override {
-        free(p);
+        // free(p);
+        free_cpu(p);
     }
 };
 
 class CUDAAllocator : public Allocator {
 public:
     CUDAAllocator() = default;
-    NODISCARD void* allocate(int64_t n) const override {
+    NODISCARD void* allocate(size_t n) const override {
         void* p = nullptr;
         // CHECK_CUDA(cudaMalloc(&p, n));
         return p;

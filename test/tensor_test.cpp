@@ -11,8 +11,12 @@ using namespace atp;
 TEST(Tensor, format) {
     fmt::print("hello world\n");
     std::string s1 = fmt::format("The answer is {}.", 42);
-    set_env("THP", "1", false);
-    std::cout << get_env("THP").value() << std::endl;
+}
+
+TEST(Tensor, envs) {
+    EXPECT_TRUE(has_env("THP_MEM_ALLOC_ENABLE"));
+    EXPECT_TRUE(check_env("THP_MEM_ALLOC_ENABLE"));
+    // std::cout << sysconf(_SC_PAGESIZE);
 }
 
 TEST(Tensor, unique_void_ptr) {

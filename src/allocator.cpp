@@ -6,6 +6,7 @@
 #include "alignment.h"
 
 #include <cstring>
+#include <glog/logging.h>
 
 #ifdef __linux__
 #include <sys/mman.h>
@@ -49,6 +50,42 @@ bool is_thp_alloc(size_t nbytes) {
 }
 
 }// namespace
+
+size_t get_alignment(size_t nbytes) {
+    static const auto pagesize = sysconf(_SC_PAGESIZE);
+    const size_t thp_alignment = pagesize < 0 ? gPagesize : pagesize;
+    return is_thp_alloc(nbytes) ? thp_alignment : gAlignment;
+}
+
+void* alloc_cpu(size_t nbytes) {
+    if (nbytes == 0) {
+        return nullptr;
+    }
+
+    CHECK(static_cast<ptrdiff_t>(nbytes) >= 0)
+            << "the nbytes is seems a negative number.";
+
+    void* data = nullptr;
+    int err = posix_memalign(&data, get_alignment(nbytes), nbytes);
+    CHECK(err == 0) << "Try allocate " << nbytes << "bytes memory failed.";
+
+    if (is_thp_alloc(nbytes)) {
+        int ret = madvise(data, nbytes, MADV_HUGEPAGE);
+        if (ret != 0) {
+            LOG(WARNING) << "thp madvise for HUGEPAGE failed";
+        }
+    }
+
+    // TODO: set numa node
+
+    memset_junk(data, nbytes);
+
+    return data;
+}
+
+void free_cpu(void* data) {
+    free(data);
+}
 
 
 }// namespace atp

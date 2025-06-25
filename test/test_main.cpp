@@ -7,7 +7,7 @@
 
 int main() {
     testing::InitGoogleTest();
-    google::InitGoogleLogging("openXAE_test");
+    google::InitGoogleLogging("AtypicalLibrary_test");
     FLAGS_logtostderr = true;
     return RUN_ALL_TESTS();
 }
