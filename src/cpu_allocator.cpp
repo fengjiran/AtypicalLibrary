@@ -89,5 +89,6 @@ void free_cpu(void* data) {
     free(data);
 }
 
+REGISTER_ALLOCATOR(DeviceType::kCPU, CPUAllocator);
 
 }// namespace atp

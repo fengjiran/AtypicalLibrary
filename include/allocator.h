@@ -9,6 +9,9 @@
 #include "tensor_utils.h"
 #include "unique_void_ptr.h"
 
+#include <glog/logging.h>
+#include <unordered_map>
+
 namespace atp {
 
 // A DataPtr is a unique pointer (with an attached deleter and some
@@ -139,6 +142,33 @@ public:
 
     virtual void deallocate(void* p) const = 0;
 };
+
+class AllocatorTable {
+public:
+    static AllocatorTable& Global() {
+        static AllocatorTable inst;
+        return inst;
+    }
+
+    void set_allocator(DeviceType device, std::unique_ptr<Allocator> allocator) {
+        table_[device] = std::move(allocator);
+    }
+
+    const std::unique_ptr<Allocator>& get_allocator(DeviceType device) {
+        CHECK(table_.contains(device)) << "Allocator not found";
+        return table_[device];
+    }
+
+private:
+    AllocatorTable() = default;
+    std::unordered_map<DeviceType, std::unique_ptr<Allocator>> table_;
+};
+
+#define REGISTER_ALLOCATOR(device, allocator)                                          \
+    STR_CONCAT(REG_VAR_DEF, __COUNTER__) = [] {                                        \
+        AllocatorTable::Global().set_allocator(device, std::make_unique<allocator>()); \
+        return 0;                                                                      \
+    }()
 
 
 class CUDAAllocator : public Allocator {
