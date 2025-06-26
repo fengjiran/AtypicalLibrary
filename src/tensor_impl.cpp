@@ -6,7 +6,8 @@
 
 namespace atp {
 
-TensorImpl::TensorImpl(std::vector<int64_t> shape, DeviceType device_type, DLDataType dtype) {
+TensorImpl::TensorImpl(std::vector<int64_t> shape, DeviceType device_type, DLDataType dtype)
+    : alloc_(AllocatorTable::Global().get_allocator(device_type)) {
     tensor_info_.ndim = static_cast<int32_t>(shape.size());
     tensor_info_.shape = std::move(shape);
     tensor_info_.device_type = device_type;
@@ -16,18 +17,6 @@ TensorImpl::TensorImpl(std::vector<int64_t> shape, DeviceType device_type, DLDat
         tensor_info_.strides[i] = tensor_info_.strides[i + 1] * tensor_info_.shape[i + 1];
     }
 
-    // std::string allocator_name;
-    // if (device_type == DeviceType::kCPU) {
-    //     allocator_name = "default_cpu_allocator";
-    // } else if (device_type == DeviceType::kCUDA) {
-    //     allocator_name = "default_cuda_allocator";
-    // } else {
-    //     throw std::runtime_error("Unsupported device type");
-    // }
-
-    alloc_ = AllocatorTable::Global().get_allocator(device_type).get();
-
-    // tensor_info_.data = alloc_->allocate(GetTensorSize(tensor_info_));
     data_ptr_ = alloc_->allocate_bk(GetTensorSize(tensor_info_));
     tensor_info_.data = data_ptr_.get();
 }

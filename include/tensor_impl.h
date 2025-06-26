@@ -182,7 +182,8 @@ public:
 
 private:
     TensorInfo tensor_info_{};
-    Allocator* alloc_{nullptr};
+    // Allocator* alloc_{nullptr};
+    const std::unique_ptr<Allocator>& alloc_;
     DataPtr data_ptr_;
 
     template<typename Void, typename Func>
