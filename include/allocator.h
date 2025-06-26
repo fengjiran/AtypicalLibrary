@@ -5,9 +5,9 @@
 #ifndef ALLOCATOR_H
 #define ALLOCATOR_H
 
+#include "env.h"
 #include "tensor_utils.h"
 #include "unique_void_ptr.h"
-#include "env.h"
 
 namespace atp {
 
@@ -101,6 +101,32 @@ inline bool operator!=(std::nullptr_t, const DataPtr& dp) noexcept {
     return dp;
 }
 
+// template<typename Rollback>
+// class ExceptionGuard {
+// public:
+//     ExceptionGuard(Rollback rollback) : rollback_(std::move(rollback)), complete_(false) {}
+//
+//     ExceptionGuard() = delete;
+//     ExceptionGuard(const ExceptionGuard&) = delete;
+//     ExceptionGuard(ExceptionGuard&&) noexcept = delete;
+//     ExceptionGuard& operator=(const ExceptionGuard&) = delete;
+//     ExceptionGuard& operator=(ExceptionGuard&&) noexcept = delete;
+//
+//     void complete() noexcept {
+//         complete_ = true;
+//     }
+//
+//     ~ExceptionGuard() {
+//         if (!complete_) {
+//             rollback_();
+//         }
+//     }
+//
+// private:
+//     bool complete_;
+//     Rollback rollback_;
+// };
+
 
 class Allocator {
 public:
@@ -110,7 +136,6 @@ public:
     NODISCARD virtual void* allocate(size_t n) const = 0;
 
     virtual void deallocate(void* p) const = 0;
-
 };
 
 

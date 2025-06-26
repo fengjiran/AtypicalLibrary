@@ -715,7 +715,8 @@ vector<T, Allocator>::vector(vector&& other, const type_identity_t<allocator_typ
         first_free = other.first_free;
         cap = other.cap;
     } else {
-        auto guard = _make_exception_guard(_destroy_vector(*this));
+        // auto guard = make_exception_guard(_destroy_vector(*this));
+        auto guard = ExceptionGuard(_destroy_vector(*this));
         for (auto iter = other.begin(); iter != other.end(); ++iter) {
             emplace_back(std::move(*iter));
         }
@@ -959,7 +960,8 @@ void vector<T, Allocator>::_reallocate() {
 
 template<typename T, typename Allocator>
 void vector<T, Allocator>::_init_with_size(size_type n) {
-    auto guard = _make_exception_guard(_destroy_vector(*this));
+    // auto guard = make_exception_guard(_destroy_vector(*this));
+    auto guard = ExceptionGuard(_destroy_vector(*this));
     if (n > 0) {
         _allocate_with_size(n);
         _construct_at_end(n);
@@ -969,7 +971,8 @@ void vector<T, Allocator>::_init_with_size(size_type n) {
 
 template<typename T, typename Allocator>
 void vector<T, Allocator>::_init_with_size(size_type n, const_reference value) {
-    auto guard = _make_exception_guard(_destroy_vector(*this));
+    // auto guard = make_exception_guard(_destroy_vector(*this));
+    auto guard = ExceptionGuard(_destroy_vector(*this));
     if (n > 0) {
         _allocate_with_size(n);
         _construct_at_end(n, value);
@@ -981,7 +984,8 @@ template<typename T, typename Allocator>
 template<typename InputIterator,
          typename has_input_iterator_category<InputIterator, T>::type>
 void vector<T, Allocator>::_init_with_range(InputIterator first, InputIterator last) {
-    auto guard = _make_exception_guard(_destroy_vector(*this));
+    // auto guard = make_exception_guard(_destroy_vector(*this));
+    auto guard = ExceptionGuard(_destroy_vector(*this));
     auto n = std::distance(first, last);
     _allocate_with_size(n);
     _construct_at_end(first, last);
