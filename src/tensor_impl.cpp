@@ -24,11 +24,13 @@ TensorImpl::TensorImpl(std::vector<int64_t> shape, DeviceType device_type, DLDat
         throw std::runtime_error("Unsupported device type");
     }
 
-    tensor_info_.data = alloc_->allocate(GetTensorSize(tensor_info_));
+    // tensor_info_.data = alloc_->allocate(GetTensorSize(tensor_info_));
+    data_ptr_ = alloc_->allocate_bk(GetTensorSize(tensor_info_));
+    tensor_info_.data = data_ptr_.get();
 }
 
 TensorImpl::~TensorImpl() {
-    alloc_->deallocate(tensor_info_.data);
+    // alloc_->deallocate(tensor_info_.data);
     delete alloc_;
 }
 

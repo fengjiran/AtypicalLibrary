@@ -183,6 +183,7 @@ public:
 private:
     TensorInfo tensor_info_{};
     Allocator* alloc_{nullptr};
+    DataPtr data_ptr_;
 
     template<typename Void, typename Func>
     Void* data_impl(const Func& get_data) const {
