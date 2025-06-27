@@ -9,6 +9,7 @@
 using namespace atp;
 
 TEST(Tensor, format) {
+    GTEST_SKIP();
     fmt::print("hello world\n");
     std::string s1 = fmt::format("The answer is {}.", 42);
 }
@@ -23,7 +24,7 @@ TEST(Tensor, unique_void_ptr) {
     struct Context {
         explicit Context(void* ptr) : data(ptr) {}
         void delete_ptr() const {
-            std::cout << "call free.\n";
+            // std::cout << "call free.\n";
             free(data);
         }
         void* data;

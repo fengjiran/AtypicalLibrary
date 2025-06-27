@@ -120,7 +120,8 @@ public:
             return false;
         }
 
-        ctx_.release();
+        auto x = ctx_.release();
+        UNUSED(x);
         ctx_.reset(new_data_and_ctx);
         data_ = new_data_and_ctx;
         return true;

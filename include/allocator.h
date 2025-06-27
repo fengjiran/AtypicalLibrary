@@ -136,9 +136,9 @@ public:
     Allocator() = default;
     virtual ~Allocator() = default;
 
-    NODISCARD virtual void* allocate(size_t nbytes) const = 0;
+    // NODISCARD virtual void* allocate(size_t nbytes) const = 0;
 
-    NODISCARD virtual DataPtr allocate_bk(size_t nbytes) const = 0;
+    NODISCARD virtual DataPtr allocate(size_t nbytes) const = 0;
 
     virtual void deallocate(void* p) const = 0;
 };
@@ -174,13 +174,13 @@ private:
 class CUDAAllocator : public Allocator {
 public:
     CUDAAllocator() = default;
-    NODISCARD void* allocate(size_t n) const override {
-        void* p = nullptr;
-        // CHECK_CUDA(cudaMalloc(&p, n));
-        return p;
-    }
+    // NODISCARD void* allocate(size_t n) const override {
+    //     void* p = nullptr;
+    //     // CHECK_CUDA(cudaMalloc(&p, n));
+    //     return p;
+    // }
 
-    NODISCARD DataPtr allocate_bk(size_t nbytes) const override {
+    NODISCARD DataPtr allocate(size_t nbytes) const override {
         return {};
     }
 

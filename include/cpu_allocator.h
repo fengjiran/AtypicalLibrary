@@ -16,13 +16,13 @@ void free_cpu(void* data);
 class CPUAllocator final : public Allocator {
 public:
     CPUAllocator() = default;
+    //
+    // NODISCARD void* allocate(size_t nbytes) const override {
+    //     // return malloc(n);
+    //     return alloc_cpu(nbytes);
+    // }
 
-    NODISCARD void* allocate(size_t nbytes) const override {
-        // return malloc(n);
-        return alloc_cpu(nbytes);
-    }
-
-    NODISCARD DataPtr allocate_bk(size_t nbytes) const override {
+    NODISCARD DataPtr allocate(size_t nbytes) const override {
         void* data = alloc_cpu(nbytes);
         return {data, data, deleter, DeviceType::kCPU};
     }

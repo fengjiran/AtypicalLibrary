@@ -6,7 +6,7 @@
 #define TENSOR_IMPL_H
 
 #include "tensor_utils.h"
-#include "storage_impl.h"
+#include "storage.h"
 #include "cpu_allocator.h"
 
 #include <fmt/format.h>

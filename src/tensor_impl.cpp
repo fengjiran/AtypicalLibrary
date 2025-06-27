@@ -17,7 +17,7 @@ TensorImpl::TensorImpl(std::vector<int64_t> shape, DeviceType device_type, DLDat
         tensor_info_.strides[i] = tensor_info_.strides[i + 1] * tensor_info_.shape[i + 1];
     }
 
-    data_ptr_ = alloc_->allocate_bk(GetTensorSize(tensor_info_));
+    data_ptr_ = alloc_->allocate(GetTensorSize(tensor_info_));
     tensor_info_.data = data_ptr_.get();
 }
 
