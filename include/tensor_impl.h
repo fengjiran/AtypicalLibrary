@@ -5,9 +5,9 @@
 #ifndef TENSOR_IMPL_H
 #define TENSOR_IMPL_H
 
-#include "tensor_utils.h"
-#include "storage.h"
 #include "cpu_allocator.h"
+#include "storage.h"
+#include "tensor_utils.h"
 
 #include <fmt/format.h>
 #include <glog/logging.h>
@@ -198,6 +198,13 @@ private:
         CHECK(tensor_info_.data != nullptr);
         return get_data();
     }
+};
+
+class TensorImpl_BK {
+public:
+    TensorImpl_BK() = delete;
+private:
+    Storage storage_;
 };
 
 }// namespace atp
