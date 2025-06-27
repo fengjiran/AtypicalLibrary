@@ -179,6 +179,11 @@ private:
         return size_ <= MAX_INLINE_SIZE;
     }
 
+    void copy_inline_data(const ShapeAndStride& other) {
+        CHECK(other.is_inline());
+        memcpy(inline_storage_, other.inline_storage_, sizeof(inline_storage_));
+    }
+
     size_t size_{1};
     union {
         int64_t* out_of_line_storage_;
