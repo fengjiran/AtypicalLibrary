@@ -75,6 +75,17 @@ private:
 template<size_t MAX_INLINE_SIZE = 5>
 class ShapeAndStride {
 public:
+    ShapeAndStride() {
+        shape_at_uncheck(0) = 0;
+        stride_at_uncheck(0) = 1;
+    }
+
+    ~ShapeAndStride() {
+        if (!is_inline()) {
+            free(out_of_line_storage_);
+        }
+    }
+
     NODISCARD size_t size() const noexcept {
         return size_;
     }
@@ -93,6 +104,74 @@ public:
 
     NODISCARD const int64_t* stride_data() const noexcept {
         return is_inline() ? &inline_storage_[MAX_INLINE_SIZE] : &out_of_line_storage_[size()];
+    }
+
+    int64_t* shape_begin() noexcept {
+        return shape_data();
+    }
+
+    NODISCARD const int64_t* shape_begin() const noexcept {
+        return shape_data();
+    }
+
+    int64_t* shape_end() noexcept {
+        return shape_data() + size();
+    }
+
+    NODISCARD const int64_t* shape_end() const noexcept {
+        return shape_data() + size();
+    }
+
+    int64_t* stride_begin() noexcept {
+        return stride_data();
+    }
+
+    NODISCARD const int64_t* stride_begin() const noexcept {
+        return stride_data();
+    }
+
+    int64_t* stride_end() noexcept {
+        return stride_data() + size();
+    }
+
+    NODISCARD const int64_t* stride_end() const noexcept {
+        return stride_data() + size();
+    }
+
+    NODISCARD int64_t shape_at(size_t idx) const noexcept {
+        CHECK(idx < size());
+        return shape_data()[idx];
+    }
+
+    NODISCARD int64_t& shape_at(size_t idx) noexcept {
+        CHECK(idx < size());
+        return shape_data()[idx];
+    }
+
+    NODISCARD int64_t shape_at_uncheck(size_t idx) const noexcept {
+        return shape_data()[idx];
+    }
+
+    NODISCARD int64_t& shape_at_uncheck(size_t idx) noexcept {
+        return shape_data()[idx];
+    }
+
+    NODISCARD int64_t stride_at(size_t idx) const noexcept {
+        CHECK(idx < size());
+        return stride_data()[idx];
+    }
+
+    NODISCARD int64_t& stride_at(size_t idx) noexcept {
+        CHECK(idx < size());
+        return stride_data()[idx];
+    }
+
+    NODISCARD int64_t stride_at_uncheck(size_t idx) const noexcept {
+        return stride_data()[idx];
+    }
+
+    NODISCARD int64_t& stride_at_uncheck(size_t idx) noexcept {
+        return stride_data()[idx];
     }
 
 private:
