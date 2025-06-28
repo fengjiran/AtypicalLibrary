@@ -135,13 +135,13 @@ private:
 SCALAR_TYPES_NAME(DEFINE_TO);
 #undef DEFINE_TO
 
-class TensorImpl {
+class TensorImpl_bk {
 public:
-    TensorImpl() = delete;
+    TensorImpl_bk() = delete;
 
-    TensorImpl(std::vector<int64_t> shape, DeviceType device_type, DLDataType dtype);
+    TensorImpl_bk(std::vector<int64_t> shape, DeviceType device_type, DLDataType dtype);
 
-    ~TensorImpl();
+    ~TensorImpl_bk();
 
     // NODISCARD void* data() const;
 
@@ -219,9 +219,14 @@ private:
  *
  *
  **/
-class TensorImpl_BK {
+class TensorImpl {
 public:
-    TensorImpl_BK() = delete;
+    TensorImpl() = delete;
+    TensorImpl(const TensorImpl&) = delete;
+    TensorImpl(TensorImpl&&) noexcept = delete;
+    TensorImpl& operator=(const TensorImpl&) = delete;
+    TensorImpl& operator=(TensorImpl&&) noexcept = delete;
+
 
 private:
     Storage storage_;

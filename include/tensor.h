@@ -80,7 +80,7 @@ public:
     const std::remove_const_t<T>* const_data_ptr() const;
 
 private:
-    std::shared_ptr<TensorImpl> data_;
+    std::shared_ptr<TensorImpl_bk> data_;
     int64_t byte_offset_{0};
 };
 

@@ -6,7 +6,7 @@
 
 namespace atp {
 
-TensorImpl::TensorImpl(std::vector<int64_t> shape, DeviceType device_type, DLDataType dtype)
+TensorImpl_bk::TensorImpl_bk(std::vector<int64_t> shape, DeviceType device_type, DLDataType dtype)
     : alloc_(AllocatorTable::Global().get_allocator(device_type)) {
     tensor_info_.ndim = static_cast<int32_t>(shape.size());
     tensor_info_.shape = std::move(shape);
@@ -21,16 +21,16 @@ TensorImpl::TensorImpl(std::vector<int64_t> shape, DeviceType device_type, DLDat
     tensor_info_.data = data_ptr_.get();
 }
 
-TensorImpl::~TensorImpl() = default;
+TensorImpl_bk::~TensorImpl_bk() = default;
 
-void* TensorImpl::data_ptr() const {
+void* TensorImpl_bk::data_ptr() const {
     auto get_data = [this] {
         return static_cast<char*>(tensor_info_.data);
     };
     return data_impl<void>(get_data);
 }
 
-const void* TensorImpl::const_data_ptr() const {
+const void* TensorImpl_bk::const_data_ptr() const {
     auto get_data = [this] {
         return static_cast<const char*>(tensor_info_.data);
     };
@@ -38,23 +38,23 @@ const void* TensorImpl::const_data_ptr() const {
 }
 
 
-std::vector<int64_t> TensorImpl::shape() const {
+std::vector<int64_t> TensorImpl_bk::shape() const {
     return tensor_info_.shape;
 }
 
-DLDataType TensorImpl::dtype() const {
+DLDataType TensorImpl_bk::dtype() const {
     return tensor_info_.dtype;
 }
 
-int32_t TensorImpl::ndim() const {
+int32_t TensorImpl_bk::ndim() const {
     return tensor_info_.ndim;
 }
 
-int64_t TensorImpl::element_size() const {
+int64_t TensorImpl_bk::element_size() const {
     return (tensor_info_.dtype.bits * tensor_info_.dtype.lanes + 7) / 8;
 }
 
-int64_t TensorImpl::numel() const {
+int64_t TensorImpl_bk::numel() const {
     if (tensor_info_.shape.empty()) {
         return 0;
     }
@@ -66,7 +66,7 @@ int64_t TensorImpl::numel() const {
     return numel;
 }
 
-int64_t TensorImpl::nbytes() const {
+int64_t TensorImpl_bk::nbytes() const {
     return GetTensorSize(tensor_info_);
 }
 

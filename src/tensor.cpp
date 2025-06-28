@@ -38,7 +38,7 @@ SCALAR_TYPES_TO_CPP_TYPES(DEFINE_DATA_PTR);
 #undef DEFINE_DATA_PTR
 
 Tensor::Tensor(const std::vector<int64_t>& shape, int64_t byte_offset, DeviceType device_type, DLDataType dtype)
-    : data_(std::make_shared<TensorImpl>(shape, device_type, dtype)), byte_offset_(byte_offset) {}
+    : data_(std::make_shared<TensorImpl_bk>(shape, device_type, dtype)), byte_offset_(byte_offset) {}
 
 bool Tensor::defined() const {
     return data_ != nullptr;
