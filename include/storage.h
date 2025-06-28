@@ -7,6 +7,8 @@
 
 #include "storage_impl.h"
 
+#define MAX_INLINE_SIZE 5
+
 namespace atp {
 
 class Storage {
@@ -72,7 +74,6 @@ private:
 // 1 size_t for the size
 // 5 eightbytes of inline sizes and 5 eightbytes of inline strides, OR pointer
 // to out-of-line array
-template<size_t MAX_INLINE_SIZE = 5>
 class ShapeAndStride {
 public:
     ShapeAndStride() {

@@ -200,11 +200,40 @@ private:
     }
 };
 
+/**
+ * The low-level representation of a tensor, which contains a pointer to a
+ * storage (which contains the actual data) and metadata (e.g., shape and
+ * strides) describing this particular view of the data as a tensor.
+ *
+ * Some basic characteristics about the in-memory representation of tensors:
+ *
+ * - It contains a pointer to a storage struct (Storage/StorageImpl) which
+ *   contains the pointer to the actual data and records the data type and
+ *   device of the view. This allows multiple tensors to alias the same
+ *   underlying data, which allows efficiently implementing differing *views*
+ *   on a tensor.
+ *
+ * - The tensor struct itself records view-specific metadata about the tensor,
+ *   e.g., shape, strides and offset into storage. Each view of a storage can
+ *   have a different shape or offset.
+ *
+ *
+ **/
 class TensorImpl_BK {
 public:
     TensorImpl_BK() = delete;
+
 private:
     Storage storage_;
+    int64_t storage_offset_ = 0;
+
+    // If shape and strides are empty, the numel is 1!! However, most of the
+    // time, we will immediately set shape to {0} and reset numel to 0.
+    // (Can't do that in the default initializers, because there's no way to
+    // spell "allocate a one-element array" for strides_).
+    int64_t numel_ = 1;
+    DLDataType dtype_;
+    ShapeAndStride shape_and_stride_;
 };
 
 }// namespace atp
