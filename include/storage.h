@@ -80,9 +80,82 @@ public:
         stride_at_uncheck(0) = 1;
     }
 
+    ShapeAndStride(const ShapeAndStride& other) : size_(other.size_) {
+        if (other.is_inline()) {
+            copy_inline_data(other);
+        } else {
+            allocate_outline_storage(size_);
+            copy_outline_data(other);
+        }
+    }
+
+    ShapeAndStride(ShapeAndStride&& other) noexcept : size_(other.size_) {
+        if (other.is_inline()) {
+            memcpy(inline_storage_, other.inline_storage_, sizeof(inline_storage_));
+        } else {
+            outline_storage_ = other.outline_storage_;
+            other.outline_storage_ = nullptr;
+        }
+        other.size_ = 0;
+    }
+
+    ShapeAndStride& operator=(const ShapeAndStride& rhs) {
+        if (this == &rhs) {
+            return *this;
+        }
+
+        if (rhs.is_inline()) {
+            if (!is_inline()) {
+                free(outline_storage_);
+            }
+            copy_inline_data(rhs);
+        } else {
+            if (is_inline()) {
+                allocate_outline_storage(rhs.size_);
+            } else {
+                resize_outline_storage(rhs.size_);
+            }
+            copy_outline_data(rhs);
+        }
+        size_ = rhs.size_;
+        return *this;
+    }
+
+    ShapeAndStride& operator=(ShapeAndStride&& rhs) noexcept {
+        if (this == &rhs) {
+            return *this;
+        }
+
+        if (rhs.is_inline()) {
+            if (!is_inline()) {
+                free(outline_storage_);
+            }
+            copy_inline_data(rhs);
+        } else {
+            if (!is_inline()) {
+                free(outline_storage_);
+            }
+            outline_storage_ = rhs.outline_storage_;
+            rhs.outline_storage_ = nullptr;
+        }
+        size_ = rhs.size_;
+        rhs.size_ = 0;
+        return *this;
+    }
+
+    bool operator==(const ShapeAndStride& other) const {
+        if (size_ != other.size_) {
+            return false;
+        }
+
+        bool res = is_inline() ? std::memcmp(inline_storage_, other.inline_storage_, sizeof(inline_storage_))
+                               : std::memcmp(outline_storage_, other.outline_storage_, storage_bytes(size_));
+        return !res;
+    }
+
     ~ShapeAndStride() {
         if (!is_inline()) {
-            free(out_of_line_storage_);
+            free(outline_storage_);
         }
     }
 
@@ -91,19 +164,19 @@ public:
     }
 
     NODISCARD int64_t* shape_data() noexcept {
-        return is_inline() ? &inline_storage_[0] : &out_of_line_storage_[0];
+        return is_inline() ? &inline_storage_[0] : &outline_storage_[0];
     }
 
     NODISCARD const int64_t* shape_data() const noexcept {
-        return is_inline() ? &inline_storage_[0] : &out_of_line_storage_[0];
+        return is_inline() ? &inline_storage_[0] : &outline_storage_[0];
     }
 
     NODISCARD int64_t* stride_data() noexcept {
-        return is_inline() ? &inline_storage_[MAX_INLINE_SIZE] : &out_of_line_storage_[size()];
+        return is_inline() ? &inline_storage_[MAX_INLINE_SIZE] : &outline_storage_[size()];
     }
 
     NODISCARD const int64_t* stride_data() const noexcept {
-        return is_inline() ? &inline_storage_[MAX_INLINE_SIZE] : &out_of_line_storage_[size()];
+        return is_inline() ? &inline_storage_[MAX_INLINE_SIZE] : &outline_storage_[size()];
     }
 
     int64_t* shape_begin() noexcept {
@@ -184,9 +257,39 @@ private:
         memcpy(inline_storage_, other.inline_storage_, sizeof(inline_storage_));
     }
 
+    static size_t storage_bytes(size_t size) noexcept {
+        return size * 2 * sizeof(int64_t);
+    }
+
+    void allocate_outline_storage(size_t size) {
+        outline_storage_ = static_cast<int64_t*>(malloc(storage_bytes(size)));
+        CHECK(outline_storage_) << "Could not allocate memory for Tensor ShapeAndStride.";
+    }
+
+    void copy_outline_data(const ShapeAndStride& other) noexcept {
+        memcpy(outline_storage_, other.outline_storage_, storage_bytes(other.size_));
+    }
+
+    void resize_outline_storage(size_t new_size) {
+        CHECK(!is_inline());
+        outline_storage_ = static_cast<int64_t*>(realloc(outline_storage_, storage_bytes(new_size)));
+        CHECK(outline_storage_) << "Could not reallocate memory for Tensor ShapeAndStride.";
+    }
+
+    void resize(size_t new_size) {
+        const auto old_size = size();
+        if (new_size == old_size) {
+            return;
+        }
+
+
+    }
+
+    void resize_slow_path(size_t new_size, size_t old_size);
+
     size_t size_{1};
     union {
-        int64_t* out_of_line_storage_;
+        int64_t* outline_storage_;
         int64_t inline_storage_[MAX_INLINE_SIZE * 2];
     };
 };
