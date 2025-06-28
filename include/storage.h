@@ -247,6 +247,24 @@ public:
         return stride_data()[idx];
     }
 
+    void set_shape(const std::vector<int64_t>& shape) {
+        resize(shape.size());
+        std::copy(shape.begin(), shape.end(), shape_begin());
+    }
+
+    void set_strides(const std::vector<int64_t>& strides) {
+        CHECK(strides.size() == size());
+        std::copy(strides.begin(), strides.end(), stride_begin());
+    }
+
+    NODISCARD std::vector<int64_t> get_shape() const {
+        return std::vector<int64_t>(shape_begin(), shape_end());
+    }
+
+    NODISCARD std::vector<int64_t> get_strides() const {
+        return std::vector<int64_t>(stride_begin(), stride_end());
+    }
+
 private:
     NODISCARD bool is_inline() const noexcept {
         return size_ <= MAX_INLINE_SIZE;
@@ -282,10 +300,62 @@ private:
             return;
         }
 
-
+        if (new_size <= MAX_INLINE_SIZE && is_inline()) {
+            if (old_size < new_size) {
+                const auto bytes_to_zero = (new_size - old_size) * sizeof(inline_storage_[0]);
+                memset(&inline_storage_[old_size], 0, bytes_to_zero);
+                memset(&inline_storage_[MAX_INLINE_SIZE + old_size], 0, bytes_to_zero);
+            }
+            size_ = new_size;
+        } else {
+            resize_slow_path(new_size, old_size);
+        }
     }
 
-    void resize_slow_path(size_t new_size, size_t old_size);
+    void resize_slow_path(size_t new_size, size_t old_size) {
+        if (new_size <= MAX_INLINE_SIZE) {
+            CHECK(!is_inline()) << "resize slow path called when fast path should have been hit!";
+            auto* tmp = outline_storage_;
+            memcpy(&inline_storage_[0], &tmp[0], MAX_INLINE_SIZE * sizeof(inline_storage_[0]));
+            memcpy(&inline_storage_[MAX_INLINE_SIZE], &tmp[old_size], MAX_INLINE_SIZE * sizeof(inline_storage_[0]));
+            free(tmp);
+        } else {
+            if (is_inline()) {
+                auto* tmp = static_cast<int64_t*>(malloc(storage_bytes(new_size)));
+                CHECK(tmp) << "Could not allocate memory for Tensor ShapeAndStride.";
+                const auto bytes_to_copy = old_size * sizeof(inline_storage_[0]);
+                const auto bytes_to_zero = new_size > old_size ? (new_size - old_size) * sizeof(tmp[0]) : 0;
+                memcpy(&tmp[0], &inline_storage_[0], bytes_to_copy);
+                if (bytes_to_zero) {
+                    memset(&tmp[old_size], 0, bytes_to_zero);
+                }
+
+                memcpy(&tmp[new_size], &inline_storage_[MAX_INLINE_SIZE], bytes_to_copy);
+                if (bytes_to_zero) {
+                    memset(&tmp[new_size + old_size], 0, bytes_to_zero);
+                }
+
+                outline_storage_ = tmp;
+            } else {
+                const bool is_growing = new_size > old_size;
+                if (is_growing) {
+                    resize_outline_storage(new_size);
+                }
+
+                memmove(outline_storage_ + new_size, outline_storage_ + old_size,
+                        std::min(new_size, old_size) * sizeof(outline_storage_[0]));
+
+                if (is_growing) {
+                    const auto bytes_to_zero = (new_size - old_size) * sizeof(outline_storage_[0]);
+                    memset(&outline_storage_[old_size], 0, bytes_to_zero);
+                    memset(&outline_storage_[new_size + old_size], 0, bytes_to_zero);
+                } else {
+                    resize_outline_storage(new_size);
+                }
+            }
+        }
+        size_ = new_size;
+    }
 
     size_t size_{1};
     union {
