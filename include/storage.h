@@ -259,40 +259,11 @@ public:
     }
 
     NODISCARD std::vector<int64_t> get_shape() const {
-        return std::vector<int64_t>(shape_begin(), shape_end());
+        return {shape_begin(), shape_end()};
     }
 
     NODISCARD std::vector<int64_t> get_strides() const {
-        return std::vector<int64_t>(stride_begin(), stride_end());
-    }
-
-private:
-    NODISCARD bool is_inline() const noexcept {
-        return size_ <= MAX_INLINE_SIZE;
-    }
-
-    void copy_inline_data(const ShapeAndStride& other) {
-        CHECK(other.is_inline());
-        memcpy(inline_storage_, other.inline_storage_, sizeof(inline_storage_));
-    }
-
-    static size_t storage_bytes(size_t size) noexcept {
-        return size * 2 * sizeof(int64_t);
-    }
-
-    void allocate_outline_storage(size_t size) {
-        outline_storage_ = static_cast<int64_t*>(malloc(storage_bytes(size)));
-        CHECK(outline_storage_) << "Could not allocate memory for Tensor ShapeAndStride.";
-    }
-
-    void copy_outline_data(const ShapeAndStride& other) noexcept {
-        memcpy(outline_storage_, other.outline_storage_, storage_bytes(other.size_));
-    }
-
-    void resize_outline_storage(size_t new_size) {
-        CHECK(!is_inline());
-        outline_storage_ = static_cast<int64_t*>(realloc(outline_storage_, storage_bytes(new_size)));
-        CHECK(outline_storage_) << "Could not reallocate memory for Tensor ShapeAndStride.";
+        return {stride_begin(), stride_end()};
     }
 
     void resize(size_t new_size) {
@@ -357,6 +328,36 @@ private:
         }
         size_ = new_size;
     }
+
+private:
+    NODISCARD bool is_inline() const noexcept {
+        return size_ <= MAX_INLINE_SIZE;
+    }
+
+    void copy_inline_data(const ShapeAndStride& other) {
+        CHECK(other.is_inline());
+        memcpy(inline_storage_, other.inline_storage_, sizeof(inline_storage_));
+    }
+
+    static size_t storage_bytes(size_t size) noexcept {
+        return size * 2 * sizeof(int64_t);
+    }
+
+    void allocate_outline_storage(size_t size) {
+        outline_storage_ = static_cast<int64_t*>(malloc(storage_bytes(size)));
+        CHECK(outline_storage_) << "Could not allocate memory for Tensor ShapeAndStride.";
+    }
+
+    void copy_outline_data(const ShapeAndStride& other) const noexcept {
+        memcpy(outline_storage_, other.outline_storage_, storage_bytes(other.size_));
+    }
+
+    void resize_outline_storage(size_t new_size) {
+        CHECK(!is_inline());
+        outline_storage_ = static_cast<int64_t*>(realloc(outline_storage_, storage_bytes(new_size)));
+        CHECK(outline_storage_) << "Could not reallocate memory for Tensor ShapeAndStride.";
+    }
+
 
     size_t size_{1};
     union {

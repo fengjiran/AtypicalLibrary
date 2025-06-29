@@ -227,6 +227,14 @@ public:
     TensorImpl& operator=(const TensorImpl&) = delete;
     TensorImpl& operator=(TensorImpl&&) noexcept = delete;
 
+    NODISCARD bool has_storage() const {
+        return storage_;
+    }
+
+    NODISCARD const Storage& storage() const {
+        return storage_;
+    }
+
 
 private:
     Storage storage_;
@@ -239,6 +247,8 @@ private:
     int64_t numel_ = 1;
     DLDataType dtype_;
     ShapeAndStride shape_and_stride_;
+
+    bool is_contiguous_ : 1;
 };
 
 }// namespace atp
