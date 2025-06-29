@@ -227,6 +227,37 @@ public:
     TensorImpl& operator=(const TensorImpl&) = delete;
     TensorImpl& operator=(TensorImpl&&) noexcept = delete;
 
+    /**
+     * The number of elements in a tensor.
+     **/
+    int64_t numel() const {
+        return numel_;
+    }
+
+    /**
+     * Return the number of dimensions of this tensor.  Note that 0-dimension
+     * represents a Tensor that is a Scalar, e.g., one that has a single element.
+     **/
+    int64_t ndim() const {
+        return shape_and_stride_.size();
+    }
+
+    /**
+     * Return a reference to the shape of this tensor. This reference remains
+     * valid as long as the tensor is live and not resized.
+     **/
+    std::vector<int64_t> shape() const {
+        return shape_and_stride_.get_shape();
+    }
+
+    /**
+     * Return a reference to the strides of this tensor.  This reference remains
+     * valid as long as the tensor is live and not restrided.
+     **/
+    std::vector<int64_t> strides() const {
+        return shape_and_stride_.get_strides();
+    }
+
     NODISCARD bool has_storage() const {
         return storage_;
     }
@@ -235,9 +266,31 @@ public:
         return storage_;
     }
 
+    /**
+     * Return the offset in number of elements into the storage that this
+     * tensor points to.  Most tensors have storage_offset() == 0, but,
+     * for example, an index into a tensor will have a non-zero storage_offset().
+     *
+     * WARNING: This is NOT computed in bytes.
+     **/
+    NODISCARD int64_t storage_offset() const {
+        return storage_offset_;
+    }
+
+    /**
+   * Whether or not a tensor is laid out in contiguous memory.
+   *
+   * Tensors with non-trivial strides are not contiguous. See
+   * compute_contiguous() for the exact definition of whether or not
+   * a tensor is contiguous or not.
+   */
+    // NODISCARD bool is_contiguous() const {
+    //     return is_contiguous_;
+    // }
 
 private:
     Storage storage_;
+    // The offset in number of elements into the storage that this tensor points to.
     int64_t storage_offset_ = 0;
 
     // If shape and strides are empty, the numel is 1!! However, most of the
