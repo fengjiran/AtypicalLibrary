@@ -8,6 +8,7 @@
 #include "cpu_allocator.h"
 #include "storage.h"
 #include "tensor_utils.h"
+#include "data_type.h"
 
 #include <fmt/format.h>
 #include <glog/logging.h>
@@ -230,7 +231,7 @@ public:
     /**
      * The number of elements in a tensor.
      **/
-    int64_t numel() const {
+    NODISCARD int64_t numel() const {
         return numel_;
     }
 
@@ -238,7 +239,7 @@ public:
      * Return the number of dimensions of this tensor.  Note that 0-dimension
      * represents a Tensor that is a Scalar, e.g., one that has a single element.
      **/
-    int64_t ndim() const {
+    NODISCARD int64_t ndim() const {
         return shape_and_stride_.size();
     }
 
@@ -246,7 +247,7 @@ public:
      * Return a reference to the shape of this tensor. This reference remains
      * valid as long as the tensor is live and not resized.
      **/
-    std::vector<int64_t> shape() const {
+    NODISCARD std::vector<int64_t> shape() const {
         return shape_and_stride_.get_shape();
     }
 
@@ -254,7 +255,7 @@ public:
      * Return a reference to the strides of this tensor.  This reference remains
      * valid as long as the tensor is live and not restrided.
      **/
-    std::vector<int64_t> strides() const {
+    NODISCARD std::vector<int64_t> strides() const {
         return shape_and_stride_.get_strides();
     }
 
@@ -266,7 +267,7 @@ public:
      * True if a tensor is storage initialized.  A tensor may become
      * storage UNINITIALIZED after a Resize() or FreeMemory()
      **/
-    bool storage_initialized() const {
+    NODISCARD bool storage_initialized() const {
         CHECK(has_storage()) << "Can't call storage_initialized() on a tensor that doesn't have storage.";
         return storage_.const_data() != nullptr || numel_ == 0;
     }
