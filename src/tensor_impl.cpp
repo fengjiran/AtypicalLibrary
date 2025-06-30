@@ -70,9 +70,5 @@ int64_t TensorImpl_bk::nbytes() const {
     return GetTensorSize(tensor_info_);
 }
 
-// Scalar TensorImpl::item() const {
-//     CHECK(numel() == 1) << fmt::format("a Tensor with {} elements can not converted to Scalar.", numel());
-// }
-
 
 }// namespace atp

@@ -262,6 +262,15 @@ public:
         return storage_;
     }
 
+    /**
+     * True if a tensor is storage initialized.  A tensor may become
+     * storage UNINITIALIZED after a Resize() or FreeMemory()
+     **/
+    bool storage_initialized() const {
+        CHECK(has_storage()) << "Can't call storage_initialized() on a tensor that doesn't have storage.";
+        return storage_.const_data() != nullptr || numel_ == 0;
+    }
+
     NODISCARD const Storage& storage() const {
         return storage_;
     }
@@ -288,13 +297,46 @@ public:
     //     return is_contiguous_;
     // }
 
+    template<typename T>
+    T* data_ptr_impl() const {
+        auto get_data = [this] {
+            return static_cast<T*>(storage_.data());
+        };
+        return data_ptr_impl_impl<T>(get_data);
+    }
+
+    template<typename T>
+    const T* const_data_ptr_impl() const {
+        auto get_data = [this] {
+            return static_cast<const T*>(storage_.const_data());
+        };
+        return data_ptr_impl_impl<const T>(get_data);
+    }
+
 private:
+    // Shared implementation of data_ptr_impl() and the const_data_ptr_impl().
+    template<typename T, typename Func>
+    __ubsan_ignore_pointer_overflow__ T* data_ptr_impl_impl(const Func& get_data) const {
+        CHECK(has_storage()) << "Can't access data pointer of Tensor that doesn't have storage.";
+        CHECK(storage_initialized()) << "The tensor has a non-zero number of elements, but its data is not allocated yet.";
+        return get_data() + storage_offset_;
+    }
+
+    template<typename Void, typename Func>
+    Void* data_impl(const Func& get_data) const {
+        CHECK(has_storage()) << "Can't access data pointer of Tensor that doesn't have storage.";
+        auto* data = get_data();
+        static_assert(sizeof(*data) == 1, "get_data must return a byte-addressed pointer.");
+        return data;
+    }
+
+
     Storage storage_;
     // The offset in number of elements into the storage that this tensor points to.
     int64_t storage_offset_ = 0;
 
     // If shape and strides are empty, the numel is 1!! However, most of the
-    // time, we will immediately set shape to {0} and reset numel to 0.
+    // time, we will immediately set the shape to {0} and reset numel to 0.
     // (Can't do that in the default initializers, because there's no way to
     // spell "allocate a one-element array" for strides_).
     int64_t numel_ = 1;
@@ -302,6 +344,12 @@ private:
     ShapeAndStride shape_and_stride_;
 
     bool is_contiguous_ : 1;
+
+    // Tensor is stored in the channels last 2d memory format, when dimensions
+    // order is (N)CHW and C-strides < W-strides < H-strides (< N-strides)
+    // (If size of any dimension is equal to 1, this dimension strides value
+    // is not taken into account).
+    bool is_channels_last_ : 1;
 };
 
 }// namespace atp
