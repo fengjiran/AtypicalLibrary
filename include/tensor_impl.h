@@ -6,9 +6,9 @@
 #define TENSOR_IMPL_H
 
 #include "cpu_allocator.h"
+#include "data_type.h"
 #include "storage.h"
 #include "tensor_utils.h"
-#include "data_type.h"
 
 #include <fmt/format.h>
 #include <glog/logging.h>
@@ -235,6 +235,10 @@ public:
         return numel_;
     }
 
+    NODISCARD bool empty() const {
+        return numel_ == 0;
+    }
+
     /**
      * Return the number of dimensions of this tensor.  Note that 0-dimension
      * represents a Tensor that is a Scalar, e.g., one that has a single element.
@@ -259,6 +263,11 @@ public:
         return shape_and_stride_.get_strides();
     }
 
+    size_t itemsize() const {
+        CHECK(dtype_initialized()) << "Can't get item sizer of Tensor that doesn't have initialized dtype.";
+        return dtype_.nbytes();
+    }
+
     NODISCARD bool has_storage() const {
         return storage_;
     }
@@ -270,6 +279,10 @@ public:
     NODISCARD bool storage_initialized() const {
         CHECK(has_storage()) << "Can't call storage_initialized() on a tensor that doesn't have storage.";
         return storage_.const_data() != nullptr || numel_ == 0;
+    }
+
+    NODISCARD bool dtype_initialized() const {
+        return dtype_ != DataType();
     }
 
     NODISCARD const Storage& storage() const {
@@ -285,6 +298,29 @@ public:
      **/
     NODISCARD int64_t storage_offset() const {
         return storage_offset_;
+    }
+
+    /**
+   * Return a void* data pointer to the actual data which this tensor refers to.
+   *
+   * It is invalid to call data() on a dtype-uninitialized tensor, even if the size is 0.
+   *
+   * WARNING: The data pointed to by this tensor may not contiguous; do NOT
+   * assume that itemsize() * numel() is sufficient to compute the bytes that
+   * can be validly read from this tensor.
+   */
+    void* data() const {
+        return data_impl<void>(
+                [this] {
+                    return static_cast<char*>(storage_.data());
+                });
+    }
+
+    const void* const_data() const {
+        return data_impl<const void>(
+                [this] {
+                    return static_cast<const char*>(storage_.const_data());
+                });
     }
 
     /**
@@ -315,6 +351,19 @@ public:
     }
 
 private:
+    template<typename Void, typename Func>
+    Void* data_impl(const Func& get_data) const {
+        CHECK(has_storage()) << "Can't access data pointer of Tensor that doesn't have storage.";
+        CHECK(dtype_initialized()) << "Can't access data pointer of Tensor that doesn't have initialized dtype.";
+        auto* data = get_data();
+        static_assert(sizeof(*data) == 1, "get_data must return a byte-addressed pointer.");
+        if (empty()) {
+            return nullptr;
+        }
+
+        return data + dtype_.nbytes() * storage_offset_;
+    }
+
     // Shared implementation of data_ptr_impl() and the const_data_ptr_impl().
     template<typename T, typename Func>
     __ubsan_ignore_pointer_overflow__ T* data_ptr_impl_impl(const Func& get_data) const {
@@ -322,15 +371,6 @@ private:
         CHECK(storage_initialized()) << "The tensor has a non-zero number of elements, but its data is not allocated yet.";
         return get_data() + storage_offset_;
     }
-
-    template<typename Void, typename Func>
-    Void* data_impl(const Func& get_data) const {
-        CHECK(has_storage()) << "Can't access data pointer of Tensor that doesn't have storage.";
-        auto* data = get_data();
-        static_assert(sizeof(*data) == 1, "get_data must return a byte-addressed pointer.");
-        return data;
-    }
-
 
     Storage storage_;
     // The offset in number of elements into the storage that this tensor points to.
@@ -341,7 +381,7 @@ private:
     // (Can't do that in the default initializers, because there's no way to
     // spell "allocate a one-element array" for strides_).
     int64_t numel_ = 1;
-    DLDataType dtype_;
+    DataType dtype_;
     ShapeAndStride shape_and_stride_;
 
     bool is_contiguous_ : 1;

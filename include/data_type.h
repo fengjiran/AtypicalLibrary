@@ -5,6 +5,8 @@
 #ifndef DATA_TYPE_H
 #define DATA_TYPE_H
 
+#include "tensor_utils.h"
+
 #include <cstdint>
 #include <string>
 
@@ -218,14 +220,6 @@ private:
 // f(DLDataTypeCode::kFloat6_e3m2fn, 6, 1, float);      \
 // f(DLDataTypeCode::kFloat4_e2m1fn, 4, 1, float)
 
-#define DEFINE_MAKE(code, bits, lanes, name, T) \
-    template<>                                  \
-    DataType DataType::Make<T>() {              \
-        return DataType(code, bits, lanes);     \
-    }
-SCALAR_TYPE_TO_NAME_AND_CPP_TYPE(DEFINE_MAKE);
-
-#undef DEFINE_MAKE
 
 }// namespace atp
 

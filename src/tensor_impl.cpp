@@ -70,5 +70,4 @@ int64_t TensorImpl_bk::nbytes() const {
     return GetTensorSize(tensor_info_);
 }
 
-
 }// namespace atp
