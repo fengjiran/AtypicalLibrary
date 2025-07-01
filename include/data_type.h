@@ -60,7 +60,7 @@ struct DLDataType {
     int16_t lanes;
 };
 
-inline std::string Type2Str(const DLDataType& dtype) {
+inline std::string TypeCode2Str(const DLDataType& dtype) {
     switch (dtype.code) {
         case DLDataTypeCode::kInt: {
             return "int";
@@ -128,6 +128,24 @@ inline std::string Type2Str(const DLDataType& dtype) {
     }
 }
 
+class DataType {
+public:
+    DataType() : dtype_({DLDataTypeCode::Undefined, -1, -1}), name_("undefined") {}
+
+    explicit DataType(DLDataType dtype, const std::string& name) : dtype_(dtype), name_(name) {}
+
+    DataType(int code, int bits, int lanes, const std::string& name) {
+        dtype_.code = static_cast<DLDataTypeCode>(code);
+        dtype_.bits = static_cast<int8_t>(bits);
+        dtype_.lanes = static_cast<int16_t>(lanes);
+        name_ = name;
+    }
+
+private:
+    DLDataType dtype_;
+    std::string name_;
+};
+
 #define SCALAR_TYPES_NAME(f) \
     f(bool, Bool);           \
     f(uint8_t, Byte);        \
@@ -142,18 +160,18 @@ inline std::string Type2Str(const DLDataType& dtype) {
     f(double, Double);
 
 // TODO: bfloat, float8, float6 and float4 type need to be defined.
-#define SCALAR_TYPES_TO_CPP_TYPES(f)           \
-    f(DLDataTypeCode::kInt, 8, 1, int8_t);     \
-    f(DLDataTypeCode::kInt, 16, 1, int16_t);   \
-    f(DLDataTypeCode::kInt, 32, 1, int32_t);   \
-    f(DLDataTypeCode::kInt, 64, 1, int64_t);   \
-    f(DLDataTypeCode::kUInt, 8, 1, uint8_t);   \
-    f(DLDataTypeCode::kUInt, 16, 1, uint16_t); \
-    f(DLDataTypeCode::kUInt, 32, 1, uint32_t); \
-    f(DLDataTypeCode::kUInt, 64, 1, uint64_t); \
-    f(DLDataTypeCode::kBool, 8, 1, bool);      \
-    f(DLDataTypeCode::kFloat, 32, 1, float);   \
-    f(DLDataTypeCode::kFloat, 64, 1, double);  \
+#define SCALAR_TYPE_TO_NAME_AND_CPP_TYPE(f)            \
+    f(DLDataTypeCode::kInt, 8, 1, Char, int8_t);       \
+    f(DLDataTypeCode::kInt, 16, 1, Short, int16_t);    \
+    f(DLDataTypeCode::kInt, 32, 1, Int, int32_t);      \
+    f(DLDataTypeCode::kInt, 64, 1, Long, int64_t);     \
+    f(DLDataTypeCode::kUInt, 8, 1, Byte, uint8_t);     \
+    f(DLDataTypeCode::kUInt, 16, 1, UShort, uint16_t); \
+    f(DLDataTypeCode::kUInt, 32, 1, UInt, uint32_t);   \
+    f(DLDataTypeCode::kUInt, 64, 1, ULong, uint64_t);  \
+    f(DLDataTypeCode::kBool, 8, 1, Bool, bool);        \
+    f(DLDataTypeCode::kFloat, 32, 1, Float, float);    \
+    f(DLDataTypeCode::kFloat, 64, 1, Double, double);  \
     // f(DLDataTypeCode::kBfloat, 16, 1, float);            \
 // f(DLDataTypeCode::kFloat8_e3m4, 8, 1, float);        \
 // f(DLDataTypeCode::kFloat8_e4m3, 8, 1, float);        \
