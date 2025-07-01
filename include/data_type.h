@@ -130,20 +130,53 @@ inline std::string TypeCode2Str(const DLDataType& dtype) {
 
 class DataType {
 public:
-    DataType() : dtype_({DLDataTypeCode::Undefined, -1, -1}), name_("undefined") {}
+    DataType() : dtype_({DLDataTypeCode::Undefined, -1, -1}) {}
 
-    explicit DataType(DLDataType dtype, const std::string& name) : dtype_(dtype), name_(name) {}
+    explicit DataType(DLDataType dtype) : dtype_(dtype) {}
 
-    DataType(int code, int bits, int lanes, const std::string& name) {
-        dtype_.code = static_cast<DLDataTypeCode>(code);
+    DataType(DLDataTypeCode code, int bits, int lanes) {
+        dtype_.code = code;
         dtype_.bits = static_cast<int8_t>(bits);
         dtype_.lanes = static_cast<int16_t>(lanes);
-        name_ = name;
+    }
+
+    NODISCARD DLDataTypeCode code() const {
+        return dtype_.code;
+    }
+
+    NODISCARD int bits() const {
+        return dtype_.bits;
+    }
+
+    NODISCARD int lanes() const {
+        return dtype_.lanes;
+    }
+
+    NODISCARD int nbytes() const {
+        return (bits() * lanes() + 7) / 8;
+    }
+
+    template<typename T>
+    static DataType Make();
+
+    template<typename T>
+    NODISCARD bool Match() const {
+        return *this == Make<T>();
+    }
+
+    NODISCARD bool operator==(const DataType& other) const {
+        if (this->code() == DLDataTypeCode::Undefined || other.code() == DLDataTypeCode::Undefined) {
+            return this->code() == other.code();
+        }
+        return this->code() == other.code() && this->bits() == other.bits() && this->lanes() == other.lanes();
+    }
+
+    NODISCARD bool operator!=(const DataType& other) const {
+        return !operator==(other);
     }
 
 private:
     DLDataType dtype_;
-    std::string name_;
 };
 
 #define SCALAR_TYPES_NAME(f) \
@@ -184,6 +217,15 @@ private:
 // f(DLDataTypeCode::kFloat6_e2m3fn, 6, 1, float);      \
 // f(DLDataTypeCode::kFloat6_e3m2fn, 6, 1, float);      \
 // f(DLDataTypeCode::kFloat4_e2m1fn, 4, 1, float)
+
+#define DEFINE_MAKE(code, bits, lanes, name, T) \
+    template<>                                  \
+    DataType DataType::Make<T>() {              \
+        return DataType(code, bits, lanes);     \
+    }
+SCALAR_TYPE_TO_NAME_AND_CPP_TYPE(DEFINE_MAKE);
+
+#undef DEFINE_MAKE
 
 }// namespace atp
 
