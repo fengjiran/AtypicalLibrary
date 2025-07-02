@@ -263,7 +263,7 @@ public:
         return shape_and_stride_.get_strides();
     }
 
-    size_t itemsize() const {
+    NODISCARD size_t itemsize() const {
         CHECK(dtype_initialized()) << "Can't get item sizer of Tensor that doesn't have initialized dtype.";
         return dtype_.nbytes();
     }
@@ -301,30 +301,7 @@ public:
     }
 
     /**
-   * Return a void* data pointer to the actual data which this tensor refers to.
-   *
-   * It is invalid to call data() on a dtype-uninitialized tensor, even if the size is 0.
-   *
-   * WARNING: The data pointed to by this tensor may not contiguous; do NOT
-   * assume that itemsize() * numel() is sufficient to compute the bytes that
-   * can be validly read from this tensor.
-   */
-    void* data() const {
-        return data_impl<void>(
-                [this] {
-                    return static_cast<char*>(storage_.data());
-                });
-    }
-
-    const void* const_data() const {
-        return data_impl<const void>(
-                [this] {
-                    return static_cast<const char*>(storage_.const_data());
-                });
-    }
-
-    /**
-   * Whether or not a tensor is laid out in contiguous memory.
+   * Whether a tensor is laid out in contiguous memory.
    *
    * Tensors with non-trivial strides are not contiguous. See
    * compute_contiguous() for the exact definition of whether or not
@@ -333,6 +310,29 @@ public:
     // NODISCARD bool is_contiguous() const {
     //     return is_contiguous_;
     // }
+
+    /**
+   * Return a void* data pointer to the actual data which this tensor refers to.
+   *
+   * It is invalid to call data() on a dtype-uninitialized tensor, even if the size is 0.
+   *
+   * WARNING: The data pointed to by this tensor may not contiguous; do NOT
+   * assume that itemsize() * numel() is sufficient to compute the bytes that
+   * can be validly read from this tensor.
+   */
+    NODISCARD void* data() const {
+        return data_impl<void>(
+                [this] {
+                    return static_cast<char*>(storage_.data());
+                });
+    }
+
+    NODISCARD const void* const_data() const {
+        return data_impl<const void>(
+                [this] {
+                    return static_cast<const char*>(storage_.const_data());
+                });
+    }
 
     template<typename T>
     T* data_ptr_impl() const {
@@ -352,7 +352,7 @@ public:
 
 private:
     template<typename Void, typename Func>
-    Void* data_impl(const Func& get_data) const {
+    NODISCARD Void* data_impl(const Func& get_data) const {
         CHECK(has_storage()) << "Can't access data pointer of Tensor that doesn't have storage.";
         CHECK(dtype_initialized()) << "Can't access data pointer of Tensor that doesn't have initialized dtype.";
         auto* data = get_data();
@@ -368,7 +368,8 @@ private:
     template<typename T, typename Func>
     __ubsan_ignore_pointer_overflow__ T* data_ptr_impl_impl(const Func& get_data) const {
         CHECK(has_storage()) << "Can't access data pointer of Tensor that doesn't have storage.";
-        CHECK(storage_initialized()) << "The tensor has a non-zero number of elements, but its data is not allocated yet.";
+        CHECK(storage_initialized() && dtype_.Match<T>())
+                << "The tensor has a non-zero number of elements, but its data is not allocated yet.";
         return get_data() + storage_offset_;
     }
 

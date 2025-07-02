@@ -12,5 +12,6 @@ namespace atp {
         return DataType(code, bits, lanes);     \
     }
 SCALAR_TYPE_TO_NAME_AND_CPP_TYPE(DEFINE_MAKE);
+#undef DEFINE_MAKE
 
 }// namespace atp
