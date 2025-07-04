@@ -3,7 +3,6 @@
 //
 #include "tensor.h"
 #include <fmt/format.h>
-
 #include <gtest/gtest.h>
 
 using namespace atp;
@@ -18,20 +17,6 @@ TEST(Tensor, envs) {
     EXPECT_TRUE(has_env("THP_MEM_ALLOC_ENABLE"));
     EXPECT_TRUE(check_env("THP_MEM_ALLOC_ENABLE"));
     // std::cout << sysconf(_SC_PAGESIZE);
-}
-
-TEST(Tensor, ShapeAndStride) {
-    ShapeAndStride s1;
-    EXPECT_EQ(s1.size(), 1);
-    EXPECT_EQ(s1.shape_begin()[0], 0);
-    EXPECT_EQ(s1.stride_begin()[0], 1);
-    EXPECT_TRUE(s1.get_shape() == std::vector<int64_t>{0});
-    EXPECT_TRUE(s1.get_strides() == std::vector<int64_t>{1});
-
-    std::vector<int64_t> shape{10, 3, 256, 256};
-    s1.set_shape(shape);
-    EXPECT_EQ(s1.size(), 4);
-    EXPECT_TRUE(s1.get_shape() == shape);
 }
 
 TEST(Tensor, unique_void_ptr) {

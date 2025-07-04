@@ -62,8 +62,7 @@ void* alloc_cpu(size_t nbytes) {
         return nullptr;
     }
 
-    CHECK(static_cast<ptrdiff_t>(nbytes) >= 0)
-            << "the nbytes is seems a negative number.";
+    CHECK(static_cast<ptrdiff_t>(nbytes) >= 0) << "the nbytes is seems a negative number.";
 
     void* data = nullptr;
     int err = posix_memalign(&data, get_alignment(nbytes), nbytes);

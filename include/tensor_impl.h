@@ -300,6 +300,10 @@ public:
         return storage_offset_;
     }
 
+    NODISCARD DeviceType device() const {
+        return storage_.device();
+    }
+
     /**
    * Whether a tensor is laid out in contiguous memory.
    *
@@ -385,13 +389,13 @@ private:
     DataType dtype_;
     ShapeAndStride shape_and_stride_;
 
-    bool is_contiguous_ : 1;
+    // bool is_contiguous_ : 1;
 
     // Tensor is stored in the channels last 2d memory format, when dimensions
     // order is (N)CHW and C-strides < W-strides < H-strides (< N-strides)
     // (If size of any dimension is equal to 1, this dimension strides value
     // is not taken into account).
-    bool is_channels_last_ : 1;
+    // bool is_channels_last_ : 1;
 };
 
 }// namespace atp
