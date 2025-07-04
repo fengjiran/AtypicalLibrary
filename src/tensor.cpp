@@ -10,8 +10,9 @@ namespace atp {
 
 namespace {
 void check_type(const Tensor& t, DLDataTypeCode type_code, int8_t type_bits, int16_t type_lanes) {
-    CHECK(t.dtype().code == type_code && t.dtype().bits == type_bits && t.dtype().lanes == type_lanes)
-            << "data type mismatch.";
+    CHECK(t.dtype() == DataType(type_code, type_bits, type_lanes));
+    // CHECK(t.dtype().code() == type_code && t.dtype().bits() == type_bits && t.dtype().lanes() == type_lanes)
+    //         << "data type mismatch.";
 }
 }// namespace
 
@@ -19,72 +20,67 @@ void check_type(const Tensor& t, DLDataTypeCode type_code, int8_t type_bits, int
     template<>                                                     \
     T* Tensor::data_ptr<T>() const {                               \
         check_type(*this, type_code, type_bits, type_lanes);       \
-        return data_->data_ptr_impl<T>();                          \
+        return impl_->data_ptr_impl<T>();                          \
     }                                                              \
                                                                    \
     template<>                                                     \
     const T* Tensor::const_data_ptr<T>() const {                   \
         check_type(*this, type_code, type_bits, type_lanes);       \
-        return data_->const_data_ptr_impl<T>();                    \
+        return impl_->const_data_ptr_impl<T>();                    \
     }                                                              \
                                                                    \
     template<>                                                     \
     const T* Tensor::const_data_ptr<const T>() const {             \
         check_type(*this, type_code, type_bits, type_lanes);       \
-        return data_->const_data_ptr_impl<T>();                    \
+        return impl_->const_data_ptr_impl<T>();                    \
     }
 
 SCALAR_TYPE_TO_NAME_AND_CPP_TYPE(DEFINE_DATA_PTR);
 #undef DEFINE_DATA_PTR
 
-Tensor::Tensor(const std::vector<int64_t>& shape, int64_t byte_offset, DeviceType device_type, DLDataType dtype)
-    : data_(std::make_shared<TensorImpl_bk>(shape, device_type, dtype)), byte_offset_(byte_offset) {}
+Tensor::Tensor(const std::vector<int64_t>& shape, int64_t storage_offset, DataType dtype, DeviceType device)
+    : impl_(std::make_shared<TensorImpl>(shape, storage_offset, dtype, device)) {}
+
 
 bool Tensor::defined() const {
-    return data_ != nullptr;
+    return impl_ != nullptr && impl_->storage_initialized();
 }
 
 int32_t Tensor::use_count() const {
-    return static_cast<int32_t>(data_.use_count());
+    return static_cast<int32_t>(impl_.use_count());
 }
 
 bool Tensor::unique() const {
-    return data_.use_count() == 1;
+    return impl_.use_count() == 1;
 }
 
 void* Tensor::data_ptr() const {
-    if (data_) {
-        return static_cast<char*>(data_->data_ptr()) + byte_offset_;
-    }
-    return nullptr;
+    return impl_ ? impl_->data() : nullptr;
 }
 
 const void* Tensor::const_data_ptr() const {
-    if (data_) {
-        return static_cast<const char*>(data_->const_data_ptr()) + byte_offset_;
-    }
-    return nullptr;
+    return impl_ ? impl_->const_data() : nullptr;
 }
 
 std::vector<int64_t> Tensor::shape() const {
-    return data_->shape();
+    return defined() ? impl_->shape() : std::vector<int64_t>{};
 }
 
-DLDataType Tensor::dtype() const {
-    return data_->dtype();
+DataType Tensor::dtype() const {
+    return defined() ? impl_->dtype() : DataType();
 }
 
 int32_t Tensor::ndim() const {
-    return data_->ndim();
+    return defined() ? impl_->ndim() : 0;
 }
 
 int64_t Tensor::numel() const {
-    return data_->numel();
+    return defined() ? impl_->numel() : 0;
 }
 
-int64_t Tensor::nbytes() const {
-    return data_->nbytes();
-}
+// int64_t Tensor::nbytes() const {
+//     return data_->nbytes();
+// }
 
 Tensor Tensor::rand(const std::vector<int64_t>& shape) {
     Tensor t(shape);
@@ -116,7 +112,7 @@ Tensor Tensor::randn(const std::vector<int64_t>& shape) {
 }
 
 Tensor Tensor::randint(int64_t low, int64_t high, const std::vector<int64_t>& shape) {
-    Tensor t(shape, 0, DeviceType::kCPU, {DLDataTypeCode::kInt, 64, 1});
+    Tensor t(shape, 0, {DLDataTypeCode::kInt, 64, 1}, DeviceType::kCPU);
     CHECK(t.numel() > 0);
     std::random_device rd;
     std::mt19937 gen(rd());

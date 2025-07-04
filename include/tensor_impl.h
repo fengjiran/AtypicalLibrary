@@ -306,6 +306,10 @@ public:
         return storage_.device();
     }
 
+    NODISCARD DataType dtype() const {
+        return dtype_;
+    }
+
     /**
    * Whether a tensor is laid out in contiguous memory.
    *

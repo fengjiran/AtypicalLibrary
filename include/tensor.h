@@ -27,9 +27,9 @@ public:
     Tensor() = default;
 
     explicit Tensor(const std::vector<int64_t>& shape,
-                    int64_t byte_offset = 0,
-                    DeviceType device_type = DeviceType::kCPU,
-                    DLDataType dtype = {DLDataTypeCode::kFloat, 32, 1});
+                    int64_t storage_offset = 0,
+                    DataType dtype = {DLDataTypeCode::kFloat, 32, 1},
+                    DeviceType device_type = DeviceType::kCPU);
 
     Tensor(const Tensor&) = default;
     Tensor(Tensor&&) = default;
@@ -54,15 +54,15 @@ public:
 
     NODISCARD std::vector<int64_t> shape() const;
 
-    NODISCARD DLDataType dtype() const;
+    NODISCARD DataType dtype() const;
 
     NODISCARD int32_t ndim() const;
 
     NODISCARD int64_t numel() const;
 
-    NODISCARD int64_t nbytes() const;
+    // NODISCARD int64_t nbytes() const;
 
-    NODISCARD Scalar item() const;
+    // NODISCARD Scalar item() const;
 
     NODISCARD void* data_ptr() const;
 
@@ -80,8 +80,8 @@ public:
     const std::remove_const_t<T>* const_data_ptr() const;
 
 private:
-    std::shared_ptr<TensorImpl_bk> data_;
-    int64_t byte_offset_{0};
+    // std::shared_ptr<TensorImpl_bk> data_;
+    std::shared_ptr<TensorImpl> impl_;
 };
 
 std::ostream& operator<<(std::ostream& os, const Tensor& t);
