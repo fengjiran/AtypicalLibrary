@@ -358,7 +358,6 @@ private:
         CHECK(outline_storage_) << "Could not reallocate memory for Tensor ShapeAndStride.";
     }
 
-
     size_t size_{1};
     union {
         int64_t* outline_storage_;

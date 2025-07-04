@@ -8,6 +8,7 @@
 #include "tensor_utils.h"
 
 #include <cstdint>
+#include <glog/logging.h>
 #include <string>
 
 namespace atp {
@@ -147,14 +148,17 @@ public:
     }
 
     NODISCARD int bits() const {
+        CHECK(code() != DLDataTypeCode::Undefined);
         return dtype_.bits;
     }
 
     NODISCARD int lanes() const {
+        CHECK(code() != DLDataTypeCode::Undefined);
         return dtype_.lanes;
     }
 
     NODISCARD int nbytes() const {
+        CHECK(code() != DLDataTypeCode::Undefined);
         return (bits() * lanes() + 7) / 8;
     }
 

@@ -228,6 +228,8 @@ public:
     TensorImpl& operator=(const TensorImpl&) = delete;
     TensorImpl& operator=(TensorImpl&&) noexcept = delete;
 
+    TensorImpl(const std::vector<int64_t>& shape, int64_t storage_offset, DataType dtype, DeviceType device);
+
     /**
      * The number of elements in a tensor.
      **/
