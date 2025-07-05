@@ -21,8 +21,9 @@ target_link_libraries(${PROJECT_NAME}
         AtypicalLibrary
         GTest::gtest_main
         glog::glog
+        /opt/anaconda3/envs/dl/lib/python3.8/site-packages/torch/lib/libc10.dylib
 #        ${TORCH_LIBRARIES}
-        /home/richard/anaconda3/envs/dl/lib/python3.12/site-packages/torch/lib/libc10.so
-        /home/richard/anaconda3/envs/dl/lib/python3.12/site-packages/torch/lib/libtorch.so
-        /home/richard/anaconda3/envs/dl/lib/python3.12/site-packages/torch/lib/libtorch_global_deps.so
+#        /home/richard/anaconda3/envs/dl/lib/python3.12/site-packages/torch/lib/libc10.so
+#        /home/richard/anaconda3/envs/dl/lib/python3.12/site-packages/torch/lib/libtorch.so
+#        /home/richard/anaconda3/envs/dl/lib/python3.12/site-packages/torch/lib/libtorch_global_deps.so
 )

@@ -83,8 +83,8 @@ TEST(Tensor, random) {
     EXPECT_TRUE(t.device() == DeviceType::kCPU);
     EXPECT_FLOAT_EQ(t.const_data_ptr<float>()[0], static_cast<const float*>(t.const_data_ptr())[0]);
 
-    // torch::Tensor t1;
-    // EXPECT_FALSE(t1.defined());
-    // EXPECT_EQ(t1.numel(), 0);
-    // EXPECT_TRUE(t1.is_contiguous());
+    torch::Tensor t1;
+    EXPECT_FALSE(t1.defined());
+    EXPECT_EQ(t1.numel(), 0);
+    EXPECT_TRUE(t1.is_contiguous());
 }
