@@ -6,70 +6,6 @@
 
 namespace atp {
 
-TensorImpl_bk::TensorImpl_bk(std::vector<int64_t> shape, DeviceType device_type, DLDataType dtype)
-    : alloc_(AllocatorTable::Global().get_allocator(device_type)) {
-    tensor_info_.ndim = static_cast<int32_t>(shape.size());
-    tensor_info_.shape = std::move(shape);
-    tensor_info_.device_type = device_type;
-    tensor_info_.dtype = dtype;
-    tensor_info_.strides.resize(tensor_info_.ndim, 1);
-    for (int i = tensor_info_.ndim - 2; i >= 0; --i) {
-        tensor_info_.strides[i] = tensor_info_.strides[i + 1] * tensor_info_.shape[i + 1];
-    }
-
-    data_ptr_ = alloc_->allocate(GetTensorSize(tensor_info_));
-    tensor_info_.data = data_ptr_.get();
-}
-
-TensorImpl_bk::~TensorImpl_bk() = default;
-
-void* TensorImpl_bk::data_ptr() const {
-    auto get_data = [this] {
-        return static_cast<char*>(tensor_info_.data);
-    };
-    return data_impl<void>(get_data);
-}
-
-const void* TensorImpl_bk::const_data_ptr() const {
-    auto get_data = [this] {
-        return static_cast<const char*>(tensor_info_.data);
-    };
-    return data_impl<const void>(get_data);
-}
-
-
-std::vector<int64_t> TensorImpl_bk::shape() const {
-    return tensor_info_.shape;
-}
-
-DLDataType TensorImpl_bk::dtype() const {
-    return tensor_info_.dtype;
-}
-
-int32_t TensorImpl_bk::ndim() const {
-    return tensor_info_.ndim;
-}
-
-int64_t TensorImpl_bk::element_size() const {
-    return (tensor_info_.dtype.bits * tensor_info_.dtype.lanes + 7) / 8;
-}
-
-int64_t TensorImpl_bk::numel() const {
-    if (tensor_info_.shape.empty()) {
-        return 0;
-    }
-
-    int64_t numel = 1;
-    for (int64_t dim: tensor_info_.shape) {
-        numel *= dim;
-    }
-    return numel;
-}
-
-int64_t TensorImpl_bk::nbytes() const {
-    return GetTensorSize(tensor_info_);
-}
-
 TensorImpl::TensorImpl(const std::vector<int64_t>& shape, int64_t storage_offset, DataType dtype, DeviceType device)
     : storage_offset_(storage_offset), dtype_(dtype) {
     for (int64_t x: shape) {
@@ -81,15 +17,12 @@ TensorImpl::TensorImpl(const std::vector<int64_t>& shape, int64_t storage_offset
     auto ndim = shape.size();
     shape_and_stride_.set_shape(shape);
 
-    for (size_t i = ndim - 1;; --i) {
+    for (int i = ndim - 1; i >= 0; --i) {
         if (i == ndim - 1) {
             shape_and_stride_.stride_at_uncheck(i) = 1;
         } else {
             auto stride = shape_and_stride_.stride_at_uncheck(i + 1) * shape_and_stride_.shape_at_uncheck(i + 1);
             shape_and_stride_.stride_at_uncheck(i) = stride;
-        }
-        if (i == 0) {
-            break;
         }
     }
 }

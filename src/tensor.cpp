@@ -70,6 +70,10 @@ DataType Tensor::dtype() const {
     return defined() ? impl_->dtype() : DataType();
 }
 
+DeviceType Tensor::device() const {
+    return defined() ? impl_->device() : DeviceType::kUndefined;
+}
+
 int32_t Tensor::ndim() const {
     return defined() ? impl_->ndim() : 0;
 }
@@ -78,9 +82,17 @@ int64_t Tensor::numel() const {
     return defined() ? impl_->numel() : 0;
 }
 
-// int64_t Tensor::nbytes() const {
-//     return data_->nbytes();
-// }
+size_t Tensor::itemsize() const {
+    return defined() ? impl_->itemsize() : 0;
+}
+
+size_t Tensor::nbytes() const {
+    return numel() * itemsize();
+}
+
+int64_t Tensor::storage_offset() const {
+    return defined() ? impl_->storage_offset() : 0;
+}
 
 Tensor Tensor::rand(const std::vector<int64_t>& shape) {
     Tensor t(shape);

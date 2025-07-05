@@ -68,19 +68,16 @@ TEST(Tensor, random) {
     for (int64_t x: shape) {
         numel *= x;
     }
+
     auto t = Tensor::rand(shape);
-    // auto t = Tensor::randint(0, 10, shape);
+    EXPECT_TRUE(t.defined());
+    EXPECT_EQ(t.shape(), shape);
+    EXPECT_EQ(t.ndim(), 4);
     EXPECT_EQ(t.numel(), numel);
-    std::cout << t.const_data_ptr<float>()[0] << std::endl;
-    std::cout << static_cast<const float*>(t.const_data_ptr())[0] << std::endl;
-    // std::cout << static_cast<double*>(t.data())[0] << std::endl;
-    // auto* p = t.const_data_ptr<int>();
-    // std::cout << p[0] << std::endl;
-    // EXPECT_TRUE(std::isfinite(p[0]));
-    // EXPECT_TRUE(p[0] != std::ceil(p[0]));
-    //
-    // auto* p1 = static_cast<double*>(static_cast<void*>(shape.data()));
-    // EXPECT_TRUE(std::isfinite(p1[6]));
-    // std::cout << p1[0] << std::endl;
-    // EXPECT_TRUE(p1[0] != std::ceil(p1[0]));
+    EXPECT_EQ(t.nbytes(), numel * 4);
+    EXPECT_EQ(t.use_count(), 1);
+    EXPECT_TRUE(t.unique());
+    EXPECT_TRUE(t.dtype() == DataType::Make<float>());
+    EXPECT_TRUE(t.device() == DeviceType::kCPU);
+    EXPECT_FLOAT_EQ(t.const_data_ptr<float>()[0], static_cast<const float*>(t.const_data_ptr())[0]);
 }

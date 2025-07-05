@@ -56,11 +56,17 @@ public:
 
     NODISCARD DataType dtype() const;
 
+    NODISCARD DeviceType device() const;
+
     NODISCARD int32_t ndim() const;
 
     NODISCARD int64_t numel() const;
 
-    // NODISCARD int64_t nbytes() const;
+    NODISCARD size_t itemsize() const;
+
+    NODISCARD size_t nbytes() const;
+
+    NODISCARD int64_t storage_offset() const;
 
     // NODISCARD Scalar item() const;
 

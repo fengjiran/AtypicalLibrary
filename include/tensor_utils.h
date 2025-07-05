@@ -51,6 +51,7 @@ namespace atp {
 enum class DeviceType : uint8_t {
     kCPU = 0,
     kCUDA = 1,
+    kUndefined
 };
 
 struct Device {

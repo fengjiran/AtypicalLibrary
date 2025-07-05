@@ -136,71 +136,6 @@ private:
 SCALAR_TYPES_NAME(DEFINE_TO);
 #undef DEFINE_TO
 
-class TensorImpl_bk {
-public:
-    TensorImpl_bk() = delete;
-
-    TensorImpl_bk(std::vector<int64_t> shape, DeviceType device_type, DLDataType dtype);
-
-    ~TensorImpl_bk();
-
-    // NODISCARD void* data() const;
-
-    NODISCARD std::vector<int64_t> shape() const;
-
-    NODISCARD DLDataType dtype() const;
-
-    NODISCARD int32_t ndim() const;
-
-    NODISCARD int64_t element_size() const;
-
-    NODISCARD int64_t numel() const;
-
-    NODISCARD int64_t nbytes() const;
-
-    NODISCARD void* data_ptr() const;
-
-    NODISCARD const void* const_data_ptr() const;
-
-    // NODISCARD Scalar item() const;
-
-    template<typename T>
-    T* data_ptr_impl() const {
-        auto get_data = [this] {
-            return static_cast<T*>(tensor_info_.data);
-        };
-        return data_ptr_impl_impl<T>(get_data);
-    }
-
-    template<typename T>
-    const T* const_data_ptr_impl() const {
-        auto get_data = [this] {
-            return static_cast<const T*>(tensor_info_.data);
-        };
-        return data_ptr_impl_impl<const T>(get_data);
-    }
-
-
-private:
-    TensorInfo tensor_info_{};
-    // Allocator* alloc_{nullptr};
-    const std::unique_ptr<Allocator>& alloc_;
-    DataPtr data_ptr_;
-
-    template<typename Void, typename Func>
-    Void* data_impl(const Func& get_data) const {
-        auto* data = get_data();
-        static_assert(sizeof(*data) == 1, "get_data must return a byte-addressed pointer.");
-        return data;
-    }
-
-    template<typename T, typename Func>
-    __ubsan_ignore_pointer_overflow__ T* data_ptr_impl_impl(const Func& get_data) const {
-        CHECK(tensor_info_.data != nullptr);
-        return get_data();
-    }
-};
-
 /**
  * The low-level representation of a tensor, which contains a pointer to a
  * storage (which contains the actual data) and metadata (e.g., shape and
@@ -378,7 +313,7 @@ private:
     template<typename T, typename Func>
     __ubsan_ignore_pointer_overflow__ T* data_ptr_impl_impl(const Func& get_data) const {
         CHECK(has_storage()) << "Can't access data pointer of Tensor that doesn't have storage.";
-        CHECK(storage_initialized() && dtype_.Match<T>())
+        CHECK(storage_initialized() && dtype_.Match<std::remove_cv_t<T>>())
                 << "The tensor has a non-zero number of elements, but its data is not allocated yet.";
         return get_data() + storage_offset_;
     }
