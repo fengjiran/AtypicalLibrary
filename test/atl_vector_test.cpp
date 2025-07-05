@@ -4,7 +4,7 @@
 
 #include "atl_vector.hpp"
 #include "atl_distance.h"
-#include "gtest/gtest.h"
+#include <gtest/gtest.h>
 
 #include <deque>
 #include <list>

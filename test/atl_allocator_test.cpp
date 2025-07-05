@@ -3,7 +3,7 @@
 //
 
 #include "atl_allocator.hpp"
-#include "gtest/gtest.h"
+#include <gtest/gtest.h>
 
 TEST(ATLAllocatorTest, general) {
     // default allocator for ints
