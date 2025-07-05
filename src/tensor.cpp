@@ -94,6 +94,10 @@ int64_t Tensor::storage_offset() const {
     return defined() ? impl_->storage_offset() : 0;
 }
 
+bool Tensor::is_contiguous() const {
+    return defined()? impl_->is_contiguous() : false;
+}
+
 Tensor Tensor::rand(const std::vector<int64_t>& shape) {
     Tensor t(shape);
     CHECK(t.numel() > 0);

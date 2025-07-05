@@ -8,6 +8,7 @@ namespace atp {
 
 TensorImpl::TensorImpl(const std::vector<int64_t>& shape, int64_t storage_offset, DataType dtype, DeviceType device)
     : storage_offset_(storage_offset), dtype_(dtype) {
+    init_bitfield();
     for (int64_t x: shape) {
         numel_ *= x;
     }

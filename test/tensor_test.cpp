@@ -4,6 +4,7 @@
 #include "tensor.h"
 #include <fmt/format.h>
 #include <gtest/gtest.h>
+#include <torch/torch.h>
 
 using namespace atp;
 
@@ -72,6 +73,7 @@ TEST(Tensor, random) {
     auto t = Tensor::rand(shape);
     EXPECT_TRUE(t.defined());
     EXPECT_EQ(t.shape(), shape);
+    // EXPECT_TRUE();
     EXPECT_EQ(t.ndim(), 4);
     EXPECT_EQ(t.numel(), numel);
     EXPECT_EQ(t.nbytes(), numel * 4);
@@ -80,4 +82,9 @@ TEST(Tensor, random) {
     EXPECT_TRUE(t.dtype() == DataType::Make<float>());
     EXPECT_TRUE(t.device() == DeviceType::kCPU);
     EXPECT_FLOAT_EQ(t.const_data_ptr<float>()[0], static_cast<const float*>(t.const_data_ptr())[0]);
+
+    torch::Tensor t1;
+    EXPECT_FALSE(t1.defined());
+    EXPECT_EQ(t1.numel(), 0);
+    EXPECT_TRUE(t1.is_contiguous());
 }

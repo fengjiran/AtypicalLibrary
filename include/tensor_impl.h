@@ -39,6 +39,30 @@ inline int64_t GetTensorSize(const TensorInfo& t) {
     return (numel * t.dtype.bits * t.dtype.lanes + 7) / 8;
 }
 
+inline bool _compute_contiguous(const std::vector<int64_t>& shape, const std::vector<int64_t>& strides) {
+    if (strides.empty()) {
+        return true;
+    }
+
+    if (shape.size() != strides.size()) {
+        return false;
+    }
+
+    int64_t expected_stride = 1;
+    for (int i = shape.size() - 1; i >= 0; --i) {
+        if (shape[i] == 1) {
+            continue;
+        }
+
+        if (strides[i] != expected_stride) {
+            return false;
+        }
+
+        expected_stride *= shape[i];
+    }
+    return true;
+}
+
 class Scalar {
 public:
     Scalar() : Scalar(static_cast<int64_t>(0)) {}
@@ -245,16 +269,20 @@ public:
         return dtype_;
     }
 
+    NODISCARD bool compute_contiguous() const {
+        return _compute_contiguous(shape(), strides());
+    }
+
     /**
    * Whether a tensor is laid out in contiguous memory.
    *
    * Tensors with non-trivial strides are not contiguous. See
-   * compute_contiguous() for the exact definition of whether or not
+   * compute_contiguous() for the exact definition of whether
    * a tensor is contiguous or not.
    */
-    // NODISCARD bool is_contiguous() const {
-    //     return is_contiguous_;
-    // }
+    NODISCARD bool is_contiguous() const {
+        return is_contiguous_;
+    }
 
     /**
    * Return a void* data pointer to the actual data which this tensor refers to.
@@ -318,6 +346,10 @@ private:
         return get_data() + storage_offset_;
     }
 
+    void init_bitfield() {
+        is_contiguous_ = true;
+    }
+
     Storage storage_;
     // The offset in number of elements into the storage that this tensor points to.
     int64_t storage_offset_ = 0;
@@ -330,7 +362,7 @@ private:
     DataType dtype_;
     ShapeAndStride shape_and_stride_;
 
-    // bool is_contiguous_ : 1;
+    bool is_contiguous_ : 1;
 
     // Tensor is stored in the channels last 2d memory format, when dimensions
     // order is (N)CHW and C-strides < W-strides < H-strides (< N-strides)
