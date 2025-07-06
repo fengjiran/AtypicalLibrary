@@ -86,5 +86,9 @@ TEST(Tensor, random) {
     torch::Tensor t1;
     EXPECT_FALSE(t1.defined());
     EXPECT_EQ(t1.numel(), 0);
+    EXPECT_EQ(t1.dim(), 1);
     EXPECT_TRUE(t1.is_contiguous());
+    std::cout << t1.sizes() << std::endl;
+    auto t2 = torch::rand({10, 3, 32, 32});
+    auto t3 = torch::empty({10, 3, 32, 32});
 }
