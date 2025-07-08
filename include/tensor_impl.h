@@ -196,85 +196,54 @@ public:
     /**
      * The number of elements in a tensor.
      **/
-    NODISCARD int64_t numel() const {
-        return numel_;
-    }
+    NODISCARD int64_t numel() const;
 
-    NODISCARD bool empty() const {
-        return numel_ == 0;
-    }
+    NODISCARD bool empty() const;
 
     /**
      * Return the number of dimensions of this tensor.  Note that 0-dimension
      * represents a Tensor that is a Scalar, e.g., one that has a single element.
      **/
-    NODISCARD int64_t ndim() const {
-        return shape_and_stride_.size();
-    }
+    NODISCARD int64_t ndim() const;
 
     /**
      * Return a reference to the shape of this tensor. This reference remains
      * valid as long as the tensor is live and not resized.
      **/
-    NODISCARD std::vector<int64_t> shape() const {
-        return shape_and_stride_.get_shape();
-    }
+    NODISCARD std::vector<int64_t> shape() const;
 
     /**
      * Return a reference to the strides of this tensor.  This reference remains
      * valid as long as the tensor is live and not restrided.
      **/
-    NODISCARD std::vector<int64_t> strides() const {
-        return shape_and_stride_.get_strides();
-    }
+    NODISCARD std::vector<int64_t> strides() const;
 
     void set_shape_and_strides(const std::vector<int64_t>& shape,
                                const std::vector<int64_t>& strides,
-                               std::optional<int64_t> storage_offset = std::nullopt) {
-        CHECK(shape.size() == strides.size()) << "dimensionality of shape must match dimensionality of strides.";
-        auto ndim = shape.size();
-        shape_and_stride_.set_shape(shape);
-        if (ndim > 0) {
-            for (size_t i = ndim - 1;;--i) {
-                if (strides[i] >= 0) {
-                    shape_and_stride_.stride_at_uncheck(i) = strides[i];
-                } else {
-                    //
-                }
+                               std::optional<int64_t> storage_offset = std::nullopt);
 
-                if (i == 0) {
-                    break;
-                }
-            }
-        }
+    /**
+     * Compute the number of elements based on the sizes of a
+     * tensor. Catches integer overflow that may occur when a tensor
+     * using a sparse layout has multiple dimensions with large sizes.
+     */
+    NODISCARD int64_t safe_compute_numel() const;
 
-    }
+    void refresh_numel();
 
-    NODISCARD size_t itemsize() const {
-        CHECK(dtype_initialized()) << "Can't get item sizer of Tensor that doesn't have initialized dtype.";
-        return dtype_.nbytes();
-    }
+    NODISCARD size_t itemsize() const;
 
-    NODISCARD bool has_storage() const {
-        return storage_;
-    }
+    NODISCARD bool has_storage() const;
 
-    NODISCARD const Storage& storage() const {
-        return storage_;
-    }
+    NODISCARD const Storage& storage() const;
 
     /**
      * True if a tensor is storage initialized.  A tensor may become
      * storage UNINITIALIZED after a Resize() or FreeMemory()
      **/
-    NODISCARD bool storage_initialized() const {
-        CHECK(has_storage()) << "Can't call storage_initialized() on a tensor that doesn't have storage.";
-        return storage_.const_data() != nullptr || numel_ == 0;
-    }
+    NODISCARD bool storage_initialized() const;
 
-    NODISCARD bool dtype_initialized() const {
-        return dtype_ != DataType();
-    }
+    NODISCARD bool dtype_initialized() const;
 
     /**
      * Return the offset in number of elements into the storage that this
@@ -283,26 +252,23 @@ public:
      *
      * WARNING: This is NOT computed in bytes.
      **/
-    NODISCARD int64_t storage_offset() const {
-        return storage_offset_;
-    }
+    NODISCARD int64_t storage_offset() const;
 
-    void set_storage_offset(int64_t storage_offset) {
-        CHECK(storage_offset >= 0) << "storage_offset must be non-negative.";
-        storage_offset_ = storage_offset;
-    }
+    void set_storage_offset(int64_t storage_offset);
 
-    NODISCARD DeviceType device() const {
-        return storage_.device();
-    }
+    NODISCARD DeviceType device() const;
 
-    NODISCARD DataType dtype() const {
-        return dtype_;
-    }
+    NODISCARD DataType dtype() const;
 
-    NODISCARD bool compute_contiguous() const {
-        return _compute_contiguous(shape(), strides());
-    }
+    NODISCARD bool compute_contiguous() const;
+
+    void set_contiguous(bool b);
+
+    /**
+     * Recompute the cached contiguity of a tensor.  Call this if you modify sizes
+     * or strides.
+     */
+    void refresh_contiguous();
 
     /**
    * Whether a tensor is laid out in contiguous memory.
@@ -311,9 +277,7 @@ public:
    * compute_contiguous() for the exact definition of whether
    * a tensor is contiguous or not.
    */
-    NODISCARD bool is_contiguous() const {
-        return is_contiguous_;
-    }
+    NODISCARD bool is_contiguous() const;
 
     /**
    * Return a void* data pointer to the actual data which this tensor refers to.
@@ -324,19 +288,9 @@ public:
    * assume that itemsize() * numel() is sufficient to compute the bytes that
    * can be validly read from this tensor.
    */
-    NODISCARD void* data() const {
-        return data_impl<void>(
-                [this] {
-                    return static_cast<char*>(storage_.data());
-                });
-    }
+    NODISCARD void* data() const;
 
-    NODISCARD const void* const_data() const {
-        return data_impl<const void>(
-                [this] {
-                    return static_cast<const char*>(storage_.const_data());
-                });
-    }
+    NODISCARD const void* const_data() const;
 
     template<typename T>
     T* data_ptr_impl() const {
@@ -377,9 +331,7 @@ private:
         return get_data() + storage_offset_;
     }
 
-    void init_bitfield() {
-        is_contiguous_ = true;
-    }
+    void init_bitfield();
 
     Storage storage_;
     // The offset in number of elements into the storage that this tensor points to.

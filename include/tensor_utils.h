@@ -95,6 +95,11 @@ bool safe_multiply_u64(Iter first, Iter last, uint64_t* out) {
     return overflowed;
 }
 
+template<typename Container>
+bool safe_multiply_u64(const Container& c, uint64_t* out) {
+    return safe_multiply_u64(c.begin(), c.end(), out);
+}
+
 }// namespace atp
 
 #endif//TENSOR_UTILS_H
