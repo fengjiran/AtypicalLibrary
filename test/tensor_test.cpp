@@ -91,4 +91,8 @@ TEST(Tensor, random) {
     std::cout << t1.sizes() << std::endl;
     auto t2 = torch::rand({10, 3, 32, 32});
     auto t3 = torch::empty({10, 3, 32, 32});
+
+    // std::shared_ptr<TensorImpl> ptr(new UndefinedTensorImpl);
+    // std::shared_ptr<TensorImpl> ptr(new TensorImpl({0}, 0, {DLDataTypeCode::kFloat, 32, 1}, DeviceType::kCPU));
+    // EXPECT_TRUE(dynamic_cast<UndefinedTensorImpl*>(ptr.get()));
 }

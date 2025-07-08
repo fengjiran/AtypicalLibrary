@@ -189,6 +189,10 @@ public:
 
     TensorImpl(const std::vector<int64_t>& shape, int64_t storage_offset, DataType dtype, DeviceType device);
 
+    // TensorImpl(Storage&& storage, )
+
+    virtual ~TensorImpl() = default;
+
     /**
      * The number of elements in a tensor.
      **/
@@ -224,12 +228,38 @@ public:
         return shape_and_stride_.get_strides();
     }
 
+    void set_shape_and_strides(const std::vector<int64_t>& shape,
+                               const std::vector<int64_t>& strides,
+                               std::optional<int64_t> storage_offset = std::nullopt) {
+        CHECK(shape.size() == strides.size()) << "dimensionality of shape must match dimensionality of strides.";
+        auto ndim = shape.size();
+        shape_and_stride_.set_shape(shape);
+        if (ndim > 0) {
+            for (size_t i = ndim - 1;;--i) {
+                if (strides[i] >= 0) {
+                    shape_and_stride_.stride_at_uncheck(i) = strides[i];
+                } else {
+                    //
+                }
+
+                if (i == 0) {
+                    break;
+                }
+            }
+        }
+
+    }
+
     NODISCARD size_t itemsize() const {
         CHECK(dtype_initialized()) << "Can't get item sizer of Tensor that doesn't have initialized dtype.";
         return dtype_.nbytes();
     }
 
     NODISCARD bool has_storage() const {
+        return storage_;
+    }
+
+    NODISCARD const Storage& storage() const {
         return storage_;
     }
 
@@ -246,10 +276,6 @@ public:
         return dtype_ != DataType();
     }
 
-    NODISCARD const Storage& storage() const {
-        return storage_;
-    }
-
     /**
      * Return the offset in number of elements into the storage that this
      * tensor points to.  Most tensors have storage_offset() == 0, but,
@@ -259,6 +285,11 @@ public:
      **/
     NODISCARD int64_t storage_offset() const {
         return storage_offset_;
+    }
+
+    void set_storage_offset(int64_t storage_offset) {
+        CHECK(storage_offset >= 0) << "storage_offset must be non-negative.";
+        storage_offset_ = storage_offset;
     }
 
     NODISCARD DeviceType device() const {
@@ -369,6 +400,18 @@ private:
     // (If size of any dimension is equal to 1, this dimension strides value
     // is not taken into account).
     // bool is_channels_last_ : 1;
+};
+
+class UndefinedTensorImpl final : public TensorImpl {
+public:
+    static UndefinedTensorImpl& Global() {
+        static UndefinedTensorImpl inst;
+        return inst;
+    }
+
+private:
+    UndefinedTensorImpl()
+        : TensorImpl({0}, 0, {DLDataTypeCode::kFloat, 32, 1}, DeviceType::kCPU) {}
 };
 
 }// namespace atp
