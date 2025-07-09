@@ -189,7 +189,12 @@ public:
 
     TensorImpl(const std::vector<int64_t>& shape, int64_t storage_offset, DataType dtype, DeviceType device);
 
-    // TensorImpl(Storage&& storage, )
+    TensorImpl(Storage&& storage, DataType dtype, std::optional<DeviceType> device_opt);
+
+    TensorImpl(Storage&& storage, DataType dtype);
+
+    // Construct a 1-dim 0 size tensor that doesn't have a storage.
+    TensorImpl(DataType dtype, std::optional<DeviceType> device_opt);
 
     virtual ~TensorImpl() = default;
 
@@ -218,19 +223,6 @@ public:
      **/
     NODISCARD std::vector<int64_t> strides() const;
 
-    void set_shape_and_strides(const std::vector<int64_t>& shape,
-                               const std::vector<int64_t>& strides,
-                               std::optional<int64_t> storage_offset = std::nullopt);
-
-    /**
-     * Compute the number of elements based on the sizes of a
-     * tensor. Catches integer overflow that may occur when a tensor
-     * using a sparse layout has multiple dimensions with large sizes.
-     */
-    NODISCARD int64_t safe_compute_numel() const;
-
-    void refresh_numel();
-
     NODISCARD size_t itemsize() const;
 
     NODISCARD bool has_storage() const;
@@ -254,21 +246,11 @@ public:
      **/
     NODISCARD int64_t storage_offset() const;
 
-    void set_storage_offset(int64_t storage_offset);
-
     NODISCARD DeviceType device() const;
 
     NODISCARD DataType dtype() const;
 
-    NODISCARD bool compute_contiguous() const;
-
-    void set_contiguous(bool b);
-
-    /**
-     * Recompute the cached contiguity of a tensor.  Call this if you modify sizes
-     * or strides.
-     */
-    void refresh_contiguous();
+    NODISCARD bool is_cpu() const;
 
     /**
    * Whether a tensor is laid out in contiguous memory.
@@ -291,6 +273,31 @@ public:
     NODISCARD void* data() const;
 
     NODISCARD const void* const_data() const;
+
+    void set_shape_and_strides(const std::vector<int64_t>& shape,
+                               const std::vector<int64_t>& strides,
+                               std::optional<int64_t> storage_offset = std::nullopt);
+
+    /**
+     * Compute the number of elements based on the sizes of a
+     * tensor. Catches integer overflow that may occur when a tensor
+     * using a sparse layout has multiple dimensions with large sizes.
+     */
+    NODISCARD int64_t safe_compute_numel() const;
+
+    void refresh_numel();
+
+    void set_storage_offset(int64_t storage_offset);
+
+    /**
+     * Recompute the cached contiguity of a tensor.  Call this if you modify sizes
+     * or strides.
+     */
+    void refresh_contiguous();
+
+    void set_contiguous(bool b);
+
+    NODISCARD bool compute_contiguous() const;
 
     template<typename T>
     T* data_ptr_impl() const {
@@ -344,6 +351,10 @@ private:
     int64_t numel_ = 1;
     DataType dtype_;
     ShapeAndStride shape_and_stride_;
+
+    // device_opt_ is only nullopt for undefined tensors which do not have a device.
+    // When storage is not-null, this device must agree with the type meta in storage.
+    std::optional<DeviceType> device_opt_;
 
     bool is_contiguous_ : 1;
 

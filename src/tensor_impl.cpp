@@ -28,6 +28,18 @@ TensorImpl::TensorImpl(const std::vector<int64_t>& shape, int64_t storage_offset
     }
 }
 
+TensorImpl::TensorImpl(Storage&& storage, DataType dtype, std::optional<DeviceType> device_opt)
+    : storage_(std::move(storage)), numel_(0), dtype_(dtype), device_opt_(device_opt) {
+    init_bitfield();
+}
+
+TensorImpl::TensorImpl(DataType dtype, std::optional<DeviceType> device_opt)
+    : TensorImpl({}, dtype, device_opt) {}
+
+TensorImpl::TensorImpl(Storage&& storage, DataType dtype)
+    : TensorImpl(std::move(storage), dtype, storage.device()) {}
+
+
 int64_t TensorImpl::numel() const {
     return numel_;
 }
@@ -75,8 +87,14 @@ int64_t TensorImpl::storage_offset() const {
 }
 
 DeviceType TensorImpl::device() const {
-    return storage_.device();
+    CHECK(device_opt_.has_value()) << "tensor does not have a device.";
+    return *device_opt_;
 }
+
+bool TensorImpl::is_cpu() const {
+    return device_opt_.has_value() && device_opt_.value() == DeviceType::kCPU;
+}
+
 
 DataType TensorImpl::dtype() const {
     return dtype_;
