@@ -110,8 +110,8 @@ void TensorImpl::set_shape_and_strides(const std::vector<int64_t>& shape, const 
     auto ndim = shape.size();
     shape_and_stride_.set_shape(shape);
 
-    bool overflowed = false;
     if (ndim > 0) {
+        bool overflowed = false;
         for (size_t i = ndim - 1;; --i) {
             if (strides[i] >= 0) {
                 shape_and_stride_.stride_at_uncheck(i) = strides[i];
