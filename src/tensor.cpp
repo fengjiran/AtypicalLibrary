@@ -43,8 +43,12 @@ Tensor::Tensor() : impl_(new UndefinedTensorImpl) {}
 Tensor::Tensor(const std::vector<int64_t>& shape, int64_t storage_offset, DataType dtype, DeviceType device)
     : impl_(std::make_shared<TensorImpl>(shape, storage_offset, dtype, device)) {}
 
+// bool Tensor::pimpl_defined() const {
+//     return dynamic_cast<UndefinedTensorImpl*>(impl_.get()) == nullptr;
+// }
+
 bool Tensor::defined() const {
-    return impl_ != nullptr && impl_->storage_initialized();
+    return impl_->storage_initialized();
 }
 
 int32_t Tensor::use_count() const {
@@ -96,7 +100,7 @@ int64_t Tensor::storage_offset() const {
 }
 
 bool Tensor::is_contiguous() const {
-    return defined() ? impl_->is_contiguous() : false;
+    return impl_->is_contiguous();
 }
 
 Tensor Tensor::rand(const std::vector<int64_t>& shape) {

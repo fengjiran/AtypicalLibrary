@@ -68,8 +68,8 @@ const Storage& TensorImpl::storage() const {
 }
 
 bool TensorImpl::storage_initialized() const {
-    CHECK(has_storage()) << "Can't call storage_initialized() on a tensor that doesn't have storage.";
-    return storage_.const_data() != nullptr || numel_ == 0;
+    // CHECK(has_storage()) << "Can't call storage_initialized() on a tensor that doesn't have storage.";
+    return has_storage() && (storage_.const_data() != nullptr || numel_ == 0);
 }
 
 bool TensorImpl::dtype_initialized() const {
@@ -201,6 +201,24 @@ const void* TensorImpl::const_data() const {
 void TensorImpl::init_bitfield() {
     is_contiguous_ = true;
 }
+
+bool UndefinedTensorImpl::storage_initialized() const {
+    return false;
+}
+
+bool UndefinedTensorImpl::has_storage() const {
+    return false;
+}
+
+bool UndefinedTensorImpl::is_contiguous() const {
+    return true;
+}
+
+int64_t UndefinedTensorImpl::numel() const {
+    return 0;
+}
+
+
 
 
 }// namespace atp

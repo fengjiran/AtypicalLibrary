@@ -46,6 +46,8 @@ public:
 
     static Tensor randint(int64_t low, int64_t high, const std::vector<int64_t>& shape);
 
+    // NODISCARD bool pimpl_defined() const;
+
     NODISCARD bool defined() const;
 
     NODISCARD int32_t use_count() const;

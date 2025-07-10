@@ -63,6 +63,24 @@ TEST(Tensor, base1) {
     EXPECT_TRUE(t1.defined());
 }
 
+TEST(Tensor, init) {
+    torch::Tensor t1;
+    EXPECT_FALSE(t1.defined());
+    EXPECT_EQ(t1.numel(), 0);
+    EXPECT_EQ(t1.dim(), 1);
+    EXPECT_TRUE(t1.is_contiguous());
+    EXPECT_FALSE(t1.is_cpu());
+
+    // std::cout << t1.sizes() << std::endl;
+    // auto t2 = torch::rand({10, 3, 32, 32});
+    // auto t3 = torch::empty({10, 3, 32, 32});
+    // UNUSED(t1.itemsize());
+
+    Tensor t2;
+    EXPECT_FALSE(t2.defined());
+    EXPECT_TRUE(t2.is_contiguous());
+}
+
 TEST(Tensor, random) {
     std::vector<int64_t> shape({10, 3, 64, 64});
     int64_t numel = 1;
@@ -83,17 +101,6 @@ TEST(Tensor, random) {
     EXPECT_TRUE(t.device() == DeviceType::kCPU);
     EXPECT_FLOAT_EQ(t.const_data_ptr<float>()[0], static_cast<const float*>(t.const_data_ptr())[0]);
 
-    torch::Tensor t1;
-    EXPECT_FALSE(t1.defined());
-    EXPECT_EQ(t1.numel(), 0);
-    EXPECT_EQ(t1.dim(), 1);
-    EXPECT_TRUE(t1.is_contiguous());
-    EXPECT_FALSE(t1.is_cpu());
-    // std::cout << t1.sizes() << std::endl;
-    // auto t2 = torch::rand({10, 3, 32, 32});
-    // auto t3 = torch::empty({10, 3, 32, 32});
-
-    std::shared_ptr<TensorImpl> ptr(new UndefinedTensorImpl);
-    EXPECT_TRUE(dynamic_cast<UndefinedTensorImpl*>(ptr.get()));
-    // EXPECT_FALSE(ptr->storage_initialized());
+    // std::shared_ptr<TensorImpl> ptr(new UndefinedTensorImpl);
+    // EXPECT_TRUE(dynamic_cast<UndefinedTensorImpl*>(ptr.get()));
 }

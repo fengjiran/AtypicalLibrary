@@ -201,7 +201,7 @@ public:
     /**
      * The number of elements in a tensor.
      **/
-    NODISCARD int64_t numel() const;
+    NODISCARD virtual int64_t numel() const;
 
     NODISCARD bool empty() const;
 
@@ -225,7 +225,7 @@ public:
 
     NODISCARD size_t itemsize() const;
 
-    NODISCARD bool has_storage() const;
+    NODISCARD virtual bool has_storage() const;
 
     NODISCARD const Storage& storage() const;
 
@@ -233,7 +233,7 @@ public:
      * True if a tensor is storage initialized.  A tensor may become
      * storage UNINITIALIZED after a Resize() or FreeMemory()
      **/
-    NODISCARD bool storage_initialized() const;
+    NODISCARD virtual bool storage_initialized() const;
 
     NODISCARD bool dtype_initialized() const;
 
@@ -259,7 +259,7 @@ public:
    * compute_contiguous() for the exact definition of whether
    * a tensor is contiguous or not.
    */
-    NODISCARD bool is_contiguous() const;
+    NODISCARD virtual bool is_contiguous() const;
 
     /**
    * Return a void* data pointer to the actual data which this tensor refers to.
@@ -373,13 +373,15 @@ private:
 
 class UndefinedTensorImpl final : public TensorImpl {
 public:
-    // static UndefinedTensorImpl& Global() {
-    //     static UndefinedTensorImpl inst;
-    //     return inst;
-    // }
-
-// private:
     UndefinedTensorImpl(): TensorImpl(DataType(), std::nullopt) {}
+
+    NODISCARD bool storage_initialized() const override;
+
+    NODISCARD bool has_storage() const override;
+
+    NODISCARD bool is_contiguous() const override;
+
+    NODISCARD int64_t numel() const override;
 };
 
 }// namespace atp

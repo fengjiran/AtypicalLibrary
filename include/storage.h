@@ -65,7 +65,6 @@ public:
         return impl_.use_count() == 1;
     }
 
-
 private:
     std::shared_ptr<StorageImpl> impl_;
 };
