@@ -31,6 +31,8 @@ public:
                     DataType dtype = {DLDataTypeCode::kFloat, 32, 1},
                     DeviceType device = DeviceType::kCPU);
 
+    explicit Tensor(std::shared_ptr<TensorImpl> impl);
+
     Tensor(const Tensor&) = default;
     Tensor(Tensor&&) = default;
     Tensor& operator=(const Tensor&) = default;

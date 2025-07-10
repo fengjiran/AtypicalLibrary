@@ -43,6 +43,10 @@ Tensor::Tensor() : impl_(new UndefinedTensorImpl) {}
 Tensor::Tensor(const std::vector<int64_t>& shape, int64_t storage_offset, DataType dtype, DeviceType device)
     : impl_(std::make_shared<TensorImpl>(shape, storage_offset, dtype, device)) {}
 
+Tensor::Tensor(std::shared_ptr<TensorImpl> impl) : impl_(std::move(impl)) {
+    CHECK(impl_.get() != nullptr) << "TensorImpl with nullptr is not supported";
+}
+
 bool Tensor::defined() const {
     return impl_->storage_initialized();
 }
