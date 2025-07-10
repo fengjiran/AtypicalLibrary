@@ -43,20 +43,16 @@ Tensor::Tensor() : impl_(new UndefinedTensorImpl) {}
 Tensor::Tensor(const std::vector<int64_t>& shape, int64_t storage_offset, DataType dtype, DeviceType device)
     : impl_(std::make_shared<TensorImpl>(shape, storage_offset, dtype, device)) {}
 
-// bool Tensor::pimpl_defined() const {
-//     return dynamic_cast<UndefinedTensorImpl*>(impl_.get()) == nullptr;
-// }
-
 bool Tensor::defined() const {
     return impl_->storage_initialized();
 }
 
 int32_t Tensor::use_count() const {
-    return static_cast<int32_t>(impl_.use_count());
+    return dynamic_cast<UndefinedTensorImpl*>(impl_.get()) == nullptr ? static_cast<int32_t>(impl_.use_count()) : 0;
 }
 
 bool Tensor::unique() const {
-    return impl_.use_count() == 1;
+    return use_count() == 1;
 }
 
 void* Tensor::data_ptr() const {
@@ -68,35 +64,44 @@ const void* Tensor::const_data_ptr() const {
 }
 
 std::vector<int64_t> Tensor::shape() const {
-    return defined() ? impl_->shape() : std::vector<int64_t>{};
+    return impl_->shape();
+}
+
+std::vector<int64_t> Tensor::strides() const {
+    return impl_->strides();
 }
 
 DataType Tensor::dtype() const {
-    return defined() ? impl_->dtype() : DataType();
+    return impl_->dtype();
 }
 
 DeviceType Tensor::device() const {
-    return defined() ? impl_->device() : DeviceType::kUndefined;
+    return impl_->device();
 }
 
 int32_t Tensor::ndim() const {
-    return defined() ? impl_->ndim() : 0;
+    return impl_->ndim();
 }
 
 int64_t Tensor::numel() const {
-    return defined() ? impl_->numel() : 0;
+    return impl_->numel();
 }
 
 size_t Tensor::itemsize() const {
-    return defined() ? impl_->itemsize() : 0;
+    return impl_->itemsize();
 }
 
 size_t Tensor::nbytes() const {
     return numel() * itemsize();
 }
 
+bool Tensor::has_storage() const {
+    return impl_->has_storage();
+}
+
+
 int64_t Tensor::storage_offset() const {
-    return defined() ? impl_->storage_offset() : 0;
+    return impl_->storage_offset();
 }
 
 bool Tensor::is_contiguous() const {

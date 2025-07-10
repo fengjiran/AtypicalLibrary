@@ -202,23 +202,4 @@ void TensorImpl::init_bitfield() {
     is_contiguous_ = true;
 }
 
-bool UndefinedTensorImpl::storage_initialized() const {
-    return false;
-}
-
-bool UndefinedTensorImpl::has_storage() const {
-    return false;
-}
-
-bool UndefinedTensorImpl::is_contiguous() const {
-    return true;
-}
-
-int64_t UndefinedTensorImpl::numel() const {
-    return 0;
-}
-
-
-
-
 }// namespace atp

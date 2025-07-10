@@ -70,8 +70,11 @@ TEST(Tensor, init) {
     EXPECT_EQ(t1.dim(), 1);
     EXPECT_TRUE(t1.is_contiguous());
     EXPECT_FALSE(t1.is_cpu());
+    EXPECT_FALSE(t1.has_storage());
 
-    // std::cout << t1.sizes() << std::endl;
+    std::cout << t1.dtype() << std::endl;
+    std::cout << t1.sizes() << std::endl;
+    // t1.strides();
     // auto t2 = torch::rand({10, 3, 32, 32});
     // auto t3 = torch::empty({10, 3, 32, 32});
     // UNUSED(t1.itemsize());
@@ -79,6 +82,16 @@ TEST(Tensor, init) {
     Tensor t2;
     EXPECT_FALSE(t2.defined());
     EXPECT_TRUE(t2.is_contiguous());
+    EXPECT_TRUE(t2.dtype() == DataType());
+    EXPECT_EQ(t2.ndim(), 1);
+    EXPECT_EQ(t2.numel(), 0);
+    EXPECT_FALSE(t2.has_storage());
+    EXPECT_EQ(t2.storage_offset(), 0);
+    EXPECT_EQ(t2.shape(), std::vector<int64_t>{0});
+    EXPECT_EQ(t2.strides(), std::vector<int64_t>{1});
+    EXPECT_EQ(t2.use_count(), 0);
+    EXPECT_FALSE(t2.unique());
+    // UNUSED(t2.itemsize());
 }
 
 TEST(Tensor, random) {

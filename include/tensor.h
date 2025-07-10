@@ -46,8 +46,6 @@ public:
 
     static Tensor randint(int64_t low, int64_t high, const std::vector<int64_t>& shape);
 
-    // NODISCARD bool pimpl_defined() const;
-
     NODISCARD bool defined() const;
 
     NODISCARD int32_t use_count() const;
@@ -55,6 +53,8 @@ public:
     NODISCARD bool unique() const;
 
     NODISCARD std::vector<int64_t> shape() const;
+
+    NODISCARD std::vector<int64_t> strides() const;
 
     NODISCARD DataType dtype() const;
 
@@ -67,6 +67,8 @@ public:
     NODISCARD size_t itemsize() const;
 
     NODISCARD size_t nbytes() const;
+
+    NODISCARD bool has_storage() const;
 
     NODISCARD int64_t storage_offset() const;
 
