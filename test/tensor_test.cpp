@@ -88,11 +88,12 @@ TEST(Tensor, random) {
     EXPECT_EQ(t1.numel(), 0);
     EXPECT_EQ(t1.dim(), 1);
     EXPECT_TRUE(t1.is_contiguous());
-    std::cout << t1.sizes() << std::endl;
-    auto t2 = torch::rand({10, 3, 32, 32});
-    auto t3 = torch::empty({10, 3, 32, 32});
+    EXPECT_FALSE(t1.is_cpu());
+    // std::cout << t1.sizes() << std::endl;
+    // auto t2 = torch::rand({10, 3, 32, 32});
+    // auto t3 = torch::empty({10, 3, 32, 32});
 
-    // std::shared_ptr<TensorImpl> ptr(new UndefinedTensorImpl);
-    // std::shared_ptr<TensorImpl> ptr(new TensorImpl({0}, 0, {DLDataTypeCode::kFloat, 32, 1}, DeviceType::kCPU));
-    // EXPECT_TRUE(dynamic_cast<UndefinedTensorImpl*>(ptr.get()));
+    std::shared_ptr<TensorImpl> ptr(new UndefinedTensorImpl);
+    EXPECT_TRUE(dynamic_cast<UndefinedTensorImpl*>(ptr.get()));
+    // EXPECT_FALSE(ptr->storage_initialized());
 }

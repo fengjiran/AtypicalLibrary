@@ -278,6 +278,8 @@ public:
                                const std::vector<int64_t>& strides,
                                std::optional<int64_t> storage_offset = std::nullopt);
 
+    void set_shape_contiguous(const std::vector<int64_t>& shape);
+
     /**
      * Compute the number of elements based on the sizes of a
      * tensor. Catches integer overflow that may occur when a tensor
@@ -286,6 +288,10 @@ public:
     NODISCARD int64_t safe_compute_numel() const;
 
     void refresh_numel();
+
+    void set_storage_keep_dtype(Storage storage);
+
+    void set_storage_and_dtype(Storage storage, DataType dtype);
 
     void set_storage_offset(int64_t storage_offset);
 
@@ -326,7 +332,7 @@ private:
             return nullptr;
         }
 
-        return data + dtype_.nbytes() * storage_offset_;
+        return data + dtype().nbytes() * storage_offset_;
     }
 
     // Shared implementation of data_ptr_impl() and the const_data_ptr_impl().
@@ -367,14 +373,13 @@ private:
 
 class UndefinedTensorImpl final : public TensorImpl {
 public:
-    static UndefinedTensorImpl& Global() {
-        static UndefinedTensorImpl inst;
-        return inst;
-    }
+    // static UndefinedTensorImpl& Global() {
+    //     static UndefinedTensorImpl inst;
+    //     return inst;
+    // }
 
-private:
-    UndefinedTensorImpl()
-        : TensorImpl({0}, 0, {DLDataTypeCode::kFloat, 32, 1}, DeviceType::kCPU) {}
+// private:
+    UndefinedTensorImpl(): TensorImpl(DataType(), std::nullopt) {}
 };
 
 }// namespace atp

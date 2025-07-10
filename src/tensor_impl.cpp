@@ -6,26 +6,20 @@
 
 namespace atp {
 
+// static const auto& undefined_tensor = UndefinedTensorImpl::Global();
+
 TensorImpl::TensorImpl(const std::vector<int64_t>& shape, int64_t storage_offset, DataType dtype, DeviceType device)
-    : storage_offset_(storage_offset), dtype_(dtype) {
+    : storage_offset_(storage_offset), numel_(0), dtype_(dtype), device_opt_(device) {
+    CHECK(dtype_initialized()) << "dtype should be initialized.";
+    CHECK(device != DeviceType::kUndefined) << "device should be initialized.";
+
     init_bitfield();
-    for (int64_t x: shape) {
-        numel_ *= x;
-    }
-
-    int64_t nbytes = numel_ * dtype_.nbytes();
-    storage_ = Storage(nbytes, AllocatorTable::Global().get_allocator(device));
     auto ndim = shape.size();
-    shape_and_stride_.set_shape(shape);
+    std::vector<int64_t> strides(ndim, -1);
+    set_shape_and_strides(shape, strides);
 
-    for (int i = ndim - 1; i >= 0; --i) {
-        if (i == ndim - 1) {
-            shape_and_stride_.stride_at_uncheck(i) = 1;
-        } else {
-            auto stride = shape_and_stride_.stride_at_uncheck(i + 1) * shape_and_stride_.shape_at_uncheck(i + 1);
-            shape_and_stride_.stride_at_uncheck(i) = stride;
-        }
-    }
+    int64_t nbytes = numel() * this->dtype().nbytes();
+    storage_ = Storage(nbytes, AllocatorTable::Global().get_allocator(device));
 }
 
 TensorImpl::TensorImpl(Storage&& storage, DataType dtype, std::optional<DeviceType> device_opt)
@@ -140,11 +134,18 @@ void TensorImpl::set_shape_and_strides(const std::vector<int64_t>& shape, const 
     }
 }
 
+void TensorImpl::set_shape_contiguous(const std::vector<int64_t>& shape) {
+    shape_and_stride_.set_shape(shape);
+    refresh_numel();
+    refresh_contiguous();
+}
+
+
 int64_t TensorImpl::safe_compute_numel() const {
     uint64_t numel = 1;
     bool overflow = safe_multiply_u64(shape_and_stride_.get_shape(), &numel);
-    constexpr auto numel_max = std::min(
-            static_cast<uint64_t>(std::numeric_limits<int64_t>::max()),
+    constexpr auto numel_max = std::min<uint64_t>(
+            std::numeric_limits<int64_t>::max(),
             std::numeric_limits<size_t>::max());
     overflow |= numel > numel_max;
     CHECK(!overflow) << "interger multiplication overflow when compute numel.";
@@ -166,6 +167,17 @@ void TensorImpl::set_contiguous(bool b) {
 void TensorImpl::refresh_contiguous() {
     set_contiguous(compute_contiguous());
 }
+
+void TensorImpl::set_storage_keep_dtype(Storage storage) {
+    storage_ = std::move(storage);
+    device_opt_ = storage_.device();
+}
+
+void TensorImpl::set_storage_and_dtype(Storage storage, DataType dtype) {
+    set_storage_keep_dtype(std::move(storage));
+    dtype_ = dtype;
+}
+
 
 void TensorImpl::set_storage_offset(int64_t storage_offset) {
     CHECK(storage_offset >= 0) << "storage_offset must be non-negative.";

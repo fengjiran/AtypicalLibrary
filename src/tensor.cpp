@@ -38,9 +38,10 @@ void check_type(const Tensor& t, DLDataTypeCode type_code, int8_t type_bits, int
 SCALAR_TYPE_TO_NAME_AND_CPP_TYPE(DEFINE_DATA_PTR);
 #undef DEFINE_DATA_PTR
 
+Tensor::Tensor() : impl_(new UndefinedTensorImpl) {}
+
 Tensor::Tensor(const std::vector<int64_t>& shape, int64_t storage_offset, DataType dtype, DeviceType device)
     : impl_(std::make_shared<TensorImpl>(shape, storage_offset, dtype, device)) {}
-
 
 bool Tensor::defined() const {
     return impl_ != nullptr && impl_->storage_initialized();
@@ -95,7 +96,7 @@ int64_t Tensor::storage_offset() const {
 }
 
 bool Tensor::is_contiguous() const {
-    return defined()? impl_->is_contiguous() : false;
+    return defined() ? impl_->is_contiguous() : false;
 }
 
 Tensor Tensor::rand(const std::vector<int64_t>& shape) {
