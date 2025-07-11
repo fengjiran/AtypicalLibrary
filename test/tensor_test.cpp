@@ -104,7 +104,7 @@ TEST(Tensor, init) {
 
     // EXPECT_TRUE(t2.data_ptr() == nullptr);
     // EXPECT_TRUE(t2.const_data_ptr() == nullptr);
-    UNUSED(t2.itemsize());
+    EXPECT_ANY_THROW(UNUSED(t2.itemsize()));
 }
 
 TEST(Tensor, random) {
@@ -115,7 +115,6 @@ TEST(Tensor, random) {
     }
 
     auto t1 = torch::rand(shape);
-    // UNUSED(t1.size(4));
 
     auto t2 = Tensor::rand(shape);
     EXPECT_TRUE(t2.defined());
@@ -133,6 +132,7 @@ TEST(Tensor, random) {
     EXPECT_EQ(t2.numel(), numel);
     EXPECT_EQ(t2.nbytes(), numel * 4);
     EXPECT_EQ(t2.use_count(), 1);
+    EXPECT_TRUE(t2.is_contiguous());
     EXPECT_TRUE(t2.unique());
     EXPECT_TRUE(t2.dtype() == DataType::Make<float>());
     EXPECT_TRUE(t2.device() == DeviceType::kCPU);
