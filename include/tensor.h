@@ -35,18 +35,12 @@ public:
 
     Tensor(const Tensor&) = default;
     Tensor(Tensor&&) = default;
-    Tensor& operator=(const Tensor&) = default;
-    Tensor& operator=(Tensor&&) = default;
 
-    // returns a tensor filled with random numbers from
-    // a uniform distribution on the interval [0, 1)
-    static Tensor rand(const std::vector<int64_t>& shape);
+    Tensor& operator=(const Tensor&) & = default;
+    Tensor& operator=(Tensor&&) & noexcept = default;
 
-    // Returns a tensor filled with random numbers from
-    // a normal distribution with mean 0 and variance 1
-    static Tensor randn(const std::vector<int64_t>& shape);
-
-    static Tensor randint(int64_t low, int64_t high, const std::vector<int64_t>& shape);
+    Tensor& operator=(const Tensor&) && = default;
+    Tensor& operator=(Tensor&&) && noexcept = default;
 
     NODISCARD bool defined() const;
 
@@ -57,6 +51,10 @@ public:
     NODISCARD std::vector<int64_t> shape() const;
 
     NODISCARD std::vector<int64_t> strides() const;
+
+    NODISCARD int64_t shape(int64_t dim) const;
+
+    NODISCARD int64_t strides(int64_t dim) const;
 
     NODISCARD DataType dtype() const;
 
@@ -92,6 +90,16 @@ public:
     template<typename T,
              std::enable_if_t<std::is_const_v<T>>* = nullptr>
     const std::remove_const_t<T>* const_data_ptr() const;
+
+    // returns a tensor filled with random numbers from
+    // a uniform distribution on the interval [0, 1)
+    static Tensor rand(const std::vector<int64_t>& shape);
+
+    // Returns a tensor filled with random numbers from
+    // a normal distribution with mean 0 and variance 1
+    static Tensor randn(const std::vector<int64_t>& shape);
+
+    static Tensor randint(int64_t low, int64_t high, const std::vector<int64_t>& shape);
 
 private:
     std::shared_ptr<TensorImpl> impl_;

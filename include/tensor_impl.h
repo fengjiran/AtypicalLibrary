@@ -223,6 +223,8 @@ public:
      **/
     NODISCARD std::vector<int64_t> strides() const;
 
+    NODISCARD int64_t strides(int64_t dim) const;
+
     NODISCARD size_t itemsize() const;
 
     NODISCARD bool has_storage() const;
@@ -251,6 +253,8 @@ public:
     NODISCARD DataType dtype() const;
 
     NODISCARD bool is_cpu() const;
+
+    NODISCARD int64_t get_real_dim(int64_t dim) const;
 
     /**
    * Whether a tensor is laid out in contiguous memory.

@@ -49,6 +49,7 @@ std::vector<int64_t> TensorImpl::shape() const {
 }
 
 int64_t TensorImpl::shape(int64_t dim) const {
+    dim = get_real_dim(dim);
     return shape_and_stride_.shape_at_uncheck(dim);
 }
 
@@ -56,8 +57,16 @@ std::vector<int64_t> TensorImpl::strides() const {
     return shape_and_stride_.get_strides();
 }
 
+int64_t TensorImpl::strides(int64_t dim) const {
+    dim = get_real_dim(dim);
+    return shape_and_stride_.stride_at_uncheck(dim);
+}
+
 size_t TensorImpl::itemsize() const {
-    CHECK(dtype_initialized()) << "Can't get item sizer of Tensor that doesn't have initialized dtype.";
+    // CHECK(dtype_initialized()) << "Can't get item sizer of Tensor that doesn't have initialized dtype.";
+    if (!dtype_initialized()) {
+        throw std::runtime_error("Can't get item size of Tensor that doesn't have initialized dtype.");
+    }
     return dtype_.nbytes();
 }
 
@@ -91,6 +100,15 @@ bool TensorImpl::is_cpu() const {
     return device_opt_.has_value() && device_opt_.value() == DeviceType::kCPU;
 }
 
+int64_t TensorImpl::get_real_dim(int64_t dim) const {
+    if (dim >= -1 * ndim() && dim < ndim()) {
+        if (dim < 0) {
+            return dim + ndim();
+        }
+        return dim;
+    }
+    throw std::out_of_range("dim out of range.");
+}
 
 DataType TensorImpl::dtype() const {
     return dtype_;

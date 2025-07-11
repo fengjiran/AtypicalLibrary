@@ -74,7 +74,7 @@ TEST(Tensor, init) {
 
     // UNUSED(t3.size(4));
     // auto t3 = torch::empty({10, 3, 32, 32});
-    // UNUSED(t1.itemsize());
+    EXPECT_ANY_THROW(UNUSED(t1.itemsize()););
 
     Tensor t2;
     EXPECT_FALSE(t2.defined());
@@ -88,15 +88,14 @@ TEST(Tensor, init) {
     EXPECT_EQ(t2.strides(), std::vector<int64_t>{1});
     EXPECT_EQ(t2.use_count(), 0);
     EXPECT_FALSE(t2.unique());
-    // EXPECT_THROW(t2.data_ptr() == nullptr, std::runtime_error);
 
     EXPECT_THROW(
             {
                 try {
                     UNUSED(t2.data_ptr());
                 } catch (const std::runtime_error& e) {
-                    std::string what = e.what();
-                    std::cout << what << std::endl;
+                    // std::string what = e.what();
+                    // std::cout << what << std::endl;
                     throw;
                 }
             },
@@ -105,7 +104,7 @@ TEST(Tensor, init) {
 
     // EXPECT_TRUE(t2.data_ptr() == nullptr);
     // EXPECT_TRUE(t2.const_data_ptr() == nullptr);
-    // UNUSED(t2.itemsize());
+    UNUSED(t2.itemsize());
 }
 
 TEST(Tensor, random) {
@@ -116,11 +115,20 @@ TEST(Tensor, random) {
     }
 
     auto t1 = torch::rand(shape);
+    // UNUSED(t1.size(4));
 
     auto t2 = Tensor::rand(shape);
     EXPECT_TRUE(t2.defined());
     EXPECT_EQ(t2.shape(), shape);
-    // EXPECT_TRUE();
+    for (int i = 0; i < t2.ndim(); ++i) {
+        EXPECT_EQ(t2.shape(i), shape[i]);
+        EXPECT_EQ(t2.shape(i - t2.ndim()), shape[i]);
+
+        EXPECT_EQ(t2.strides(i), t2.strides()[i]);
+        EXPECT_EQ(t2.strides(i - t2.ndim()), t2.strides()[i]);
+    }
+    EXPECT_ANY_THROW(UNUSED(t2.shape(t2.ndim())));
+
     EXPECT_EQ(t2.ndim(), 4);
     EXPECT_EQ(t2.numel(), numel);
     EXPECT_EQ(t2.nbytes(), numel * 4);

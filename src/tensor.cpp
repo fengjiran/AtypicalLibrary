@@ -44,7 +44,10 @@ Tensor::Tensor(const std::vector<int64_t>& shape, int64_t storage_offset, DataTy
     : impl_(std::make_shared<TensorImpl>(shape, storage_offset, dtype, device)) {}
 
 Tensor::Tensor(std::shared_ptr<TensorImpl> impl) : impl_(std::move(impl)) {
-    CHECK(impl_.get() != nullptr) << "TensorImpl with nullptr is not supported";
+    // CHECK(impl_.get() != nullptr) << "TensorImpl with nullptr is not supported";
+    if (impl_ == nullptr) {
+        throw std::runtime_error("TensorImpl with nullptr is not supported");
+    }
 }
 
 bool Tensor::defined() const {
@@ -73,6 +76,14 @@ std::vector<int64_t> Tensor::shape() const {
 
 std::vector<int64_t> Tensor::strides() const {
     return impl_->strides();
+}
+
+int64_t Tensor::shape(int64_t dim) const {
+    return impl_->shape(dim);
+}
+
+int64_t Tensor::strides(int64_t dim) const {
+    return impl_->strides(dim);
 }
 
 DataType Tensor::dtype() const {
