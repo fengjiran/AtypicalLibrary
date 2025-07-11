@@ -216,6 +216,8 @@ public:
      **/
     NODISCARD std::vector<int64_t> shape() const;
 
+    NODISCARD int64_t shape(int64_t dim) const;
+
     /**
      * Return the strides of this tensor.
      **/
@@ -322,7 +324,10 @@ public:
 private:
     template<typename Void, typename Func>
     NODISCARD Void* data_impl(const Func& get_data) const {
-        CHECK(has_storage()) << "Can't access data pointer of Tensor that doesn't have storage.";
+        if (!has_storage()) {
+            throw std::runtime_error("Can't access data pointer of Tensor that doesn't have storage.");
+        }
+        // CHECK(has_storage()) << "Can't access data pointer of Tensor that doesn't have storage.";
         CHECK(dtype_initialized()) << "Can't access data pointer of Tensor that doesn't have initialized dtype.";
         auto* data = get_data();
         static_assert(sizeof(*data) == 1, "get_data must return a byte-addressed pointer.");

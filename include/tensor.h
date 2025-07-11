@@ -28,7 +28,7 @@ public:
 
     explicit Tensor(const std::vector<int64_t>& shape,
                     int64_t storage_offset = 0,
-                    DataType dtype = {DLDataTypeCode::kFloat, 32, 1},
+                    DataType dtype = DataType::Float32(),
                     DeviceType device = DeviceType::kCPU);
 
     explicit Tensor(std::shared_ptr<TensorImpl> impl);

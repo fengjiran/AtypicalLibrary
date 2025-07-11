@@ -60,11 +60,11 @@ bool Tensor::unique() const {
 }
 
 void* Tensor::data_ptr() const {
-    return impl_ ? impl_->data() : nullptr;
+    return impl_->data();
 }
 
 const void* Tensor::const_data_ptr() const {
-    return impl_ ? impl_->const_data() : nullptr;
+    return impl_->const_data();
 }
 
 std::vector<int64_t> Tensor::shape() const {

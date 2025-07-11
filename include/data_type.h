@@ -162,6 +162,18 @@ public:
         return (bits() * lanes() + 7) / 8;
     }
 
+    static DataType Int(int bits, int lanes = 1) {
+        return {DLDataTypeCode::kInt, bits, lanes};
+    }
+
+    static DataType Float(int bits, int lanes = 1) {
+        return {DLDataTypeCode::kFloat, bits, lanes};
+    }
+
+    static DataType Float32() {
+        return {DLDataTypeCode::kFloat, 32, 1};
+    }
+
     template<typename T>
     static DataType Make();
 

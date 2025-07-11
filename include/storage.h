@@ -15,8 +15,7 @@ class Storage {
 public:
     Storage() = default;
 
-    Storage(std::shared_ptr<StorageImpl> ptr)
-        : impl_(std::move(ptr)) {}
+    Storage(std::shared_ptr<StorageImpl> ptr) : impl_(std::move(ptr)) {}
 
     // Allocates memory buffer using the given allocator and creates a storage with it
     Storage(size_t nbytes, const std::unique_ptr<Allocator>& alloc)

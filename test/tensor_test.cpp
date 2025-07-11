@@ -72,10 +72,7 @@ TEST(Tensor, init) {
     EXPECT_FALSE(t1.is_cpu());
     EXPECT_FALSE(t1.has_storage());
 
-    std::cout << t1.dtype() << std::endl;
-    std::cout << t1.sizes() << std::endl;
-    // t1.strides();
-    // auto t2 = torch::rand({10, 3, 32, 32});
+    // UNUSED(t3.size(4));
     // auto t3 = torch::empty({10, 3, 32, 32});
     // UNUSED(t1.itemsize());
 
@@ -91,29 +88,45 @@ TEST(Tensor, init) {
     EXPECT_EQ(t2.strides(), std::vector<int64_t>{1});
     EXPECT_EQ(t2.use_count(), 0);
     EXPECT_FALSE(t2.unique());
+    // EXPECT_THROW(t2.data_ptr() == nullptr, std::runtime_error);
+
+    EXPECT_THROW(
+            {
+                try {
+                    UNUSED(t2.data_ptr());
+                } catch (const std::runtime_error& e) {
+                    std::string what = e.what();
+                    std::cout << what << std::endl;
+                    throw;
+                }
+            },
+            std::runtime_error);
+
+
+    // EXPECT_TRUE(t2.data_ptr() == nullptr);
+    // EXPECT_TRUE(t2.const_data_ptr() == nullptr);
     // UNUSED(t2.itemsize());
 }
 
 TEST(Tensor, random) {
-    std::vector<int64_t> shape({10, 3, 64, 64});
+    std::vector<int64_t> shape({10, 3, 32, 32});
     int64_t numel = 1;
     for (int64_t x: shape) {
         numel *= x;
     }
 
-    auto t = Tensor::rand(shape);
-    EXPECT_TRUE(t.defined());
-    EXPECT_EQ(t.shape(), shape);
-    // EXPECT_TRUE();
-    EXPECT_EQ(t.ndim(), 4);
-    EXPECT_EQ(t.numel(), numel);
-    EXPECT_EQ(t.nbytes(), numel * 4);
-    EXPECT_EQ(t.use_count(), 1);
-    EXPECT_TRUE(t.unique());
-    EXPECT_TRUE(t.dtype() == DataType::Make<float>());
-    EXPECT_TRUE(t.device() == DeviceType::kCPU);
-    EXPECT_FLOAT_EQ(t.const_data_ptr<float>()[0], static_cast<const float*>(t.const_data_ptr())[0]);
+    auto t1 = torch::rand(shape);
 
-    // std::shared_ptr<TensorImpl> ptr(new UndefinedTensorImpl);
-    // EXPECT_TRUE(dynamic_cast<UndefinedTensorImpl*>(ptr.get()));
+    auto t2 = Tensor::rand(shape);
+    EXPECT_TRUE(t2.defined());
+    EXPECT_EQ(t2.shape(), shape);
+    // EXPECT_TRUE();
+    EXPECT_EQ(t2.ndim(), 4);
+    EXPECT_EQ(t2.numel(), numel);
+    EXPECT_EQ(t2.nbytes(), numel * 4);
+    EXPECT_EQ(t2.use_count(), 1);
+    EXPECT_TRUE(t2.unique());
+    EXPECT_TRUE(t2.dtype() == DataType::Make<float>());
+    EXPECT_TRUE(t2.device() == DeviceType::kCPU);
+    EXPECT_FLOAT_EQ(t2.const_data_ptr<float>()[0], static_cast<const float*>(t2.const_data_ptr())[0]);
 }

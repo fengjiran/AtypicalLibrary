@@ -6,8 +6,6 @@
 
 namespace atp {
 
-// static const auto& undefined_tensor = UndefinedTensorImpl::Global();
-
 TensorImpl::TensorImpl(const std::vector<int64_t>& shape, int64_t storage_offset, DataType dtype, DeviceType device)
     : storage_offset_(storage_offset), numel_(0), dtype_(dtype), device_opt_(device) {
     CHECK(dtype_initialized()) << "dtype should be initialized.";
@@ -48,6 +46,10 @@ int64_t TensorImpl::ndim() const {
 
 std::vector<int64_t> TensorImpl::shape() const {
     return shape_and_stride_.get_shape();
+}
+
+int64_t TensorImpl::shape(int64_t dim) const {
+    return shape_and_stride_.shape_at_uncheck(dim);
 }
 
 std::vector<int64_t> TensorImpl::strides() const {
@@ -97,7 +99,6 @@ DataType TensorImpl::dtype() const {
 bool TensorImpl::is_contiguous() const {
     return is_contiguous_;
 }
-
 
 void TensorImpl::set_shape_and_strides(const std::vector<int64_t>& shape, const std::vector<int64_t>& strides, std::optional<int64_t> storage_offset) {
     CHECK(shape.size() == strides.size()) << "dimensionality of shape must match dimensionality of strides.";
