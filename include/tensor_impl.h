@@ -254,6 +254,8 @@ public:
 
     NODISCARD bool is_cpu() const;
 
+    NODISCARD bool is_cuda() const;
+
     NODISCARD int64_t get_real_dim(int64_t dim) const;
 
     /**

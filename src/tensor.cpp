@@ -123,6 +123,14 @@ bool Tensor::is_contiguous() const {
     return impl_->is_contiguous();
 }
 
+bool Tensor::is_cpu() const {
+    return impl_->is_cpu();
+}
+
+bool Tensor::is_cuda() const {
+    return impl_->is_cuda();
+}
+
 Tensor Tensor::rand(const std::vector<int64_t>& shape) {
     Tensor t(shape);
     CHECK(t.numel() > 0);

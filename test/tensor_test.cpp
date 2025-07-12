@@ -75,6 +75,7 @@ TEST(Tensor, init) {
     EXPECT_TRUE(t1.is_contiguous());
     EXPECT_FALSE(t1.is_cpu());
     EXPECT_FALSE(t1.has_storage());
+    t1.to()
 
     // UNUSED(t3.size(4));
     // auto t3 = torch::empty({10, 3, 32, 32});
@@ -93,6 +94,8 @@ TEST(Tensor, init) {
     EXPECT_EQ(t2.strides(), std::vector<int64_t>{1});
     EXPECT_EQ(t2.use_count(), 0);
     EXPECT_FALSE(t2.unique());
+    EXPECT_FALSE(t2.is_cpu());
+    EXPECT_FALSE(t2.is_cuda());
 
     EXPECT_THROW(
             {
@@ -125,6 +128,8 @@ TEST(Tensor, random) {
 
     auto t2 = Tensor::rand(shape);
     EXPECT_TRUE(t2.defined());
+    EXPECT_TRUE(t2.is_cpu());
+    EXPECT_FALSE(t2.is_cuda());
     EXPECT_EQ(t2.shape(), shape);
     for (int i = 0; i < t2.ndim(); ++i) {
         EXPECT_EQ(t2.shape(i), shape[i]);

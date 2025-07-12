@@ -100,6 +100,10 @@ bool TensorImpl::is_cpu() const {
     return device_opt_.has_value() && device_opt_.value() == DeviceType::kCPU;
 }
 
+bool TensorImpl::is_cuda() const {
+    return device_opt_.has_value() && device_opt_.value() == DeviceType::kCUDA;
+}
+
 int64_t TensorImpl::get_real_dim(int64_t dim) const {
     if (dim >= -1 * ndim() && dim < ndim()) {
         if (dim < 0) {
