@@ -75,7 +75,7 @@ TEST(Tensor, init) {
     EXPECT_TRUE(t1.is_contiguous());
     EXPECT_FALSE(t1.is_cpu());
     EXPECT_FALSE(t1.has_storage());
-    t1.to()
+    // t1.to()
 
     // UNUSED(t3.size(4));
     // auto t3 = torch::empty({10, 3, 32, 32});
