@@ -4,7 +4,10 @@
 #include "tensor.h"
 #include <fmt/format.h>
 #include <gtest/gtest.h>
+
+#ifdef USE_TORCH
 #include <torch/torch.h>
+#endif
 
 using namespace atp;
 
@@ -64,6 +67,7 @@ TEST(Tensor, base1) {
 }
 
 TEST(Tensor, init) {
+#ifdef USE_TORCH
     torch::Tensor t1;
     EXPECT_FALSE(t1.defined());
     EXPECT_EQ(t1.numel(), 0);
@@ -75,6 +79,7 @@ TEST(Tensor, init) {
     // UNUSED(t3.size(4));
     // auto t3 = torch::empty({10, 3, 32, 32});
     EXPECT_ANY_THROW(UNUSED(t1.itemsize()););
+#endif
 
     Tensor t2;
     EXPECT_FALSE(t2.defined());
@@ -114,7 +119,9 @@ TEST(Tensor, random) {
         numel *= x;
     }
 
+#ifdef USE_TORCH
     auto t1 = torch::rand(shape);
+#endif
 
     auto t2 = Tensor::rand(shape);
     EXPECT_TRUE(t2.defined());
