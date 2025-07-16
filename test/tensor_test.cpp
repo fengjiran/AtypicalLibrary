@@ -48,14 +48,21 @@ TEST(Tensor, scalar) {
     EXPECT_TRUE(s1.type() == DLDataTypeCode::kBool);
     EXPECT_TRUE(s1.isBool());
     s1 = true;
+    std::cout << s1 << std::endl;
+    std::cout << toString(s1) << std::endl;
 
     Scalar s2 = 10;
     EXPECT_EQ(s2.toInt(), 10);
     EXPECT_TRUE(s2.isIntegral());
+    std::cout << s2 << std::endl;
+    std::cout << toString(s2) << std::endl;
 
-    Scalar s3 = 1.0;
-    EXPECT_EQ(s3.toFloat(), 1.0);
+    Scalar s3 = 1.5;
+    EXPECT_EQ(s3.toFloat(), 1.5);
     EXPECT_TRUE(s3.isFloatingPoint());
+    EXPECT_TRUE(std::isfinite(s3.toFloat()));
+    std::cout << s3 << std::endl;
+    std::cout << toString(s3) << std::endl;
 }
 
 TEST(Tensor, base1) {
@@ -75,7 +82,7 @@ TEST(Tensor, init) {
     EXPECT_TRUE(t1.is_contiguous());
     EXPECT_FALSE(t1.is_cpu());
     EXPECT_FALSE(t1.has_storage());
-    // t1.to()
+    std::cout << t1;
 
     // UNUSED(t3.size(4));
     // auto t3 = torch::empty({10, 3, 32, 32});

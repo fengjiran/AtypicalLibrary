@@ -160,6 +160,9 @@ private:
 SCALAR_TYPES_NAME(DEFINE_TO);
 #undef DEFINE_TO
 
+std::ostream& operator<<(std::ostream& out, const Scalar& s);
+std::string toString(const Scalar& s);
+
 /**
  * The low-level representation of a tensor, which contains a pointer to a
  * storage (which contains the actual data) and metadata (e.g., shape and

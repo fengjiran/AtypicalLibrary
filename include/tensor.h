@@ -8,19 +8,6 @@
 #include "tensor_impl.h"
 
 namespace atp {
-//
-// inline int32_t atomic_inc_relaxed(int32_t* ptr) {
-//     return __atomic_fetch_add(ptr, 1, __ATOMIC_RELAXED);
-// }
-//
-// inline int32_t atomic_dec_rel_acq(int32_t* ptr) {
-//     return __atomic_fetch_sub(ptr, 1, __ATOMIC_ACQ_REL);
-// }
-//
-// inline int32_t atomic_load_relaxed(const int32_t* ptr) {
-//     auto raw_ptr = const_cast<int32_t*>(ptr);
-//     return __atomic_load_n(raw_ptr, __ATOMIC_RELAXED);
-// }
 
 class Tensor {
 public:
