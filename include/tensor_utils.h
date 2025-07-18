@@ -8,6 +8,9 @@
 #include "macros.h"
 
 #include <cstdint>
+#include <cxxabi.h>
+#include <functional>
+#include <memory>
 #include <stdexcept>
 #include <string>
 
@@ -63,6 +66,30 @@ bool safe_multiply_u64(Iter first, Iter last, uint64_t* out) {
 template<typename Container>
 bool safe_multiply_u64(const Container& c, uint64_t* out) {
     return safe_multiply_u64(c.begin(), c.end(), out);
+}
+
+// This function will demangle the mangled function name into a more human
+// readable format, e.g. _Z1gv -> g().
+// More information:
+// https://github.com/gcc-mirror/gcc/blob/master/libstdc%2B%2B-v3/libsupc%2B%2B/cxxabi.h
+inline std::string demangle(const char* name) {
+    int status = -1;
+    std::unique_ptr<char, std::function<void(char*)>> demangled(
+            abi::__cxa_demangle(
+                    name,
+                    /*__output_buffer=*/nullptr,
+                    /*__length=*/nullptr,
+                    &status),
+            /*deleter=*/free);
+
+    // Demangling may fail, for example when the name does not follow the
+    // standard C++ (Itanium ABI) mangling scheme. This is the case for `main`
+    // or `clone` for example, so the mangled name is a fine default.
+    if (status == 0) {
+        return demangled.get();
+    }
+
+    return name;
 }
 
 }// namespace atp
