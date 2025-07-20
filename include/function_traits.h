@@ -25,6 +25,12 @@ struct function_traits<R(Args...)> {
 template<typename R, typename... Args>
 struct function_traits<R (*)(Args...)> : function_traits<R(Args...)> {};
 
+template<typename R, typename... Args>
+struct function_traits<std::function<R(Args...)>> : function_traits<R(Args...)> {};
+
+template<typename R, typename... Args>
+struct function_traits<std::function<R (*)(Args...)>> : function_traits<R(Args...)> {};
+
 }// namespace atp
 
 #endif//FUNCTION_TRAITS_H

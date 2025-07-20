@@ -167,10 +167,13 @@ TEST(Tensor, function_traits) {
     // std::function<void(int, float)> func = f;
 
 
-    using func_type = void(int, float);
+    // using func_type = void(int, float);
+    // using func_type = std::function<void(int, float)>;
+    using func_type = std::function<void(*)(int, float)>;
     // using func_type = void(*)(int, float);
     // using func_type = decltype(func);
     static_assert(std::is_same_v<function_traits<func_type>::return_type, void>);
     static_assert(std::is_same_v<function_traits<func_type>::args_type_tuple, std::tuple<int, float>>);
     static_assert(std::is_same_v<function_traits<func_type>::func_type, void(int, float)>);
+    static_assert(function_traits<func_type>::params_num == 2);
 }
