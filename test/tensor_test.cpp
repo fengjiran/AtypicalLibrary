@@ -2,6 +2,7 @@
 // Created by 赵丹 on 25-6-17.
 //
 #include "tensor.h"
+#include "function_traits.h"
 #include <fmt/format.h>
 #include <gtest/gtest.h>
 
@@ -156,10 +157,20 @@ TEST(Tensor, random) {
     EXPECT_TRUE(t2.dtype() == DataType::Make<float>());
     EXPECT_TRUE(t2.device() == DeviceType::kCPU);
     EXPECT_FLOAT_EQ(t2.const_data_ptr<float>()[0], static_cast<const float*>(t2.const_data_ptr())[0]);
+}
 
-    auto f = [](int a, int b) {
-        return a + b;
+TEST(Tensor, function_traits) {
+    auto f = [](int a, float b) {
+        return;
     };
 
-    // static_assert(std::is_same_v<decltype(f), int(int, int)>);
+    // std::function<void(int, float)> func = f;
+
+
+    using func_type = void(int, float);
+    // using func_type = void(*)(int, float);
+    // using func_type = decltype(func);
+    static_assert(std::is_same_v<function_traits<func_type>::return_type, void>);
+    static_assert(std::is_same_v<function_traits<func_type>::args_type_tuple, std::tuple<int, float>>);
+    static_assert(std::is_same_v<function_traits<func_type>::func_type, void(int, float)>);
 }

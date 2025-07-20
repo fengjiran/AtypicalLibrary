@@ -18,7 +18,7 @@ template<typename R, typename... Args>
 struct function_traits<R(Args...)> {
     using func_type = R(Args...);
     using return_type = R;
-    using args_tuple = std::tuple<Args...>;
+    using args_type_tuple = std::tuple<Args...>;
     static constexpr auto params_num = sizeof...(Args);
 };
 
