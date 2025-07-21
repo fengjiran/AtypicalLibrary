@@ -10,6 +10,15 @@
 
 namespace atp {
 
+template<typename T>
+struct is_tuple : std::false_type {};
+
+template<typename... Args>
+struct is_tuple<std::tuple<Args...>> : std::true_type {};
+
+template<typename T>
+constexpr bool is_tuple_v = is_tuple<T>::value;
+
 /**
  * is_function_type<T> is true_type if T is a plain function type (i.e.
  * "Result(Args...)")
@@ -50,7 +59,7 @@ struct infer_function_traits<R(Args...)> {
 };
 
 template<typename R, typename... Args>
-struct infer_function_traits<R(*)(Args...)> {
+struct infer_function_traits<R (*)(Args...)> {
     using type = function_traits<R(Args...)>;
 };
 
@@ -60,7 +69,7 @@ struct infer_function_traits<std::function<R(Args...)>> {
 };
 
 template<typename R, typename... Args>
-struct infer_function_traits<std::function<R(*)(Args...)>> {
+struct infer_function_traits<std::function<R (*)(Args...)>> {
     using type = function_traits<R(Args...)>;
 };
 

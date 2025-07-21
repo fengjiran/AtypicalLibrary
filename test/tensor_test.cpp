@@ -160,6 +160,9 @@ TEST(Tensor, random) {
 }
 
 TEST(Tensor, function_traits) {
+    static_assert(!is_tuple_v<int>);
+    static_assert(is_tuple_v<std::tuple<int, float>>);
+
     auto f = [](int a, float b) {
         return a + b;
     };
