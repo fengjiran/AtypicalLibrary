@@ -15,16 +15,13 @@ namespace atp {
  * "Result(Args...)")
  */
 template<typename T>
-struct is_function_type : std::false_type {};
+struct is_plain_function_type : std::false_type {};
 
 template<typename R, typename... Args>
-struct is_function_type<R(Args...)> : std::true_type {};
+struct is_plain_function_type<R(Args...)> : std::true_type {};
 
 template<typename T>
-using is_function_type_t = typename is_function_type<T>::type;
-
-template<typename T>
-constexpr bool is_function_type_v = is_function_type<T>::value;
+constexpr bool is_plain_function_type_v = is_plain_function_type<T>::value;
 
 template<typename FuncType>
 struct function_traits;
@@ -38,26 +35,37 @@ struct function_traits<R(Args...)> {
     static constexpr auto params_num = sizeof...(Args);
 };
 
-// plain function pointer type
-template<typename R, typename... Args>
-struct function_traits<R (*)(Args...)> : function_traits<R(Args...)> {};
-
-template<typename R, typename... Args>
-struct function_traits<std::function<R(Args...)>> : function_traits<R(Args...)> {};
-
-template<typename R, typename... Args>
-struct function_traits<std::function<R (*)(Args...)>> : function_traits<R(Args...)> {};
-
-template<typename Functor, typename R, typename... Args>
-struct function_traits<R(Args...)> {
-    using func_type = std::remove_const_t<decltype(Functor::operator())>;
-    using return_type = R;
-    using args_type_tuple = std::tuple<Args...>;
-    static constexpr auto params_num = sizeof...(Args);
+/**
+ * creates a `function_traits` type for a simple function (pointer) or functor (lambda/struct).
+ * Currently does not support class methods.
+ */
+template<typename Functor>
+struct infer_function_traits {
+    using type = function_traits<std::remove_const_t<decltype(Functor::operator())>>;
 };
 
-// template<typename Functor>
-// struct;
+template<typename R, typename... Args>
+struct infer_function_traits<R(Args...)> {
+    using type = function_traits<R(Args...)>;
+};
+
+template<typename R, typename... Args>
+struct infer_function_traits<R(*)(Args...)> {
+    using type = function_traits<R(Args...)>;
+};
+
+template<typename R, typename... Args>
+struct infer_function_traits<std::function<R(Args...)>> {
+    using type = function_traits<R(Args...)>;
+};
+
+template<typename R, typename... Args>
+struct infer_function_traits<std::function<R(*)(Args...)>> {
+    using type = function_traits<R(Args...)>;
+};
+
+template<typename T>
+using infer_function_traits_t = typename infer_function_traits<T>::type;
 
 }// namespace atp
 

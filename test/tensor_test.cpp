@@ -160,22 +160,23 @@ TEST(Tensor, random) {
 }
 
 TEST(Tensor, function_traits) {
-    auto f = [](int a, float b)-> void {
-        return;
+    auto f = [](int a, float b) {
+        return a + b;
     };
 
-    // using func_type = std::remove_const_t<decltype(decltype(f)::operator())>;
-    // using func_type = decltype(f);
-    using func_type = void(int, float);
-    // using func_type = std::function<void(int, float)>;
-    // using func_type = std::function<void(*)(int, float)>;
-    // using func_type = void(*)(int, float);
+    using func_type = decltype(f);
+    // using func_type = float(int, float);
+    // using func_type = std::function<float(int, float)>;
+    // using func_type = std::function<float(*)(int, float)>;
+    // using func_type = float(*)(int, float);
 
-    static_assert(is_function_type_v<func_type>);
-    static_assert(std::is_same_v<function_traits<func_type>::return_type, void>);
-    static_assert(std::is_same_v<function_traits<func_type>::args_type_tuple, std::tuple<int, float>>);
-    static_assert(std::is_same_v<function_traits<func_type>::func_type, void(int, float)>);
-    static_assert(function_traits<func_type>::params_num == 2);
+    using func_traits = infer_function_traits_t<func_type>;
+
+    // static_assert(is_function_type_v<func_type>);
+    static_assert(std::is_same_v<func_traits::return_type, float>);
+    static_assert(std::is_same_v<func_traits::args_type_tuple, std::tuple<int, float>>);
+    static_assert(std::is_same_v<func_traits::func_type, float(int, float)>);
+    static_assert(func_traits::params_num == 2);
 
 
 }
