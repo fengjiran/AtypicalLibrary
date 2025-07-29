@@ -50,8 +50,7 @@ private:
     bool log_before_throw_;
 };
 
-#define ATP_THROW(ErrorKind) \
-    ErrorBuilder(#ErrorKind, true).stream()
+#define ATP_THROW(ErrorKind) ErrorBuilder(#ErrorKind, true).stream()
 
 }// namespace atp
 

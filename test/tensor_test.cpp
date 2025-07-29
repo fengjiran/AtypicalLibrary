@@ -111,10 +111,9 @@ TEST(Tensor, init) {
                 try {
                     UNUSED(t2.data_ptr());
                 } catch (const Error& e) {
-                    std::string what = e.what();
-                    std::cout << what << std::endl;
+                    std::cout << e.what() << std::endl;
                     // ATP_THROW(RuntimeError) << "runtime error.";
-                    // throw std::runtime_error("runtime error.");
+                    throw;
                 }
             },
             Error);
