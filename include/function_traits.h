@@ -87,6 +87,12 @@ struct make_function_traits<R, std::tuple<Args...>> {
 template<typename R, typename... Args>
 using make_function_traits_t = typename make_function_traits<R, std::tuple<Args...>>::type;
 
+template<size_t start, size_t N, size_t... Is>
+struct make_offset_index_sequence_impl : make_offset_index_sequence_impl<start, N - 1, start + N - 1, Is...> {
+    static_assert(static_cast<int>(start) >= 0);
+    static_assert(static_cast<int>(N) >= 0);
+};
+
 }// namespace atp
 
 #endif//FUNCTION_TRAITS_H

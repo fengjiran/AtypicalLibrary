@@ -6,6 +6,7 @@
 #define TENSOR_UTILS_H
 
 #include "macros.h"
+#include "error.h"
 
 #include <cstdint>
 #include <cxxabi.h>

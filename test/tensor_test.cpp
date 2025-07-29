@@ -1,8 +1,9 @@
 //
 // Created by 赵丹 on 25-6-17.
 //
-#include "tensor.h"
+#include "error.h"
 #include "function_traits.h"
+#include "tensor.h"
 #include <fmt/format.h>
 #include <gtest/gtest.h>
 
@@ -109,13 +110,14 @@ TEST(Tensor, init) {
             {
                 try {
                     UNUSED(t2.data_ptr());
-                } catch (const std::runtime_error& e) {
-                    // std::string what = e.what();
-                    // std::cout << what << std::endl;
-                    throw;
+                } catch (const Error& e) {
+                    std::string what = e.what();
+                    std::cout << what << std::endl;
+                    // ATP_THROW(RuntimeError) << "runtime error.";
+                    // throw std::runtime_error("runtime error.");
                 }
             },
-            std::runtime_error);
+            Error);
 
 
     // EXPECT_TRUE(t2.data_ptr() == nullptr);
@@ -168,8 +170,8 @@ TEST(Tensor, function_traits) {
         return a + b;
     };
 
-    using func_type = decltype(f);
-    // using func_type = float(int, float);
+    // using func_type = decltype(f);
+    using func_type = float(int, float);
     // using func_type = std::function<float(int, float)>;
     // using func_type = std::function<float(*)(int, float)>;
     // using func_type = float(*)(int, float);
@@ -182,5 +184,5 @@ TEST(Tensor, function_traits) {
     static_assert(std::is_same_v<func_traits::func_type, float(int, float)>);
     static_assert(func_traits::params_num == 2);
 
-
+    static_assert(std::is_same_v<std::make_index_sequence<5>, std::index_sequence<0, 1, 2, 3, 4>>);
 }

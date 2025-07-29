@@ -3,6 +3,7 @@
 //
 
 #include "tensor_impl.h"
+#include "error.h"
 
 namespace atp {
 

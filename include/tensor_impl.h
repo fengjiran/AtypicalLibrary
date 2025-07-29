@@ -334,7 +334,8 @@ private:
     template<typename Void, typename Func>
     NODISCARD Void* data_impl(const Func& get_data) const {
         if (!has_storage()) {
-            throw std::runtime_error("Can't access data pointer of Tensor that doesn't have storage.");
+            // throw std::runtime_error("Can't access data pointer of Tensor that doesn't have storage.");
+            ATP_THROW(runtime_error) << "Can't access data pointer of Tensor that doesn't have storage.";
         }
         // CHECK(has_storage()) << "Can't access data pointer of Tensor that doesn't have storage.";
         CHECK(dtype_initialized()) << "Can't access data pointer of Tensor that doesn't have initialized dtype.";
